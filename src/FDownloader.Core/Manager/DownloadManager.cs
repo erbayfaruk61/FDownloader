@@ -375,7 +375,7 @@ public sealed class DownloadManager : IAsyncDisposable
             {
                 try
                 {
-                    await _mediaService.DownloadMediaAsync(task.Id, url, saveDirectory, isAudioOnlyMp3, isPlaylist, cts.Token);
+                    await _mediaService.DownloadMediaAsync(task.Id, url, saveDirectory, isAudioOnlyMp3, isPlaylist, task.Name, cts.Token);
                 }
                 catch (Exception ex)
                 {
@@ -425,7 +425,7 @@ public sealed class DownloadManager : IAsyncDisposable
             {
                 try
                 {
-                    await _mediaService.DownloadMediaAsync(task.Id, task.OriginalUrl, task.SaveDirectory, isAudioOnly, isPlaylist, cts.Token);
+                    await _mediaService.DownloadMediaAsync(task.Id, task.OriginalUrl, task.SaveDirectory, isAudioOnly, isPlaylist, task.Name, cts.Token);
                 }
                 catch (Exception ex)
                 {

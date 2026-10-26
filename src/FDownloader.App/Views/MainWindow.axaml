@@ -740,7 +740,9 @@
                         <TextBlock Text="İndirme Bağlantısı (URL veya Magnet):" FontWeight="SemiBold" />
                         <Grid ColumnDefinitions="*, Auto">
                             <TextBox Grid.Column="0" Text="{Binding AddDialogUrl}" PlaceholderText="https://... veya magnet:?xt=... veya dosya yolu" Height="36" VerticalContentAlignment="Center" />
-                            <Button Grid.Column="1" Command="{Binding BrowseTorrentFileCommand}" ToolTip.Tip="Bilgisayardan .torrent dosyası seçin" Content="📁 .torrent Seç..." Margin="8,0,0,0" Height="36" Padding="12,0" FontWeight="SemiBold" />
+                            <Button Grid.Column="1" Command="{Binding BrowseTorrentFileCommand}" 
+                                    IsVisible="{Binding !AddDialogIsMediaDetected}"
+                                    ToolTip.Tip="Bilgisayardan .torrent dosyası seçin" Content="📁 .torrent Seç..." Margin="8,0,0,0" Height="36" Padding="12,0" FontWeight="SemiBold" />
                         </Grid>
                     </StackPanel>
 

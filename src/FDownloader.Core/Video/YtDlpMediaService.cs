@@ -292,8 +292,13 @@ public sealed class YtDlpMediaService
             using var doc = JsonDocument.Parse(jsonOutput);
             var root = doc.RootElement;
 
-            var title = root.TryGetProperty("title", out var titleProp) ? titleProp.GetString() ?? "" : "";
+            var rawTitle = root.TryGetProperty("title", out var titleProp) ? titleProp.GetString() ?? "" : "";
             var uploader = root.TryGetProperty("uploader", out var upProp) ? upProp.GetString() ?? "" : "";
+            var channel = root.TryGetProperty("channel", out var chanProp) ? chanProp.GetString() ?? "" : "";
+            var artist = root.TryGetProperty("artist", out var artProp) ? artProp.GetString() ?? "" : "";
+            var author = !string.IsNullOrWhiteSpace(artist) ? artist : (!string.IsNullOrWhiteSpace(uploader) ? uploader : channel);
+            var title = FormatMediaTitle(author, rawTitle);
+
             var thumbnail = root.TryGetProperty("thumbnail", out var thumbProp) ? thumbProp.GetString() ?? "" : "";
             var duration = root.TryGetProperty("duration", out var durProp) ? TimeSpan.FromSeconds(durProp.GetDouble()) : TimeSpan.Zero;
 
@@ -304,7 +309,7 @@ public sealed class YtDlpMediaService
             {
                 Url = url,
                 Title = title,
-                Uploader = uploader,
+                Uploader = author,
                 ThumbnailUrl = thumbnail,
                 Duration = duration,
                 IsPlaylist = isPlaylist
@@ -318,6 +323,36 @@ public sealed class YtDlpMediaService
     }
 
     /// <summary>
+    /// Medya başlığına sanatçı/kanal adını (eğer başlıkta yer almıyorsa) "Sanatçı - Başlık" formatında ekler.
+    /// </summary>
+    public static string FormatMediaTitle(string? author, string? title)
+    {
+        if (string.IsNullOrWhiteSpace(title)) return author ?? "Medya";
+        if (string.IsNullOrWhiteSpace(author)) return title;
+
+        var cleanAuthor = author.Trim();
+        if (cleanAuthor.EndsWith(" - Topic", StringComparison.OrdinalIgnoreCase))
+        {
+            cleanAuthor = cleanAuthor[..^8].Trim();
+        }
+
+        if (string.IsNullOrWhiteSpace(cleanAuthor)) return title;
+
+        // Başlıkta zaten sanatçı adı varsa tekrar ekleme
+        if (title.StartsWith(cleanAuthor, StringComparison.OrdinalIgnoreCase) ||
+            title.Contains($" {cleanAuthor} ", StringComparison.OrdinalIgnoreCase) ||
+            title.Contains($"{cleanAuthor} -", StringComparison.OrdinalIgnoreCase) ||
+            title.Contains($"- {cleanAuthor}", StringComparison.OrdinalIgnoreCase) ||
+            title.Contains($"| {cleanAuthor}", StringComparison.OrdinalIgnoreCase) ||
+            title.Contains($"{cleanAuthor} |", StringComparison.OrdinalIgnoreCase))
+        {
+            return title;
+        }
+
+        return $"{cleanAuthor} - {title}";
+    }
+
+    /// <summary>
     /// Medyayı seçilen formata (MP4 veya MP3) ve kapsama (Tek video veya Playlist) göre indirir.
     /// </summary>
     public async Task DownloadMediaAsync(
@@ -326,6 +361,7 @@ public sealed class YtDlpMediaService
         string outputDirectory,
         bool isAudioOnlyMp3,
         bool isPlaylist = false,
+        string? customTitle = null,
         CancellationToken cancellationToken = default)
     {
         await EnsureYtDlpAsync(cancellationToken);
@@ -337,8 +373,18 @@ public sealed class YtDlpMediaService
 
         // Format ve argüman belirleme
         var commonArgs = GetCommonArguments();
+        string outputTemplate;
+        if (!isPlaylist && !string.IsNullOrWhiteSpace(customTitle))
+        {
+            var sanitizedTitle = FDownloader.Core.Utilities.FileNameSanitizer.Sanitize(customTitle);
+            outputTemplate = Path.Combine(outputDirectory, $"{sanitizedTitle}.%(ext)s");
+        }
+        else
+        {
+            outputTemplate = Path.Combine(outputDirectory, "%(uploader)s - %(title)s.%(ext)s");
+        }
+
         string args;
-        string outputTemplate = Path.Combine(outputDirectory, "%(title)s.%(ext)s");
         string playlistFlag = isPlaylist ? "--yes-playlist" : "--no-playlist";
         string ffmpegFlag = Directory.Exists(_toolsDir) ? $"--ffmpeg-location \"{_toolsDir}\"" : "";
 
