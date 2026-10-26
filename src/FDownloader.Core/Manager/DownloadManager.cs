@@ -3,6 +3,7 @@ using FDownloader.Core.Engine;
 using FDownloader.Core.Events;
 using FDownloader.Core.Storage;
 using FDownloader.Core.Torrent;
+using FDownloader.Core.Utilities;
 using FDownloader.Core.Video;
 using Microsoft.Extensions.Logging;
 
@@ -511,7 +512,14 @@ public sealed class DownloadManager : IAsyncDisposable
     /// </summary>
     public async Task RemoveTaskAsync(long taskId, bool deleteFile = false)
     {
-        await PauseTaskAsync(taskId);
+        try
+        {
+            await PauseTaskAsync(taskId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Görev duraklatılırken hata alındı (#{TaskId}), kaldırmaya devam ediliyor.", taskId);
+        }
 
         DownloadTask? task;
         lock (_lock)
@@ -529,8 +537,24 @@ public sealed class DownloadManager : IAsyncDisposable
             DeleteTaskFiles(task);
         }
 
-        await _torrentService.RemoveTorrentAsync(taskId, deleteFile);
-        _repository.DeleteTask(taskId);
+        try
+        {
+            await _torrentService.RemoveTorrentAsync(taskId, deleteFile);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Torrent motorundan kaldırılırken hata alındı (#{TaskId})", taskId);
+        }
+
+        try
+        {
+            _repository.DeleteTask(taskId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Görev veritabanından silinirken hata alındı (#{TaskId})", taskId);
+        }
+
         _eventBus.Publish(new TaskCancelledEvent(taskId));
     }
 
@@ -539,15 +563,15 @@ public sealed class DownloadManager : IAsyncDisposable
         try
         {
             // 1. Tamamlanmış dosya
-            if (!string.IsNullOrEmpty(task.FinalFilePath) && File.Exists(task.FinalFilePath))
+            if (!string.IsNullOrEmpty(task.FinalFilePath))
             {
-                try { File.Delete(task.FinalFilePath); } catch { }
+                PathSafetyHelper.SafeDeleteFile(task.FinalFilePath);
             }
 
             // 2. Geçici indirme dosyası (.fdown / TempFilePath)
-            if (!string.IsNullOrEmpty(task.TempFilePath) && File.Exists(task.TempFilePath))
+            if (!string.IsNullOrEmpty(task.TempFilePath))
             {
-                try { File.Delete(task.TempFilePath); } catch { }
+                PathSafetyHelper.SafeDeleteFile(task.TempFilePath);
             }
 
             // 3. Olası geçici uzantılar (Sadece bu dosyanın adıyla biten: ornek.zip.fdown, ornek.zip.part vb.)
@@ -557,32 +581,39 @@ public sealed class DownloadManager : IAsyncDisposable
                 foreach (var ext in tempExtensions)
                 {
                     var p = task.FinalFilePath + ext;
-                    if (File.Exists(p))
-                    {
-                        try { File.Delete(p); } catch { }
-                    }
+                    PathSafetyHelper.SafeDeleteFile(p);
                 }
 
                 // yt-dlp format birleştirme aşamasındaki geçici dosyalar (ornek.f137.mp4, ornek.temp.mp4 vb.)
                 if (!string.IsNullOrEmpty(task.SaveDirectory) && Directory.Exists(task.SaveDirectory) && !string.IsNullOrEmpty(task.FileName))
                 {
                     var exactName = task.FileName;
-                    var nameOnly = Path.GetFileNameWithoutExtension(exactName);
-
                     try
                     {
-                        // Sadece bu dosyanın birebir adına eklenen .part / .ytdl veya video format geçici parçaları
                         var exactMatches = Directory.GetFiles(task.SaveDirectory, $"{exactName}.*");
                         foreach (var f in exactMatches)
                         {
                             var fExt = Path.GetExtension(f).ToLowerInvariant();
                             if (fExt is ".fdown" or ".fdtmp" or ".part" or ".ytdl" or ".tmp")
                             {
-                                try { File.Delete(f); } catch { }
+                                PathSafetyHelper.SafeDeleteFile(f);
                             }
                         }
                     }
                     catch { }
+                }
+            }
+
+            // 4. Torrent görevi ise ve FinalFilePath henüz atanmamışsa SaveDirectory + FileName kontrolü
+            if (task.Category == DownloadCategory.Torrent && !string.IsNullOrEmpty(task.SaveDirectory) && !string.IsNullOrEmpty(task.FileName))
+            {
+                var candidateSingleFile = Path.Combine(task.SaveDirectory, task.FileName);
+                PathSafetyHelper.SafeDeleteFile(candidateSingleFile);
+
+                var candidateDir = Path.Combine(task.SaveDirectory, task.FileName);
+                if (Directory.Exists(candidateDir))
+                {
+                    PathSafetyHelper.SafeDeleteDirectory(candidateDir, task.SaveDirectory);
                 }
             }
         }

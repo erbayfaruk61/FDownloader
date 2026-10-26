@@ -3,6 +3,7 @@ using MonoTorrent.Client;
 using Microsoft.Extensions.Logging;
 using FDownloader.Core.Domain;
 using FDownloader.Core.Events;
+using FDownloader.Core.Utilities;
 
 namespace FDownloader.Core.Torrent;
 
@@ -196,8 +197,17 @@ public sealed class TorrentService : IAsyncDisposable
 
         if (manager != null)
         {
-            await manager.PauseAsync();
-            _eventBus.Publish(new TaskPausedEvent(taskId));
+            try
+            {
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+                var pauseTask = manager.PauseAsync();
+                await System.Threading.Tasks.Task.WhenAny(pauseTask, System.Threading.Tasks.Task.Delay(3000, cts.Token));
+                _eventBus.Publish(new TaskPausedEvent(taskId));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Torrent duraklatılırken hata alındı: Görev #{TaskId}", taskId);
+            }
         }
     }
 
@@ -214,13 +224,21 @@ public sealed class TorrentService : IAsyncDisposable
 
         if (manager != null)
         {
-            await manager.StartAsync();
-            _eventBus.Publish(new TaskResumedEvent(taskId));
+            try
+            {
+                await manager.StartAsync();
+                _eventBus.Publish(new TaskResumedEvent(taskId));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Torrent devam ettirilirken hata alındı: Görev #{TaskId}", taskId);
+            }
         }
     }
 
     /// <summary>
     /// Torrent indirmesini durdurur ve motor listesinden çıkarır.
+    /// deleteFiles true ise indirilen dosyaları ve .torrent önbelleğini güvenli bir şekilde siler.
     /// </summary>
     public async Task RemoveTorrentAsync(long taskId, bool deleteFiles = false)
     {
@@ -234,10 +252,70 @@ public sealed class TorrentService : IAsyncDisposable
 
         if (manager != null)
         {
-            await manager.StopAsync();
-            await _engine.RemoveAsync(manager);
-            _eventBus.Publish(new TaskCancelledEvent(taskId));
+            var savePath = manager.SavePath;
+            var torrentName = manager.Torrent?.Name;
+            var filePaths = new List<string>();
+
+            if (manager.Files != null)
+            {
+                foreach (var f in manager.Files)
+                {
+                    try
+                    {
+                        var full = Path.GetFullPath(Path.Combine(savePath, f.Path));
+                        filePaths.Add(full);
+                    }
+                    catch { }
+                }
+            }
+
+            try
+            {
+                // Torrent'i 3 saniye içinde nazikçe durdur
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+                var stopTask = manager.StopAsync();
+                await System.Threading.Tasks.Task.WhenAny(stopTask, System.Threading.Tasks.Task.Delay(3000, cts.Token));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Torrent durdurulurken istisna alındı: Görev #{TaskId}", taskId);
+            }
+
+            try
+            {
+                await _engine.RemoveAsync(manager);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Torrent motordan kaldırılırken hata alındı: Görev #{TaskId}", taskId);
+            }
+
+            if (deleteFiles)
+            {
+                // 1. Torrent'e ait dosyaları sil
+                foreach (var fp in filePaths)
+                {
+                    PathSafetyHelper.SafeDeleteFile(fp);
+                }
+
+                // 2. Çoklu dosyalı torrent ise ve SavePath altında özel bir klasör açılmışsa,
+                // sadece bu torrent'e ait alt klasörü sil (Downloads ana klasörüne asla dokunma!)
+                if (!string.IsNullOrWhiteSpace(torrentName) && !string.IsNullOrWhiteSpace(savePath))
+                {
+                    var specificTorrentFolder = Path.Combine(savePath, torrentName);
+                    if (Directory.Exists(specificTorrentFolder))
+                    {
+                        PathSafetyHelper.SafeDeleteDirectory(specificTorrentFolder, savePath);
+                    }
+                }
+            }
         }
+
+        // 3. Yerel .torrent önbelleğini temizle
+        var localCachePath = Path.Combine(_cacheDirectory, $"{taskId}.torrent");
+        PathSafetyHelper.SafeDeleteFile(localCachePath);
+
+        _eventBus.Publish(new TaskCancelledEvent(taskId));
     }
 
     /// <summary>
@@ -449,9 +527,19 @@ public sealed class TorrentService : IAsyncDisposable
 
                     if (manager.Complete)
                     {
+                        string finalTorrentPath = manager.SavePath;
+                        if (manager.Torrent != null && !string.IsNullOrWhiteSpace(manager.Torrent.Name))
+                        {
+                            finalTorrentPath = Path.Combine(manager.SavePath, manager.Torrent.Name);
+                        }
+                        else if (manager.Files != null && manager.Files.Count == 1)
+                        {
+                            finalTorrentPath = Path.Combine(manager.SavePath, manager.Files[0].Path);
+                        }
+
                         _eventBus.Publish(new TaskCompletedEvent(
                             taskId,
-                            manager.SavePath,
+                            finalTorrentPath,
                             totalSize,
                             TimeSpan.Zero
                         ));
