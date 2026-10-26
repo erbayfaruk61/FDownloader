@@ -1,0 +1,1385 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:FDownloader.App.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="780"
+        x:Class="FDownloader.App.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Icon="/Assets/logo.png"
+        Title="FDownloader — Çoklu Protokol İndirme Yöneticisi (IDM, BitTorrent &amp; YouTube)"
+        Width="1260" Height="780"
+        MinWidth="1000" MinHeight="640"
+        WindowStartupLocation="CenterScreen"
+        DragDrop.AllowDrop="True"
+        Background="{Binding ThemeWindowBg}">
+
+    <Grid>
+        <!-- ANA DÜZEN (Üst Toolbar, Canlı Hız Grafiği Paneli, Orta Alan, Durum Çubuğu) -->
+        <Grid RowDefinitions="Auto, Auto, *, Auto">
+            
+            <!-- ─── 1. ÜST ARAÇ ÇUBUĞU (TOOLBAR) ────────────────────────────── -->
+            <Border Grid.Row="0" Background="{Binding ThemeToolbarBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="0,0,0,1" Padding="12,8">
+                <Grid ColumnDefinitions="Auto, *, Auto">
+                    <!-- Sol Butonlar -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
+                        <!-- Marka Logosu (Ekle Butonunun Yanında) -->
+                        <Border CornerRadius="8" ClipToBounds="True" Width="34" Height="34" VerticalAlignment="Center" Margin="0,0,4,0" BoxShadow="0 2 6 0 #30000000">
+                            <Image Source="/Assets/logo.png" Width="34" Height="34" Stretch="UniformToFill" />
+                        </Border>
+
+                        <!-- Yeni İndirme Ekle -->
+                        <Button Command="{Binding OpenAddDownloadDialogCommand}" Background="{Binding ThemeAccentBg}" Foreground="{Binding ThemeAccentFg}" FontWeight="SemiBold" Padding="12,6" Height="34">
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <TextBlock Text="➕" VerticalAlignment="Center" />
+                                <TextBlock Text="Ekle" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Torrent Dosyası Aç -->
+                        <Button Command="{Binding BrowseTorrentFileCommand}" ToolTip.Tip="Bilgisayardan bir .torrent dosyası seçerek indirmeyi başlatır" Padding="10,6" Height="34">
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <TextBlock Text="🌊" VerticalAlignment="Center" />
+                                <TextBlock Text="Torrent Aç" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Separator Width="1" Margin="3,2" />
+
+                        <!-- Toplu İşlem Butonları -->
+                        <Button Command="{Binding StartAllCommand}" ToolTip.Tip="Bekleyen ve duraklatılmış tüm indirmeleri başlatır" Padding="10,6">
+                            <TextBlock Text="▶ Bekleyenleri Başlat" />
+                        </Button>
+                        <Button Command="{Binding PauseAllCommand}" ToolTip.Tip="Tüm aktif indirmeleri duraklatır" Padding="10,6">
+                            <TextBlock Text="⏸ Tümünü Duraklat" />
+                        </Button>
+                        <Separator Width="1" Margin="3,2" />
+
+                        <!-- Hibrit Başlat / Duraklat Butonu (Dosyanın o anki durumuna göre otomatik değişir) -->
+                        <Button Command="{Binding ToggleStartPauseSelectedCommand}" 
+                                ToolTip.Tip="{Binding SelectedHybridTooltip}" 
+                                Padding="10,6" Height="34">
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding SelectedHybridIcon}" Foreground="{Binding SelectedHybridColor}" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding SelectedHybridText}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding RequestDeleteSelectedCommand}" ToolTip.Tip="Seçileni Sil (Diskten silme seçeneğiyle)" Padding="8,6">
+                            <TextBlock Text="🗑 Sil" />
+                        </Button>
+                        <Separator Width="1" Margin="3,2" />
+
+                        <!-- Ayarlar (Çark Butonu — Site Yakalayıcı ve Hız Ayarları Buradadır) -->
+                        <Button Command="{Binding OpenSettingsDialogCommand}" ToolTip.Tip="Ayarlar, Hız Sınırları ve Site Yakalayıcı" Padding="10,6">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="⚙️" VerticalAlignment="Center" />
+                                <TextBlock Text="Ayarlar" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- Sağ Taraf: Pano İzleyici ve Hız Grafiği Butonu -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                        <!-- Pano İzleme Anahtarı -->
+                        <Border Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="6" Padding="8,4">
+                            <CheckBox IsChecked="{Binding IsClipboardMonitoringEnabled}" Content="📋 Pano İzleyici" VerticalAlignment="Center" />
+                        </Border>
+
+                        <!-- Hız Grafiği Aç/Kapat Butonu -->
+                        <Button Command="{Binding ToggleSpeedGraphCommand}" ToolTip.Tip="Tam Boy Hız Grafiğini Aç / Kapat" Padding="8,5">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="📈" VerticalAlignment="Center" />
+                                <TextBlock Text="Hız Grafiği" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Toplam Hız Göstergesi Rozeti -->
+                        <Border Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="6" Padding="10,4" VerticalAlignment="Center">
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{Binding TotalDownloadSpeedText}" Foreground="#10B981" FontWeight="Bold" FontSize="13" />
+                                <TextBlock Text="{Binding ActiveCountText}" FontSize="10" Foreground="{Binding ThemeTextSecondary}" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- ─── 1.5. TAM BOY CANLI HIZ GRAFİK PANELİ (TOOLBAR'IN HEMEN ALTINDA) ── -->
+            <Border Grid.Row="1" Background="{Binding ThemeSpeedGraphPanelBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="0,0,0,1" Padding="14,8" IsVisible="{Binding IsSpeedGraphVisible}">
+                <Grid ColumnDefinitions="Auto, *, Auto, Auto">
+                    <!-- Sol Taraf: Hedef Başlığı ve Detay Bilgisi -->
+                    <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center" Margin="0,0,14,0">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="📈" FontSize="14" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding GraphTitle}" FontWeight="Bold" FontSize="13" Foreground="{Binding ThemeForeground}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="320" />
+                        </StackPanel>
+
+                        <!-- Detay Bilgisi (İlerleme, Boyut, Durum) -->
+                        <TextBlock Text="{Binding GraphDetailsText}" FontSize="11" Foreground="{Binding ThemeTextSecondary}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="320" />
+                    </StackPanel>
+
+                    <!-- Orta Alan: TAM BOY CANLI HIZ GRAFİK ÇUBUKLARI (Sol Taraf Boşluksuz, Tam Dolu, Canlı Ölçeklenen) -->
+                    <Border Grid.Column="1" Height="44" Background="{Binding ThemeSpeedGraphInnerBg}" CornerRadius="6" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" Padding="4,2" VerticalAlignment="Center" ClipToBounds="True">
+                        <Viewbox Stretch="Fill" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                            <Grid Height="40">
+                                <ItemsControl ItemsSource="{Binding DisplaySpeedHistory}" VerticalAlignment="Bottom">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Bottom" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Width="4" Height="{Binding}" Background="#10B981" CornerRadius="1.5" VerticalAlignment="Bottom" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Grid>
+                        </Viewbox>
+                    </Border>
+
+                    <!-- Sağ Taraf: Anlık, Min, Maks Hız Rozetleri (Grafiğin Sağında) -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="14,0,6,0">
+                        <!-- Anlık Hız -->
+                        <Border Background="#1A10B981" BorderBrush="#10B981" BorderThickness="1" CornerRadius="4" Padding="8,4">
+                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                <TextBlock Text="⚡ Anlık:" FontSize="11" Foreground="#6EE7B7" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding GraphCurrentSpeedText}" FontWeight="Bold" FontSize="12" Foreground="#10B981" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                        <!-- Min Hız -->
+                        <Border Background="#1A0284C7" BorderBrush="#0284C7" BorderThickness="1" CornerRadius="4" Padding="8,4">
+                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                <TextBlock Text="📉 Min:" FontSize="11" Foreground="#7DD3FC" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding GraphMinSpeedText}" FontWeight="SemiBold" FontSize="11" Foreground="#38BDF8" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                        <!-- Maks Hız -->
+                        <Border Background="#1A8B5CF6" BorderBrush="#8B5CF6" BorderThickness="1" CornerRadius="4" Padding="8,4">
+                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                <TextBlock Text="🚀 Maks:" FontSize="11" Foreground="#C4B5FD" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding GraphMaxSpeedText}" FontWeight="SemiBold" FontSize="11" Foreground="#A78BFA" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- En Sağ: Kapat / Gizle Butonu -->
+                    <Button Grid.Column="3" Command="{Binding ToggleSpeedGraphCommand}" Background="Transparent" BorderThickness="0" Padding="8,4" ToolTip.Tip="Hız Grafiğini Gizle" VerticalAlignment="Center" Margin="4,0,0,0">
+                        <TextBlock Text="✕" FontSize="12" Foreground="#64748B" />
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- ─── 2. ORTA ALAN: SOL KATEGORİLER + LİSTE + ALT DETAY PANELİ ── -->
+            <Grid Grid.Row="2" ColumnDefinitions="220, *">
+                
+                <!-- Sol Kenar Çubuğu (Kategori Ağacı) -->
+                <Border Grid.Column="0" Background="{Binding ThemeSidebarBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="0,0,1,0" Padding="10">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="KATEGORİLER" FontWeight="Bold" FontSize="11" Foreground="{Binding ThemeTextSecondary}" Margin="8,4,8,8" />
+                        
+                        <ListBox SelectedIndex="{Binding SelectedCategoryIndex}" Background="Transparent">
+                            <ListBoxItem Content="📥 Tümü" />
+                            <ListBoxItem Content="⚡ İndiriliyor" />
+                            <ListBoxItem Content="✔️ Tamamlandı" />
+                            <ListBoxItem Content="⏸ Duraklatıldı" />
+                            <ListBoxItem Content="🌊 BitTorrent" />
+                            <ListBoxItem Content="🎬 Videolar &amp; YouTube" />
+                            <ListBoxItem Content="🎵 Ses &amp; MP3" />
+                            <ListBoxItem Content="📦 Sıkıştırılmış" />
+                            <ListBoxItem Content="📄 Belgeler" />
+                        </ListBox>
+                    </StackPanel>
+                </Border>
+
+                <!-- Sağ Alan: İndirme Listesi + Alt Detay Panel (BitTorrent stili) -->
+                <Grid Grid.Column="1" RowDefinitions="*, 4, 220">
+                    
+                    <!-- İNDİRME LİSTESİ TABLOSU (ÇOKLU SEÇİM & SAĞ TIK MENÜLÜ) -->
+                    <Border Grid.Row="0" Margin="8,8,8,4">
+                        <Grid RowDefinitions="Auto, *">
+                            <!-- Tablo Başlıkları (Sağ Tık ile Sütun Gizle/Göster & Tutamaçlarla Boyutlandır) -->
+                            <Border Grid.Row="0" Background="{Binding ThemeTableHeaderBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1,1,1,0" CornerRadius="6,6,0,0" Padding="10,6">
+                                <Border.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="Sütunları Göster / Gizle" IsEnabled="False" FontWeight="Bold" />
+                                        <Separator />
+                                        <MenuItem Header="Tür İkonu" ToggleType="CheckBox" IsChecked="{Binding ShowColCategory}" />
+                                        <MenuItem Header="Boyut" ToggleType="CheckBox" IsChecked="{Binding ShowColSize}" />
+                                        <MenuItem Header="İlerleme" ToggleType="CheckBox" IsChecked="{Binding ShowColProgress}" />
+                                        <MenuItem Header="Anlık Hız" ToggleType="CheckBox" IsChecked="{Binding ShowColSpeed}" />
+                                        <MenuItem Header="Maks. Hız" ToggleType="CheckBox" IsChecked="{Binding ShowColMaxSpeed}" />
+                                        <MenuItem Header="Kalan Süre" ToggleType="CheckBox" IsChecked="{Binding ShowColEta}" />
+                                        <MenuItem Header="Eşler (Torrent)" ToggleType="CheckBox" IsChecked="{Binding ShowColPeers}" />
+                                        <MenuItem Header="Durum Metni" ToggleType="CheckBox" IsChecked="{Binding ShowColStatus}" />
+                                        <Separator />
+                                        <MenuItem Header="🔄 Sütun Boyutlarını Sıfırla" Command="{Binding ResetColumnWidthsCommand}" />
+                                    </ContextMenu>
+                                </Border.ContextMenu>
+
+                                <Grid ColumnDefinitions="32, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto">
+                                    <TextBlock Grid.Column="0" Text="Durum" Width="32" FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+
+                                    <!-- 1: Tür -->
+                                    <Grid Grid.Column="1" Width="32" IsVisible="{Binding ShowColCategory}">
+                                        <TextBlock Text="Tür" FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Grid>
+
+                                    <!-- 2: Dosya Adı -->
+                                    <Grid Grid.Column="2" Width="{Binding ColNameWidth}">
+                                        <TextBlock Text="Dosya Adı" FontWeight="SemiBold" VerticalAlignment="Center" Margin="6,0" />
+                                        <Border Width="1" Background="#26FFFFFF" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,3" />
+                                        <Thumb DragDelta="OnColumnThumbDragDelta" Tag="Name" Width="10" HorizontalAlignment="Right" Cursor="SizeWestEast" Background="Transparent" />
+                                    </Grid>
+
+                                    <!-- 3: Boyut -->
+                                    <Grid Grid.Column="3" Width="{Binding ColSizeWidth}" IsVisible="{Binding ShowColSize}">
+                                        <TextBlock Text="Boyut" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0" />
+                                        <Border Width="1" Background="#26FFFFFF" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,3" />
+                                        <Thumb DragDelta="OnColumnThumbDragDelta" Tag="Size" Width="10" HorizontalAlignment="Right" Cursor="SizeWestEast" Background="Transparent" />
+                                    </Grid>
+
+                                    <!-- 4: İlerleme -->
+                                    <Grid Grid.Column="4" Width="{Binding ColProgressWidth}" IsVisible="{Binding ShowColProgress}">
+                                        <TextBlock Text="İlerleme" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0" />
+                                        <Border Width="1" Background="#26FFFFFF" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,3" />
+                                        <Thumb DragDelta="OnColumnThumbDragDelta" Tag="Progress" Width="10" HorizontalAlignment="Right" Cursor="SizeWestEast" Background="Transparent" />
+                                    </Grid>
+
+                                    <!-- 5: Anlık Hız -->
+                                    <Grid Grid.Column="5" Width="{Binding ColSpeedWidth}" IsVisible="{Binding ShowColSpeed}">
+                                        <TextBlock Text="Anlık Hız" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0" />
+                                        <Border Width="1" Background="#26FFFFFF" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,3" />
+                                        <Thumb DragDelta="OnColumnThumbDragDelta" Tag="Speed" Width="10" HorizontalAlignment="Right" Cursor="SizeWestEast" Background="Transparent" />
+                                    </Grid>
+
+                                    <!-- 6: Maks. Hız -->
+                                    <Grid Grid.Column="6" Width="{Binding ColMaxSpeedWidth}" IsVisible="{Binding ShowColMaxSpeed}">
+                                        <TextBlock Text="Maks. Hız" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0" />
+                                        <Border Width="1" Background="#26FFFFFF" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,3" />
+                                        <Thumb DragDelta="OnColumnThumbDragDelta" Tag="MaxSpeed" Width="10" HorizontalAlignment="Right" Cursor="SizeWestEast" Background="Transparent" />
+                                    </Grid>
+
+                                    <!-- 7: Kalan Süre -->
+                                    <Grid Grid.Column="7" Width="{Binding ColEtaWidth}" IsVisible="{Binding ShowColEta}">
+                                        <TextBlock Text="Kalan Süre" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0" />
+                                        <Border Width="1" Background="#26FFFFFF" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,3" />
+                                        <Thumb DragDelta="OnColumnThumbDragDelta" Tag="Eta" Width="10" HorizontalAlignment="Right" Cursor="SizeWestEast" Background="Transparent" />
+                                    </Grid>
+
+                                    <!-- 8: Eşler -->
+                                    <Grid Grid.Column="8" Width="{Binding ColPeersWidth}" IsVisible="{Binding ShowColPeers}">
+                                        <TextBlock Text="Eşler" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0" />
+                                        <Border Width="1" Background="#26FFFFFF" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,3" />
+                                        <Thumb DragDelta="OnColumnThumbDragDelta" Tag="Peers" Width="10" HorizontalAlignment="Right" Cursor="SizeWestEast" Background="Transparent" />
+                                    </Grid>
+
+                                    <!-- 9: Durum -->
+                                    <Grid Grid.Column="9" Width="{Binding ColStatusWidth}" IsVisible="{Binding ShowColStatus}">
+                                        <TextBlock Text="Durum" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0" />
+                                        <Border Width="1" Background="#26FFFFFF" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,3" />
+                                        <Thumb DragDelta="OnColumnThumbDragDelta" Tag="Status" Width="10" HorizontalAlignment="Right" Cursor="SizeWestEast" Background="Transparent" />
+                                    </Grid>
+                                </Grid>
+                            </Border>
+
+                            <!-- Liste Satırları (Çoklu Seçim, ScrollViewer Taşması Engellendi) -->
+                            <ListBox Grid.Row="1" 
+                                     x:Name="DownloadsListBox"
+                                     ItemsSource="{Binding FilteredDownloads}" 
+                                     SelectionMode="Multiple" 
+                                     SelectionChanged="OnDownloadsListBoxSelectionChanged"
+                                     KeyDown="OnDownloadsListBoxKeyDown"
+                                     PointerPressed="OnDownloadsListBoxPointerPressed"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                     Background="Transparent">
+                                <ListBox.KeyBindings>
+                                    <KeyBinding Gesture="Ctrl+A" Command="{Binding SelectAllCommand}" />
+                                    <KeyBinding Gesture="Delete" Command="{Binding RequestListOnlyDeleteCommand}" />
+                                </ListBox.KeyBindings>
+                                <ListBox.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="✔ Tümünü Seç" Command="{Binding SelectAllCommand}" InputGesture="Ctrl+A" />
+                                        <MenuItem Header="⚡ Tümünü Başlat" Command="{Binding StartAllCommand}" />
+                                        <MenuItem Header="⏸ Tümünü Duraklat" Command="{Binding PauseAllCommand}" />
+                                        <Separator />
+                                        <MenuItem Header="🧹 Tamamlananları Listeden Temizle" Command="{Binding ClearCompletedCommand}" />
+                                        <MenuItem Header="❌ Tümünü Listeden Kaldır..." Command="{Binding RequestDeleteAllCommand}">
+                                            <MenuItem.Icon>
+                                                <TextBlock Text="❌" Foreground="#EF4444" VerticalAlignment="Center" />
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                    </ContextMenu>
+                                </ListBox.ContextMenu>
+                                <ListBox.Styles>
+                                    <Style Selector="ListBoxItem">
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                        <Setter Property="Padding" Value="4,4" />
+                                        <Setter Property="CornerRadius" Value="4" />
+                                    </Style>
+                                    <Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+                                        <Setter Property="Background" Value="#353B82F6" />
+                                    </Style>
+                                    <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                                        <Setter Property="Background" Value="#15FFFFFF" />
+                                    </Style>
+                                    <Style Selector="ListBoxItem" x:DataType="vm:DownloadItemViewModel">
+                                        <Setter Property="ContextMenu">
+                                            <ContextMenu>
+                                                <MenuItem Header="📂 Dosya Konumunu Aç" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).OpenFolderCommand}" CommandParameter="{Binding}" />
+                                                <MenuItem Header="🚀 Dosyayı Aç" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).OpenFileCommand}" CommandParameter="{Binding}" />
+                                                <Separator />
+                                                <MenuItem Header="▶ Seçilenleri Başlat / Devam Et" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).StartSelectedCommand}">
+                                                    <MenuItem.Icon>
+                                                        <TextBlock Text="▶" Foreground="#10B981" FontWeight="Bold" VerticalAlignment="Center" />
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Header="⏸ Seçilenleri Duraklat" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).PauseSelectedCommand}">
+                                                    <MenuItem.Icon>
+                                                        <TextBlock Text="⏸" Foreground="#F59E0B" FontWeight="Bold" VerticalAlignment="Center" />
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <Separator />
+                                                <MenuItem Header="📋 Bağlantıyı Kopyala" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).CopyUrlCommand}" CommandParameter="{Binding}" />
+                                                <MenuItem Header="🗑 Seçilenleri Kaldır / Sil..." Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).RequestDeleteSelectedCommand}">
+                                                    <MenuItem.Icon>
+                                                        <TextBlock Text="🗑" Foreground="#EF4444" VerticalAlignment="Center" />
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <Separator />
+                                                <MenuItem Header="✔ Tümünü Seç" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).SelectAllCommand}" InputGesture="Ctrl+A" />
+                                                <MenuItem Header="⚡ Tümünü Başlat" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).StartAllCommand}" />
+                                                <MenuItem Header="⏸ Tümünü Duraklat" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).PauseAllCommand}" />
+                                                <Separator />
+                                                <MenuItem Header="🧹 Tamamlananları Listeden Temizle" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).ClearCompletedCommand}" />
+                                                <MenuItem Header="❌ Tümünü Listeden Kaldır..." Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).RequestDeleteAllCommand}">
+                                                    <MenuItem.Icon>
+                                                        <TextBlock Text="❌" Foreground="#EF4444" VerticalAlignment="Center" />
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                            </ContextMenu>
+                                        </Setter>
+                                    </Style>
+                                </ListBox.Styles>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate DataType="vm:DownloadItemViewModel">
+                                        <!-- Satır Hücreleri (Sütunlar Arası Asla Taşmaz, Hata/Kopma Durumunda Sarı-Turuncu Vurgulu) -->
+                                        <Border Background="{Binding RowBackground}" BorderBrush="{Binding RowBorderBrush}" BorderThickness="1" CornerRadius="6" Margin="0,1" Padding="2,2">
+                                            <Grid ColumnDefinitions="32, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto" HorizontalAlignment="Left" Background="Transparent">
+
+                                            <!-- 0: En Solda Durum Rozeti -->
+                                            <Border Grid.Column="0" Width="32" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <Border Width="22" Height="22" CornerRadius="11" Background="{Binding StatusBadgeColor}">
+                                                    <TextBlock Text="{Binding StatusBadgeIcon}" Foreground="White" FontWeight="Bold" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                </Border>
+                                            </Border>
+
+                                            <!-- 1: Dosya Türü İkonu -->
+                                            <Grid Grid.Column="1" Width="32" IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).ShowColCategory}">
+                                                <TextBlock Text="{Binding CategoryIcon}" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Grid>
+
+                                            <!-- 2: Dosya Adı & URL (Genişlik Kilitlendi, Asla Taşmaz) -->
+                                            <Border Grid.Column="2" Width="{Binding $parent[Window].((vm:MainViewModel)DataContext).ColNameWidth}" VerticalAlignment="Center" ClipToBounds="True" Padding="6,2,10,2">
+                                                <Grid RowDefinitions="Auto, Auto">
+                                                    <TextBlock Grid.Row="0" Text="{Binding FileName}" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Grid.Row="1" Text="{Binding OriginalUrl}" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" TextTrimming="CharacterEllipsis" />
+                                                </Grid>
+                                            </Border>
+
+                                            <!-- 3: Boyut -->
+                                            <Border Grid.Column="3" Width="{Binding $parent[Window].((vm:MainViewModel)DataContext).ColSizeWidth}" IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).ShowColSize}" VerticalAlignment="Center" ClipToBounds="True" Padding="6,0,10,0">
+                                                <TextBlock Text="{Binding TotalBytesDisplay}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                            </Border>
+
+                                            <!-- 4: İlerleme Çubuğu ve % (Genişlik Kilitlendi, Sağa Taşmaz) -->
+                                            <Border Grid.Column="4" Width="{Binding $parent[Window].((vm:MainViewModel)DataContext).ColProgressWidth}" IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).ShowColProgress}" VerticalAlignment="Center" ClipToBounds="True" Padding="6,0,14,0">
+                                                <Grid RowDefinitions="14, Auto">
+                                                    <!-- KLASIK: Standart Avalonia ProgressBar (indeterminate desteğiyle) -->
+                                                    <ProgressBar Grid.Row="0"
+                                                        Value="{Binding ProgressPercent}" Minimum="0" Maximum="100"
+                                                        Height="8" CornerRadius="4" VerticalAlignment="Center"
+                                                        IsIndeterminate="{Binding IsProgressIndeterminate}"
+                                                        IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).IsProgressStyleKlasik}" />
+
+                                                    <!-- GRADYAN: Mavi→Mor→Yeşil gradient -->
+                                                    <ProgressBar Grid.Row="0"
+                                                        Value="{Binding ProgressPercent}" Minimum="0" Maximum="100"
+                                                        Height="8" CornerRadius="4" VerticalAlignment="Center"
+                                                        IsIndeterminate="{Binding IsProgressIndeterminate}"
+                                                        IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).IsProgressStyleGradyan}">
+                                                        <ProgressBar.Foreground>
+                                                            <LinearGradientBrush StartPoint="0%,50%" EndPoint="100%,50%">
+                                                                <GradientStop Color="#3B82F6" Offset="0"/>
+                                                                <GradientStop Color="#8B5CF6" Offset="0.45"/>
+                                                                <GradientStop Color="#10B981" Offset="1"/>
+                                                            </LinearGradientBrush>
+                                                        </ProgressBar.Foreground>
+                                                    </ProgressBar>
+
+                                                    <!-- NEON: Parlak cyan renkli çubuk -->
+                                                    <ProgressBar Grid.Row="0"
+                                                        Value="{Binding ProgressPercent}" Minimum="0" Maximum="100"
+                                                        Height="8" CornerRadius="4" VerticalAlignment="Center"
+                                                        Foreground="#38BDF8"
+                                                        IsIndeterminate="{Binding IsProgressIndeterminate}"
+                                                        IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).IsProgressStyleNeon}" />
+
+                                                    <!-- İNCE ÇİZGİ: Çok ince, minimalist -->
+                                                    <ProgressBar Grid.Row="0"
+                                                        Value="{Binding ProgressPercent}" Minimum="0" Maximum="100"
+                                                        Height="3" CornerRadius="1.5" VerticalAlignment="Center"
+                                                        Foreground="#10B981"
+                                                        IsIndeterminate="{Binding IsProgressIndeterminate}"
+                                                        IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).IsProgressStyleInce}" />
+
+                                                    <!-- Yüzde Metni (tüm stillerde ortak) -->
+                                                    <TextBlock Grid.Row="1" Text="{Binding ProgressPercent, StringFormat='{}{0:F1}%'}" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" HorizontalAlignment="Right" Margin="0,2,0,0" />
+                                                </Grid>
+                                            </Border>
+
+
+                                            <!-- 5: Anlık Hız -->
+                                            <Border Grid.Column="5" Width="{Binding $parent[Window].((vm:MainViewModel)DataContext).ColSpeedWidth}" IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).ShowColSpeed}" VerticalAlignment="Center" ClipToBounds="True" Padding="6,0,10,0">
+                                                <TextBlock Text="{Binding SpeedDisplay}" Foreground="#10B981" FontWeight="Medium" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                            </Border>
+
+                                            <!-- 6: Maksimum Hız -->
+                                            <Border Grid.Column="6" Width="{Binding $parent[Window].((vm:MainViewModel)DataContext).ColMaxSpeedWidth}" IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).ShowColMaxSpeed}" VerticalAlignment="Center" ClipToBounds="True" Padding="6,0,10,0">
+                                                <TextBlock Text="{Binding MaxSpeedDisplay}" Foreground="#6EE7B7" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                            </Border>
+
+                                            <!-- 7: Kalan Süre -->
+                                            <Border Grid.Column="7" Width="{Binding $parent[Window].((vm:MainViewModel)DataContext).ColEtaWidth}" IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).ShowColEta}" VerticalAlignment="Center" ClipToBounds="True" Padding="6,0,10,0">
+                                                <TextBlock Text="{Binding EtaDisplay}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                            </Border>
+
+                                            <!-- 8: Eşler (Torrent) -->
+                                            <Border Grid.Column="8" Width="{Binding $parent[Window].((vm:MainViewModel)DataContext).ColPeersWidth}" IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).ShowColPeers}" VerticalAlignment="Center" ClipToBounds="True" Padding="6,0,10,0">
+                                                <TextBlock Text="{Binding PeersDisplay}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                            </Border>
+
+                                            <!-- 9: Durum Metni -->
+                                            <Border Grid.Column="9" Width="{Binding $parent[Window].((vm:MainViewModel)DataContext).ColStatusWidth}" IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).ShowColStatus}" VerticalAlignment="Center" ClipToBounds="True" Padding="6,0,10,0">
+                                                <TextBlock Text="{Binding StatusDisplay}" FontWeight="Medium" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                            </Border>
+                                        </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Grid>
+                    </Border>
+
+                    <GridSplitter Grid.Row="1" Background="{Binding ThemeBorderColor}" ResizeDirection="Rows" />
+
+                    <!-- ALT DETAY PANELİ (BitTorrent Sekmeleri) -->
+                    <Border Grid.Row="2" Background="{Binding ThemeDetailBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="0,1,0,0" Padding="8,4">
+                        <TabControl SelectedIndex="{Binding SelectedDetailTabIndex}">
+                            <TabItem Header="ℹ️ Genel Bilgi">
+                                <ScrollViewer Margin="8">
+                                    <Grid ColumnDefinitions="140, *" RowDefinitions="Auto, Auto, Auto, Auto, Auto" Margin="4">
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Dosya Adı:" FontWeight="SemiBold" Margin="0,4" />
+                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedDownload.FileName, FallbackValue='Seçili öğe yok'}" Margin="0,4" />
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Kayıt Yolu:" FontWeight="SemiBold" Margin="0,4" />
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedDownload.SavePath, FallbackValue='-'}" Margin="0,4" />
+                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Kaynak URL:" FontWeight="SemiBold" Margin="0,4" />
+                                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedDownload.OriginalUrl, FallbackValue='-'}" TextWrapping="Wrap" Margin="0,4" />
+                                        <TextBlock Grid.Row="3" Grid.Column="0" Text="İndirilen Boyut:" FontWeight="SemiBold" Margin="0,4" />
+                                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedDownload.DownloadedBytesDisplay, FallbackValue='0 B'}" Margin="0,4" />
+                                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Son Hata:" FontWeight="SemiBold" Margin="0,4" />
+                                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SelectedDownload.LastErrorMessage, FallbackValue='Hata yok'}" Foreground="#EF4444" Margin="0,4" />
+                                    </Grid>
+                                </ScrollViewer>
+                            </TabItem>
+
+                            <TabItem Header="🟩 Parçalar (Segmentler)">
+                                <ScrollViewer Margin="8">
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="Segment / Parça Doluluk Haritası (Eşzamanlı Parçalar):" FontWeight="SemiBold" />
+                                        <ItemsControl ItemsSource="{Binding SelectedDownload.SegmentProgresses}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel Orientation="Horizontal" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Width="65" Height="28" Margin="4" CornerRadius="4" Background="#1E293B" BorderBrush="#334155" BorderThickness="1">
+                                                        <Grid>
+                                                            <ProgressBar Value="{Binding}" Minimum="0" Maximum="1" Height="28" Foreground="#10B981" Background="Transparent" CornerRadius="4" />
+                                                            <TextBlock Text="{Binding, StringFormat='{}{0:P0}'}" FontSize="10" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </TabItem>
+
+                            <!-- qBittorrent Stili Detaylı BitTorrent Sekmeleri -->
+                            <TabItem Header="🌊 BitTorrent Genel" IsVisible="{Binding SelectedDownload.IsTorrent, FallbackValue=False}">
+                                <ScrollViewer Margin="8">
+                                    <Grid ColumnDefinitions="*, *" RowDefinitions="Auto, Auto, Auto, Auto" Margin="4">
+                                        <!-- Sol Kolon: Boyut ve İlerleme -->
+                                        <StackPanel Grid.Column="0" Spacing="6" Margin="0,0,16,0">
+                                            <TextBlock Text="📊 İndirme Durumu" FontWeight="Bold" FontSize="12" Foreground="#38BDF8" Margin="0,0,0,4" />
+                                            <Grid ColumnDefinitions="140, *">
+                                                <TextBlock Text="Durum:" Foreground="{DynamicResource SystemBaseMediumColor}" FontSize="11" />
+                                                <TextBlock Grid.Column="1" Text="{Binding CurrentTorrentDetails.State, FallbackValue='Bağlanıyor...'}" FontWeight="SemiBold" FontSize="11" />
+                                            </Grid>
+                                            <Grid ColumnDefinitions="140, *">
+                                                <TextBlock Text="Toplam Boyut:" Foreground="{DynamicResource SystemBaseMediumColor}" FontSize="11" />
+                                                <TextBlock Grid.Column="1" Text="{Binding SelectedDownload.TotalBytesDisplay, FallbackValue='0 B'}" FontSize="11" />
+                                            </Grid>
+                                            <Grid ColumnDefinitions="140, *">
+                                                <TextBlock Text="İndirilen:" Foreground="{DynamicResource SystemBaseMediumColor}" FontSize="11" />
+                                                <TextBlock Grid.Column="1" Text="{Binding SelectedDownload.DownloadedBytesDisplay, FallbackValue='0 B'}" FontSize="11" />
+                                            </Grid>
+                                            <Grid ColumnDefinitions="140, *">
+                                                <TextBlock Text="Gönderilen (Upload):" Foreground="{DynamicResource SystemBaseMediumColor}" FontSize="11" />
+                                                <TextBlock Grid.Column="1" Text="{Binding CurrentTorrentDetails.UploadedBytes, StringFormat='{}{0:N0} Byte', FallbackValue='0 B'}" FontSize="11" />
+                                            </Grid>
+                                            <Grid ColumnDefinitions="140, *">
+                                                <TextBlock Text="Paylaşım Oranı (Ratio):" Foreground="{DynamicResource SystemBaseMediumColor}" FontSize="11" />
+                                                <TextBlock Grid.Column="1" Text="{Binding CurrentTorrentDetails.ShareRatio, StringFormat='{}{0:F2}', FallbackValue='0.00'}" FontWeight="Bold" Foreground="#10B981" FontSize="11" />
+                                            </Grid>
+                                        </StackPanel>
+
+                                        <!-- Sağ Kolon: Hızlar, Eşler ve Hash -->
+                                        <StackPanel Grid.Column="1" Spacing="6">
+                                            <TextBlock Text="⚡ Bağlantı &amp; Eşler" FontWeight="Bold" FontSize="12" Foreground="#38BDF8" Margin="0,0,0,4" />
+                                            <Grid ColumnDefinitions="140, *">
+                                                <TextBlock Text="İndirme / Gönderme:" Foreground="{DynamicResource SystemBaseMediumColor}" FontSize="11" />
+                                                <TextBlock Grid.Column="1" Text="{Binding SelectedDownload.SpeedDisplay, FallbackValue='0 B/s'}" FontSize="11" />
+                                            </Grid>
+                                            <Grid ColumnDefinitions="140, *">
+                                                <TextBlock Text="Tohumlar (Seeds):" Foreground="{DynamicResource SystemBaseMediumColor}" FontSize="11" />
+                                                <TextBlock Grid.Column="1" Text="{Binding CurrentTorrentDetails.Seeds, FallbackValue='0'}" FontSize="11" />
+                                            </Grid>
+                                            <Grid ColumnDefinitions="140, *">
+                                                <TextBlock Text="Eşler (Leeches):" Foreground="{DynamicResource SystemBaseMediumColor}" FontSize="11" />
+                                                <TextBlock Grid.Column="1" Text="{Binding CurrentTorrentDetails.Leeches, FallbackValue='0'}" FontSize="11" />
+                                            </Grid>
+                                            <Grid ColumnDefinitions="140, *">
+                                                <TextBlock Text="Kayıt Klasörü:" Foreground="{DynamicResource SystemBaseMediumColor}" FontSize="11" />
+                                                <TextBlock Grid.Column="1" Text="{Binding SelectedDownload.SavePath, FallbackValue=''}" TextTrimming="CharacterEllipsis" FontSize="11" />
+                                            </Grid>
+                                            <Grid ColumnDefinitions="140, *">
+                                                <TextBlock Text="Torrent Hash (v1/v2):" Foreground="{DynamicResource SystemBaseMediumColor}" FontSize="11" />
+                                                <TextBlock Grid.Column="1" Text="{Binding CurrentTorrentDetails.InfoHash, FallbackValue='-'}" TextTrimming="CharacterEllipsis" FontSize="10" FontFamily="Consolas, monospace" Foreground="#94A3B8" />
+                                            </Grid>
+                                        </StackPanel>
+                                    </Grid>
+                                </ScrollViewer>
+                            </TabItem>
+
+                            <!-- qBittorrent Stili Dosya & İçerik Seçimi -->
+                            <TabItem Header="📁 Dosyalar (İçerik)" IsVisible="{Binding SelectedDownload.IsTorrent, FallbackValue=False}">
+                                <Grid RowDefinitions="Auto, *">
+                                    <Border Grid.Row="0" Background="{DynamicResource SystemControlBackgroundAltHighBrush}" Padding="8,4" BorderBrush="{DynamicResource SystemBaseLowColor}" BorderThickness="0,0,0,1">
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <Button Command="{Binding SelectAllTorrentFilesCommand}" CommandParameter="{x:True}" Padding="8,2" FontSize="11">
+                                                <TextBlock Text="✅ Tümünü İndir" />
+                                            </Button>
+                                            <Button Command="{Binding SelectAllTorrentFilesCommand}" CommandParameter="{x:False}" Padding="8,2" FontSize="11">
+                                                <TextBlock Text="⬜ Tümünü Bırak" />
+                                            </Button>
+                                            <TextBlock Text="{Binding CurrentTorrentDetails.Files.Count, StringFormat='Toplam {0} dosya'}" VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                        </StackPanel>
+                                    </Border>
+                                    <ListBox Grid.Row="1" ItemsSource="{Binding CurrentTorrentDetails.Files}" MaxHeight="160">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid ColumnDefinitions="Auto, *, 100, 90" Margin="0,2">
+                                                    <!-- İndirilsin mi Onay Kutusu -->
+                                                    <CheckBox IsChecked="{Binding IsSelected}" 
+                                                              Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).ToggleTorrentFilePriorityCommand}" 
+                                                              CommandParameter="{Binding}" 
+                                                              VerticalAlignment="Center" Margin="0,0,8,0" />
+                                                    <!-- Dosya Yolu -->
+                                                    <TextBlock Grid.Column="1" Text="{Binding Path}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" FontSize="11" />
+                                                    <!-- Dosya Boyutu -->
+                                                    <TextBlock Grid.Column="2" Text="{Binding Length, StringFormat='{}{0:N0} B'}" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                                    <!-- Öncelik Durumu -->
+                                                    <Border Grid.Column="3" HorizontalAlignment="Right" Padding="6,2" CornerRadius="4" 
+                                                            Background="{Binding IsSelected, Converter={x:Null}}" Margin="4,0,0,0">
+                                                        <TextBlock Text="{Binding Priority}" FontSize="10" FontWeight="SemiBold" 
+                                                                   Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                                    </Border>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Grid>
+                            </TabItem>
+
+                            <!-- qBittorrent Stili Eşler (Peers) -->
+                            <TabItem Header="👥 Eşler (Peers)" IsVisible="{Binding SelectedDownload.IsTorrent, FallbackValue=False}">
+                                <ListBox ItemsSource="{Binding CurrentTorrentDetails.Peers}" MaxHeight="160">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid ColumnDefinitions="160, *, 100, 100" Margin="0,2">
+                                                <TextBlock Text="{Binding Address}" FontSize="11" FontFamily="Consolas, monospace" VerticalAlignment="Center" />
+                                                <TextBlock Grid.Column="1" Text="{Binding Client}" FontSize="11" VerticalAlignment="Center" Foreground="#38BDF8" />
+                                                <TextBlock Grid.Column="2" Text="{Binding DownloadSpeed, StringFormat='⬇ {0:N0} B/s'}" FontSize="11" Foreground="#10B981" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                                <TextBlock Grid.Column="3" Text="{Binding UploadSpeed, StringFormat='⬆ {0:N0} B/s'}" FontSize="11" Foreground="#F59E0B" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </TabItem>
+
+                            <!-- qBittorrent Stili İzleyiciler (Trackers) -->
+                            <TabItem Header="📡 İzleyiciler" IsVisible="{Binding SelectedDownload.IsTorrent, FallbackValue=False}">
+                                <ListBox ItemsSource="{Binding CurrentTorrentDetails.Trackers}" MaxHeight="160">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid ColumnDefinitions="*, 140" Margin="0,2">
+                                                <TextBlock Text="{Binding Uri}" FontSize="11" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                                <TextBlock Grid.Column="1" Text="{Binding Status}" FontSize="11" HorizontalAlignment="Right" Foreground="#10B981" VerticalAlignment="Center" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </TabItem>
+                        </TabControl>
+                    </Border>
+
+                </Grid>
+            </Grid>
+
+            <!-- ─── 3. ALT DURUM ÇUBUĞU (STATUSBAR - hDM + qBittorrent İBRESİ) ─── -->
+            <Border Grid.Row="3" Background="{Binding ThemeStatusBarBg}" Padding="10,5" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="0,1,0,0">
+                <Grid ColumnDefinitions="*, Auto">
+                    <!-- Sol Taraf: hDM Stili Sayaçlar ve Disk Boş Alanı -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding TotalCount, StringFormat='Listedeki Toplam: {0}'}" FontSize="11" FontWeight="Medium" />
+                        <TextBlock Text="|" Foreground="{DynamicResource SystemBaseLowColor}" />
+                        <TextBlock Text="{Binding CompletedCount, StringFormat='Tamamlanan: {0}'}" Foreground="#10B981" FontSize="11" />
+                        <TextBlock Text="|" Foreground="{DynamicResource SystemBaseLowColor}" />
+                        <TextBlock Text="{Binding ActiveCount, StringFormat='Aktif: {0}'}" Foreground="#3B82F6" FontSize="11" />
+                        <TextBlock Text="|" Foreground="{DynamicResource SystemBaseLowColor}" />
+                        <TextBlock Text="{Binding PausedCount, StringFormat='Duraklatıldı: {0}'}" Foreground="#F59E0B" FontSize="11" />
+                        <TextBlock Text="|" Foreground="{DynamicResource SystemBaseLowColor}" />
+                        <TextBlock Text="{Binding FailedCount, StringFormat='Hata: {0}'}" Foreground="#EF4444" FontSize="11" />
+                        <TextBlock Text="|" Foreground="{DynamicResource SystemBaseLowColor}" />
+                        <TextBlock Text="{Binding DiskFreeSpaceText}" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
+
+                        <!-- Güncelleme Rozeti (Yeni sürüm algılandığında belirir) -->
+                        <Border Background="#10B981" CornerRadius="4" Padding="6,2" Margin="10,0,0,0" IsVisible="{Binding IsUpdateAvailable}">
+                            <Button Command="{Binding ApplyUpdateCommand}" Background="Transparent" BorderThickness="0" Padding="0" Cursor="Hand">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="🚀" FontSize="11" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding UpdateVersionText, StringFormat='Yeni Sürüm ({0}) - Güncelle'}" Foreground="White" FontSize="11" FontWeight="Bold" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                        </Border>
+
+                        <Border Background="#3B82F6" CornerRadius="4" Padding="6,2" Margin="10,0,0,0" IsVisible="{Binding IsUpdating}">
+                            <TextBlock Text="{Binding UpdateStatusText}" Foreground="White" FontSize="11" FontWeight="Bold" VerticalAlignment="Center" />
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Sağ Taraf: qBittorrent Stili İbre ve Anlık/Sınır Hızlar (Sabit Konum, Tıklanınca Asla Kaymaz) -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                        <!-- Belirgin Hız Modu Butonu (Sol tık: Sınırsız/Limitli geçişi, Sağ tık: Hız ve Limitler Ayarları) -->
+                        <Button Command="{Binding ToggleAltRateLimitCommand}" 
+                                ToolTip.Tip="{Binding AltRateLimitTooltip}" 
+                                PointerPressed="OnSpeedLimitButtonPointerPressed"
+                                Width="155" Height="26" Padding="6,2" 
+                                Background="{Binding RateLimitBadgeBackground}" 
+                                BorderBrush="{Binding RateLimitBadgeBorder}" 
+                                BorderThickness="1.5" CornerRadius="5">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+                                <TextBlock Text="{Binding RateLimitStatusIcon}" FontSize="12" Foreground="{Binding RateLimitStatusColor}" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding RateLimitStatusText}" FontSize="11" FontWeight="Bold" Foreground="{Binding RateLimitStatusColor}" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding RateLimitStatusSubtext}" FontSize="10" FontWeight="SemiBold" Foreground="{Binding RateLimitStatusColor}" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <TextBlock Text="|" Foreground="{DynamicResource SystemBaseLowColor}" VerticalAlignment="Center" />
+
+                        <!-- İndirme Hızı ve Limiti (Sabit Genişlik: 160) -->
+                        <Border Width="160" VerticalAlignment="Center">
+                            <Grid ColumnDefinitions="16, *, Auto" VerticalAlignment="Center">
+                                <TextBlock Grid.Column="0" Text="⬇" Foreground="#10B981" FontWeight="Bold" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="{Binding TotalDownloadSpeedText}" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" Margin="4,0,0,0" />
+                                <TextBlock Grid.Column="2" Text="{Binding DownloadLimitDisplayText}" Foreground="{Binding RateLimitStatusColor}" FontWeight="Bold" FontSize="11" VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+
+                        <TextBlock Text="|" Foreground="{DynamicResource SystemBaseLowColor}" VerticalAlignment="Center" />
+
+                        <!-- Yükleme Hızı ve Limiti (Sabit Genişlik: 160) -->
+                        <Border Width="160" VerticalAlignment="Center">
+                            <Grid ColumnDefinitions="16, *, Auto" VerticalAlignment="Center">
+                                <TextBlock Grid.Column="0" Text="⬆" Foreground="#3B82F6" FontWeight="Bold" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="{Binding TotalUploadSpeedText}" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" Margin="4,0,0,0" />
+                                <TextBlock Grid.Column="2" Text="{Binding UploadLimitDisplayText}" Foreground="{Binding RateLimitStatusColor}" FontWeight="Bold" FontSize="11" VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- ─── 4. MODAL: YENİ İNDİRME EKLE (IDM & ClipGrab & BitTorrent) ──────── -->
+        <Border Background="#80000000" IsVisible="{Binding IsAddDialogOpen}">
+            <Border Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="12" Width="600" Padding="24" HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 10 30 0 #40000000">
+                <StackPanel Spacing="16">
+                    <Grid ColumnDefinitions="*, Auto">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="📥" FontSize="20" VerticalAlignment="Center" />
+                            <TextBlock Text="Yeni İndirme Ekle" FontSize="18" FontWeight="Bold" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <Button Grid.Column="1" Command="{Binding CancelAddDownloadCommand}" Content="✕" Background="Transparent" BorderThickness="0" FontSize="16" />
+                    </Grid>
+
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Bağlantı (URL, YouTube Linki veya Magnet):" FontWeight="SemiBold" />
+                        <Grid ColumnDefinitions="*, Auto">
+                            <TextBox Grid.Column="0" Text="{Binding AddDialogUrl}" PlaceholderText="https://... veya magnet:?xt=... veya dosya yolu" Height="36" VerticalContentAlignment="Center" />
+                            <Button Grid.Column="1" Command="{Binding BrowseTorrentFileCommand}" ToolTip.Tip="Bilgisayardan .torrent dosyası seçin" Content="📁 .torrent Seç..." Margin="8,0,0,0" Height="36" Padding="12,0" FontWeight="SemiBold" />
+                        </Grid>
+                    </StackPanel>
+
+                    <Border Background="{Binding ThemeWindowBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="6" Padding="12,8">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="{Binding AddDialogStatusText}" FontWeight="Medium" Foreground="{DynamicResource SystemBaseHighColor}" />
+                            <TextBlock Text="YouTube, TikTok, Twitter vb. linklerde MP4 video veya MP3 ses seçebilirsiniz." FontSize="11" Foreground="{Binding ThemeTextSecondary}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="{Binding ThemeWindowBg}" BorderBrush="{Binding ThemeBorderColor}" CornerRadius="8" Padding="14" IsVisible="{Binding AddDialogIsMediaDetected}" BorderThickness="1">
+                        <StackPanel Spacing="10">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="🎬" FontSize="16" VerticalAlignment="Center" />
+                                <TextBlock Text="YouTube &amp; Medya Seçenekleri:" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                            </StackPanel>
+
+                            <TextBox Text="{Binding AddDialogTitle}" PlaceholderText="Dosya / Video Başlığı" Height="34" VerticalContentAlignment="Center" />
+
+                            <!-- Format Seçimi -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="İndirme Formatı:" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource SystemBaseHighColor}" />
+                                <StackPanel Orientation="Horizontal" Spacing="20" Margin="4,2,0,0">
+                                    <RadioButton Content="🎵 MP3 Olarak İndir (Yalnızca Ses)" IsChecked="{Binding AddDialogIsMp3}" GroupName="MediaFormatGroup" FontWeight="Medium" />
+                                    <RadioButton Content="🎬 MP4 Olarak İndir (Video)" IsChecked="{Binding AddDialogIsMp4}" GroupName="MediaFormatGroup" FontWeight="Medium" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Playlist / Çalma Listesi Seçeneği -->
+                            <Border Background="{Binding ThemeCardBg}" CornerRadius="6" Padding="10" IsVisible="{Binding AddDialogIsPlaylistDetected}" BorderBrush="#3B82F6" BorderThickness="1.5">
+                                <StackPanel Spacing="6">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock Text="📑" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding AddDialogPlaylistNoticeText}" FontWeight="SemiBold" FontSize="12" Foreground="#3B82F6" VerticalAlignment="Center" />
+                                    </StackPanel>
+
+                                    <StackPanel Spacing="6" Margin="10,4,0,0">
+                                        <RadioButton Content="🎯 Yalnızca Bu Şarkıyı İndir (Tek Dosya)" 
+                                                     IsChecked="{Binding AddDialogDownloadSingleOnly}" 
+                                                     GroupName="PlaylistScopeGroup" FontWeight="SemiBold" />
+                                        <RadioButton Content="📚 Tüm Çalma Listesini İndir (Listedeki Bütün Şarkılar)" 
+                                                     IsChecked="{Binding AddDialogDownloadWholePlaylist}" 
+                                                     GroupName="PlaylistScopeGroup" FontWeight="SemiBold" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Kayıt Klasörü:" FontWeight="SemiBold" />
+                        <TextBox Text="{Binding AddDialogSavePath}" PlaceholderText="C:\Users\...\Downloads" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12" Margin="0,8,0,0">
+                        <Button Command="{Binding CancelAddDownloadCommand}" Content="İptal" Width="90" Height="34" />
+                        <Button Command="{Binding ConfirmAddDownloadCommand}" Content="İndirmeyi Başlat" Background="{Binding ThemeAccentBg}" Foreground="{Binding ThemeAccentFg}" FontWeight="Bold" Width="140" Height="34" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- ─── 5. MODAL: ⚙️ AYARLAR VE SİTE YAKALAYICI (TÜMÜ TEK PENCEREDE) ─── -->
+        <Border Background="#90000000" IsVisible="{Binding IsSettingsDialogOpen}">
+            <Border Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="12" Width="760" Height="620" Padding="20" HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 14 36 0 #50000000">
+                <Grid RowDefinitions="Auto, *, Auto">
+                    <!-- Başlık Çubuğu -->
+                    <Grid Grid.Row="0" ColumnDefinitions="*, Auto" Margin="4,0,4,12">
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <TextBlock Text="⚙️" FontSize="18" VerticalAlignment="Center" />
+                            <TextBlock Text="Uygulama Ayarları" FontSize="16" FontWeight="Bold" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <Button Grid.Column="1" Command="{Binding CancelSettingsCommand}" Content="✕" Background="Transparent" BorderThickness="0" FontSize="15" Padding="6,2" />
+                    </Grid>
+
+                    <!-- Ayarlar Sekmeleri (Görünüm, Ses, Hız & Ağ, Depolama, Araçlar) -->
+                    <TabControl Grid.Row="1" SelectedIndex="{Binding SettingsTabIndex}">
+                        
+                        <!-- SEKME 1: 🎨 GÖRÜNÜM & TEMALAR -->
+                        <TabItem Header="🎨 Görünüm &amp; Tema">
+                            <ScrollViewer Margin="0,10,0,0">
+                                <StackPanel Spacing="14">
+                                    <!-- Renk Temaları -->
+                                    <Border Background="{Binding ThemeWindowBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="8" Padding="14">
+                                        <StackPanel Spacing="10">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="🎭" FontSize="14" VerticalAlignment="Center" />
+                                                <TextBlock Text="Renk Teması Seçimi:" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                            <TextBlock Text="Arayüzün renk tonunu ve kontrastını tercihinize göre anında uyarlayın." FontSize="11" Foreground="{Binding ThemeTextSecondary}" />
+
+                                            <Grid ColumnDefinitions="*, *, *, *" Margin="0,4,0,0">
+                                                <!-- 1: Koyu Grafit -->
+                                                <Border Grid.Column="0" Margin="4" Padding="10" CornerRadius="8" BorderThickness="1.5"
+                                                        Background="#181D28" BorderBrush="#334155">
+                                                    <StackPanel Spacing="8">
+                                                        <RadioButton Content="Koyu Grafit"
+                                                                     IsChecked="{Binding IsThemeDarkGraphite, Mode=TwoWay}"
+                                                                     Command="{Binding SelectThemeCommand}"
+                                                                     CommandParameter="DarkGraphite"
+                                                                     GroupName="AppThemeGroup" FontWeight="SemiBold" FontSize="12" />
+                                                        <Border Height="28" CornerRadius="4" Background="#0F172A" BorderBrush="#1E293B" BorderThickness="1">
+                                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="4">
+                                                                <Border Width="12" Height="12" CornerRadius="6" Background="#38BDF8" />
+                                                                <Border Width="12" Height="12" CornerRadius="6" Background="#10B981" />
+                                                                <Border Width="12" Height="12" CornerRadius="6" Background="#64748B" />
+                                                            </StackPanel>
+                                                        </Border>
+                                                        <TextBlock Text="Derin koyu &amp; dengeli kontrast" FontSize="10" Foreground="#94A3B8" HorizontalAlignment="Center" />
+                                                    </StackPanel>
+                                                </Border>
+
+                                                <!-- 2: Okyanus Mavisi -->
+                                                <Border Grid.Column="1" Margin="4" Padding="10" CornerRadius="8" BorderThickness="1.5"
+                                                        Background="#0F172A" BorderBrush="#0284C7">
+                                                    <StackPanel Spacing="8">
+                                                        <RadioButton Content="Okyanus"
+                                                                     IsChecked="{Binding IsThemeOceanBlue, Mode=TwoWay}"
+                                                                     Command="{Binding SelectThemeCommand}"
+                                                                     CommandParameter="OceanBlue"
+                                                                     GroupName="AppThemeGroup" FontWeight="SemiBold" FontSize="12" />
+                                                        <Border Height="28" CornerRadius="4" Background="#0C4A6E" BorderBrush="#0369A1" BorderThickness="1">
+                                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="4">
+                                                                <Border Width="12" Height="12" CornerRadius="6" Background="#0EA5E9" />
+                                                                <Border Width="12" Height="12" CornerRadius="6" Background="#38BDF8" />
+                                                                <Border Width="12" Height="12" CornerRadius="6" Background="#BAE6FD" />
+                                                            </StackPanel>
+                                                        </Border>
+                                                        <TextBlock Text="Deniz mavisi &amp; ferah vurgular" FontSize="10" Foreground="#7DD3FC" HorizontalAlignment="Center" />
+                                                    </StackPanel>
+                                                </Border>
+
+                                                <!-- 3: Siber Mor -->
+                                                <Border Grid.Column="2" Margin="4" Padding="10" CornerRadius="8" BorderThickness="1.5"
+                                                        Background="#181126" BorderBrush="#7C3AED">
+                                                    <StackPanel Spacing="8">
+                                                        <RadioButton Content="Siber Mor"
+                                                                     IsChecked="{Binding IsThemeCyberPurple, Mode=TwoWay}"
+                                                                     Command="{Binding SelectThemeCommand}"
+                                                                     CommandParameter="CyberPurple"
+                                                                     GroupName="AppThemeGroup" FontWeight="SemiBold" FontSize="12" />
+                                                        <Border Height="28" CornerRadius="4" Background="#3B0764" BorderBrush="#581C87" BorderThickness="1">
+                                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="4">
+                                                                <Border Width="12" Height="12" CornerRadius="6" Background="#A855F7" />
+                                                                <Border Width="12" Height="12" CornerRadius="6" Background="#EC4899" />
+                                                                <Border Width="12" Height="12" CornerRadius="6" Background="#C084FC" />
+                                                            </StackPanel>
+                                                        </Border>
+                                                        <TextBlock Text="Neon mor &amp; modern siber stil" FontSize="10" Foreground="#D8B4FE" HorizontalAlignment="Center" />
+                                                    </StackPanel>
+                                                </Border>
+
+                                                <!-- 4: Aydınlık -->
+                                                <Border Grid.Column="3" Margin="4" Padding="10" CornerRadius="8" BorderThickness="1.5"
+                                                        Background="#F1F5F9" BorderBrush="#CBD5E1">
+                                                    <StackPanel Spacing="8">
+                                                        <RadioButton Content="Aydınlık" Foreground="#0F172A"
+                                                                     IsChecked="{Binding IsThemeLightClean, Mode=TwoWay}"
+                                                                     Command="{Binding SelectThemeCommand}"
+                                                                     CommandParameter="LightClean"
+                                                                     GroupName="AppThemeGroup" FontWeight="SemiBold" FontSize="12" />
+                                                        <Border Height="28" CornerRadius="4" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1">
+                                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="4">
+                                                                <Border Width="12" Height="12" CornerRadius="6" Background="#0284C7" />
+                                                                <Border Width="12" Height="12" CornerRadius="6" Background="#10B981" />
+                                                                <Border Width="12" Height="12" CornerRadius="6" Background="#E2E8F0" />
+                                                            </StackPanel>
+                                                        </Border>
+                                                        <TextBlock Text="Aydınlık, sade ve net zemin" FontSize="10" Foreground="#475569" HorizontalAlignment="Center" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- İlerleme Çubuğu Stili -->
+                                    <Border Background="{Binding ThemeWindowBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="8" Padding="14">
+                                        <StackPanel Spacing="10">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="📊" FontSize="14" VerticalAlignment="Center" />
+                                                <TextBlock Text="İlerleme Çubuğu Tasarımı:" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                            <TextBlock Text="İndirme listesindeki ilerleme çubuğunun görsel tarzını tercihinize göre belirleyin." FontSize="11" Foreground="{Binding ThemeTextSecondary}" />
+
+                                            <Grid ColumnDefinitions="*, *, *, *" Margin="0,4,0,0">
+                                                <!-- Klasik -->
+                                                <Border Grid.Column="0" Margin="4" Padding="10" CornerRadius="8" BorderThickness="1.5"
+                                                        Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}">
+                                                    <StackPanel Spacing="8">
+                                                        <RadioButton Content="Klasik"
+                                                                     IsChecked="{Binding IsProgressStyleKlasik, Mode=TwoWay}"
+                                                                     Command="{Binding SelectProgressStyleCommand}"
+                                                                     CommandParameter="Klasik"
+                                                                     GroupName="ProgressStyleGroup" FontWeight="SemiBold" FontSize="12" />
+                                                        <Border Height="28" CornerRadius="4" Background="{Binding ThemeSpeedGraphInnerBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" Padding="8,0" ClipToBounds="True">
+                                                            <Border Height="8" CornerRadius="4" Background="#1E293B" ClipToBounds="True" VerticalAlignment="Center">
+                                                                <Grid ColumnDefinitions="65*, 35*">
+                                                                    <Border Grid.Column="0" Background="#0284C7" CornerRadius="4" />
+                                                                </Grid>
+                                                            </Border>
+                                                        </Border>
+                                                        <TextBlock Text="Klasik IDM stili mavi" FontSize="10" Foreground="{Binding ThemeTextSecondary}" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                                    </StackPanel>
+                                                </Border>
+
+                                                <!-- Gradyan -->
+                                                <Border Grid.Column="1" Margin="4" Padding="10" CornerRadius="8" BorderThickness="1.5"
+                                                        Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}">
+                                                    <StackPanel Spacing="8">
+                                                        <RadioButton Content="Gradyan"
+                                                                     IsChecked="{Binding IsProgressStyleGradyan, Mode=TwoWay}"
+                                                                     Command="{Binding SelectProgressStyleCommand}"
+                                                                     CommandParameter="Gradyan"
+                                                                     GroupName="ProgressStyleGroup" FontWeight="SemiBold" FontSize="12" />
+                                                        <Border Height="28" CornerRadius="4" Background="{Binding ThemeSpeedGraphInnerBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" Padding="8,0" ClipToBounds="True">
+                                                            <Border Height="8" CornerRadius="4" Background="#1E293B" ClipToBounds="True" VerticalAlignment="Center">
+                                                                <Grid ColumnDefinitions="65*, 35*">
+                                                                    <Border Grid.Column="0" CornerRadius="4">
+                                                                        <Border.Background>
+                                                                            <LinearGradientBrush StartPoint="0%,50%" EndPoint="100%,50%">
+                                                                                <GradientStop Color="#3B82F6" Offset="0"/>
+                                                                                <GradientStop Color="#8B5CF6" Offset="0.5"/>
+                                                                                <GradientStop Color="#10B981" Offset="1"/>
+                                                                            </LinearGradientBrush>
+                                                                        </Border.Background>
+                                                                    </Border>
+                                                                </Grid>
+                                                            </Border>
+                                                        </Border>
+                                                        <TextBlock Text="Mavi-Mor-Yeşil geçiş" FontSize="10" Foreground="{Binding ThemeTextSecondary}" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                                    </StackPanel>
+                                                </Border>
+
+                                                <!-- Neon -->
+                                                <Border Grid.Column="2" Margin="4" Padding="10" CornerRadius="8" BorderThickness="1.5"
+                                                        Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}">
+                                                    <StackPanel Spacing="8">
+                                                        <RadioButton Content="Neon"
+                                                                     IsChecked="{Binding IsProgressStyleNeon, Mode=TwoWay}"
+                                                                     Command="{Binding SelectProgressStyleCommand}"
+                                                                     CommandParameter="Neon"
+                                                                     GroupName="ProgressStyleGroup" FontWeight="SemiBold" FontSize="12" />
+                                                        <Border Height="28" CornerRadius="4" Background="{Binding ThemeSpeedGraphInnerBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" Padding="8,0" ClipToBounds="True">
+                                                            <Border Height="8" CornerRadius="4" Background="#1E293B" ClipToBounds="True" VerticalAlignment="Center">
+                                                                <Grid ColumnDefinitions="65*, 35*">
+                                                                    <Border Grid.Column="0" Background="#38BDF8" CornerRadius="4" BoxShadow="0 0 8 0 #8038BDF8" />
+                                                                </Grid>
+                                                            </Border>
+                                                        </Border>
+                                                        <TextBlock Text="Parlak cyan parlama" FontSize="10" Foreground="{Binding ThemeTextSecondary}" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                                    </StackPanel>
+                                                </Border>
+
+                                                <!-- İnce -->
+                                                <Border Grid.Column="3" Margin="4" Padding="10" CornerRadius="8" BorderThickness="1.5"
+                                                        Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}">
+                                                    <StackPanel Spacing="8">
+                                                        <RadioButton Content="İnce Çizgi"
+                                                                     IsChecked="{Binding IsProgressStyleInce, Mode=TwoWay}"
+                                                                     Command="{Binding SelectProgressStyleCommand}"
+                                                                     CommandParameter="Ince"
+                                                                     GroupName="ProgressStyleGroup" FontWeight="SemiBold" FontSize="12" />
+                                                        <Border Height="28" CornerRadius="4" Background="{Binding ThemeSpeedGraphInnerBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" Padding="8,0" ClipToBounds="True">
+                                                            <Border Height="3" CornerRadius="1.5" Background="#1E293B" ClipToBounds="True" VerticalAlignment="Center">
+                                                                <Grid ColumnDefinitions="65*, 35*">
+                                                                    <Border Grid.Column="0" Background="#10B981" CornerRadius="1.5" />
+                                                                </Grid>
+                                                            </Border>
+                                                        </Border>
+                                                        <TextBlock Text="Minimalist zarif çizgi" FontSize="10" Foreground="{Binding ThemeTextSecondary}" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <!-- SEKME 2: 🔔 SES & BİLDİRİM -->
+                        <TabItem Header="🔔 Ses &amp; Bildirim">
+                            <ScrollViewer Margin="0,10,0,0">
+                                <StackPanel Spacing="14">
+                                    <Border Background="{DynamicResource SystemChromeLowColor}" CornerRadius="8" Padding="14">
+                                        <StackPanel Spacing="12">
+                                            <Grid ColumnDefinitions="*, Auto">
+                                                <StackPanel Spacing="3">
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <TextBlock Text="🎵" FontSize="14" VerticalAlignment="Center" />
+                                                        <TextBlock Text="İndirme Tamamlanma Zil Sesi:" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                                                    </StackPanel>
+                                                    <TextBlock Text="Bir dosya başarıyla indirildiğinde çalınacak zil sesini seçin ve test edin." FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                                </StackPanel>
+
+                                                <Button Grid.Column="1" Command="{Binding PlayTestCurrentSoundCommand}" Background="{DynamicResource AccentButtonBackground}" Foreground="{DynamicResource AccentButtonForeground}" FontWeight="SemiBold" Padding="12,6" Height="32">
+                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                        <TextBlock Text="▶" VerticalAlignment="Center" />
+                                                        <TextBlock Text="Seçileni Dinle" VerticalAlignment="Center" />
+                                                    </StackPanel>
+                                                </Button>
+                                            </Grid>
+
+                                            <!-- Ses Seçenekleri Listesi -->
+                                            <StackPanel Spacing="8" Margin="4,4,0,0">
+                                                <!-- Notify -->
+                                                <Border Background="{DynamicResource SystemChromeMediumColor}" CornerRadius="6" Padding="12,8">
+                                                    <Grid ColumnDefinitions="Auto, *, Auto">
+                                                        <RadioButton Grid.Column="0" Content="🔔 Windows Notify (Varsayılan Zarif Zil)"
+                                                                     IsChecked="{Binding IsSoundNotify, Mode=TwoWay}"
+                                                                     GroupName="SoundGroup" FontWeight="Medium" VerticalAlignment="Center" />
+                                                        <Button Grid.Column="2" Command="{Binding PlaySpecificSoundCommand}" CommandParameter="Notify" Content="▶ Önizle" Padding="8,4" FontSize="11" />
+                                                    </Grid>
+                                                </Border>
+
+                                                <!-- Chimes -->
+                                                <Border Background="{DynamicResource SystemChromeMediumColor}" CornerRadius="6" Padding="12,8">
+                                                    <Grid ColumnDefinitions="Auto, *, Auto">
+                                                        <RadioButton Grid.Column="0" Content="✨ Chimes (Rüzgar Çanı / Melodik)"
+                                                                     IsChecked="{Binding IsSoundChimes, Mode=TwoWay}"
+                                                                     GroupName="SoundGroup" FontWeight="Medium" VerticalAlignment="Center" />
+                                                        <Button Grid.Column="2" Command="{Binding PlaySpecificSoundCommand}" CommandParameter="Chimes" Content="▶ Önizle" Padding="8,4" FontSize="11" />
+                                                    </Grid>
+                                                </Border>
+
+                                                <!-- Ding -->
+                                                <Border Background="{DynamicResource SystemChromeMediumColor}" CornerRadius="6" Padding="12,8">
+                                                    <Grid ColumnDefinitions="Auto, *, Auto">
+                                                        <RadioButton Grid.Column="0" Content="🛎️ Ding (Kısa &amp; Net Zil Sesi)"
+                                                                     IsChecked="{Binding IsSoundDing, Mode=TwoWay}"
+                                                                     GroupName="SoundGroup" FontWeight="Medium" VerticalAlignment="Center" />
+                                                        <Button Grid.Column="2" Command="{Binding PlaySpecificSoundCommand}" CommandParameter="Ding" Content="▶ Önizle" Padding="8,4" FontSize="11" />
+                                                    </Grid>
+                                                </Border>
+
+                                                <!-- Tada -->
+                                                <Border Background="{DynamicResource SystemChromeMediumColor}" CornerRadius="6" Padding="12,8">
+                                                    <Grid ColumnDefinitions="Auto, *, Auto">
+                                                        <RadioButton Grid.Column="0" Content="🎺 Tada (Klasik Windows Kutlama Melodisi)"
+                                                                     IsChecked="{Binding IsSoundTada, Mode=TwoWay}"
+                                                                     GroupName="SoundGroup" FontWeight="Medium" VerticalAlignment="Center" />
+                                                        <Button Grid.Column="2" Command="{Binding PlaySpecificSoundCommand}" CommandParameter="Tada" Content="▶ Önizle" Padding="8,4" FontSize="11" />
+                                                    </Grid>
+                                                </Border>
+
+                                                <!-- Chord -->
+                                                <Border Background="{DynamicResource SystemChromeMediumColor}" CornerRadius="6" Padding="12,8">
+                                                    <Grid ColumnDefinitions="Auto, *, Auto">
+                                                        <RadioButton Grid.Column="0" Content="🎹 Chord (Yumuşak Akor Sesi)"
+                                                                     IsChecked="{Binding IsSoundChord, Mode=TwoWay}"
+                                                                     GroupName="SoundGroup" FontWeight="Medium" VerticalAlignment="Center" />
+                                                        <Button Grid.Column="2" Command="{Binding PlaySpecificSoundCommand}" CommandParameter="Chord" Content="▶ Önizle" Padding="8,4" FontSize="11" />
+                                                    </Grid>
+                                                </Border>
+
+                                                <!-- Sessiz -->
+                                                <Border Background="{DynamicResource SystemChromeMediumColor}" CornerRadius="6" Padding="12,8">
+                                                    <RadioButton Content="🔇 Sessiz (Tamamlanınca ses çalma)"
+                                                                 IsChecked="{Binding IsSoundSessiz, Mode=TwoWay}"
+                                                                 GroupName="SoundGroup" FontWeight="Medium" VerticalAlignment="Center" />
+                                                </Border>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <!-- SEKME 3: ⚡ HIZ VE BANT GENİŞLİĞİ -->
+                        <TabItem Header="⚡ Hız &amp; Limitler">
+                            <ScrollViewer Margin="0,10,0,0">
+                                <StackPanel Spacing="14">
+                                    <!-- GENEL HIZ LİMİTLERİ -->
+                                    <Border Background="{DynamicResource SystemChromeLowColor}" CornerRadius="8" Padding="14">
+                                        <StackPanel Spacing="10">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="🔄" Foreground="#10B981" FontWeight="Bold" VerticalAlignment="Center" />
+                                                <TextBlock Text="Genel Oran Sınırları (0 = Sınırsız ∞):" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                                            </StackPanel>
+
+                                            <Grid ColumnDefinitions="140, 160, *" RowDefinitions="Auto, Auto" Margin="6,4,0,0">
+                                                <TextBlock Grid.Row="0" Grid.Column="0" Text="İndirme Limiti (KiB/s):" VerticalAlignment="Center" FontSize="12" />
+                                                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding GlobalDownloadLimitKiB}" Margin="0,3" Height="30" VerticalContentAlignment="Center" />
+
+                                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Gönderme Limiti (KiB/s):" VerticalAlignment="Center" FontSize="12" />
+                                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding GlobalUploadLimitKiB}" Margin="0,3" Height="30" VerticalContentAlignment="Center" />
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- ALTERNATİF HIZ MODU (İbre) -->
+                                    <Border Background="{DynamicResource SystemChromeLowColor}" CornerRadius="8" Padding="14">
+                                        <StackPanel Spacing="10">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="⏱️" Foreground="#EF4444" FontWeight="Bold" VerticalAlignment="Center" />
+                                                <TextBlock Text="Alternatif Hız Sınırları (Hız İbresi Aktifken):" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                                            </StackPanel>
+
+                                            <Grid ColumnDefinitions="140, 160, *" RowDefinitions="Auto, Auto" Margin="6,4,0,0">
+                                                <TextBlock Grid.Row="0" Grid.Column="0" Text="İndirme (KiB/s):" VerticalAlignment="Center" FontSize="12" />
+                                                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding AltDownloadLimitKiB}" Margin="0,3" Height="30" VerticalContentAlignment="Center" />
+
+                                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Gönderme (KiB/s):" VerticalAlignment="Center" FontSize="12" />
+                                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding AltUploadLimitKiB}" Margin="0,3" Height="30" VerticalContentAlignment="Center" />
+                                            </Grid>
+
+                                            <CheckBox IsChecked="{Binding IsAltRateLimitActive}" Content="⏱️ Yavaş Hız (Limitli) Modunu Etkinleştir (Limitleri Devreye Al)" FontWeight="Bold" Foreground="#F59E0B" Margin="6,4,0,0" FontSize="12" />
+                                            <CheckBox IsChecked="{Binding IsScheduleEnabled}" Content="Alternatif oran sınırlarını zamanlayıcı ile otomatik yönet" Margin="6,4,0,0" FontSize="12" />
+
+                                            <Border Background="{DynamicResource SystemChromeMediumColor}" CornerRadius="6" Padding="10" Margin="6,0,0,0" IsVisible="{Binding IsScheduleEnabled}">
+                                                <StackPanel Orientation="Horizontal" Spacing="16">
+                                                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                        <TextBlock Text="Başlangıç:" VerticalAlignment="Center" FontSize="12" />
+                                                        <TextBox Text="{Binding ScheduleStartTime}" Width="65" Height="28" VerticalContentAlignment="Center" />
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                        <TextBlock Text="Bitiş:" VerticalAlignment="Center" FontSize="12" />
+                                                        <TextBox Text="{Binding ScheduleEndTime}" Width="65" Height="28" VerticalContentAlignment="Center" />
+                                                    </StackPanel>
+                                                    <TextBlock Text="Her gün tekrarlanır" Foreground="{DynamicResource SystemBaseMediumColor}" VerticalAlignment="Center" FontSize="11" />
+                                                </StackPanel>
+                                            </Border>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <!-- SEKME 4: 📁 DEPOLAMA & KUYRUK -->
+                        <TabItem Header="📁 Depolama &amp; Kuyruk">
+                            <ScrollViewer Margin="0,10,0,0">
+                                <StackPanel Spacing="14">
+                                    <Border Background="{DynamicResource SystemChromeLowColor}" CornerRadius="8" Padding="14">
+                                        <StackPanel Spacing="12">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="📁" FontSize="14" VerticalAlignment="Center" />
+                                                <TextBlock Text="Varsayılan Klasör ve Motor Parametreleri:" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                                            </StackPanel>
+
+                                            <Grid ColumnDefinitions="140, *" RowDefinitions="Auto, Auto, Auto" Margin="6,4,0,0">
+                                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Kayıt Klasörü:" VerticalAlignment="Center" FontSize="12" />
+                                                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SettingsDefaultSaveDirectory}" Margin="0,4" Height="32" VerticalContentAlignment="Center" />
+
+                                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Eşzamanlı İndirme:" VerticalAlignment="Center" FontSize="12" />
+                                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SettingsMaxConcurrentDownloads}" Margin="0,4" Width="70" HorizontalAlignment="Left" Height="30" VerticalContentAlignment="Center" />
+
+                                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Segment (Parça):" VerticalAlignment="Center" FontSize="12" />
+                                                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SettingsDefaultSegments}" Margin="0,4" Width="70" HorizontalAlignment="Left" Height="30" VerticalContentAlignment="Center" />
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <!-- SEKME 5: 🌐 SİTE YAKALAYICI -->
+                        <TabItem Header="🌐 Site Yakalayıcı">
+                            <Grid RowDefinitions="Auto, Auto, *, Auto" Margin="0,10,0,0">
+                                <Grid Grid.Row="0" ColumnDefinitions="*, 120" Margin="0,0,0,8">
+                                    <TextBox Grid.Column="0" Text="{Binding SiteGrabberUrl}" PlaceholderText="https://example.com/galeri" Height="34" VerticalContentAlignment="Center" Margin="0,0,8,0" />
+                                    <Button Grid.Column="1" Command="{Binding AnalyzeSiteCommand}" Content="Sayfayı Tara" Background="{DynamicResource AccentButtonBackground}" Foreground="{DynamicResource AccentButtonForeground}" FontWeight="SemiBold" Height="34" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+                                </Grid>
+
+                                <TextBlock Grid.Row="1" Text="{Binding SiteGrabberStatusText}" FontSize="12" Foreground="{DynamicResource SystemBaseMediumColor}" Margin="0,0,0,8" />
+
+                                <Border Grid.Row="2" Background="{DynamicResource SystemChromeLowColor}" CornerRadius="6" BorderBrush="{DynamicResource SystemBaseLowColor}" BorderThickness="1">
+                                    <ListBox ItemsSource="{Binding GrabbedFiles}">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid ColumnDefinitions="40, 2*, 100, 3*">
+                                                    <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}" VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="1" Text="{Binding FileName}" FontWeight="Medium" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" FontSize="12" />
+                                                    <TextBlock Grid.Column="2" Text="{Binding Category}" Foreground="{DynamicResource SystemBaseMediumColor}" VerticalAlignment="Center" FontSize="11" />
+                                                    <TextBlock Grid.Column="3" Text="{Binding Url}" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Border>
+
+                                <Button Grid.Row="3" Command="{Binding ConfirmGrabbedDownloadsCommand}" Content="Seçilenleri İndirmeye Ekle" Background="{DynamicResource AccentButtonBackground}" Foreground="{DynamicResource AccentButtonForeground}" FontWeight="Bold" Height="34" HorizontalAlignment="Right" Margin="0,10,0,0" />
+                            </Grid>
+                        </TabItem>
+
+                        <!-- SEKME 6: 🧩 TARAYICI ENTEGRASYONU -->
+                        <TabItem Header="🧩 Tarayıcı Köprüsü">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <StackPanel Spacing="14" Margin="4,10,4,0">
+                                    <Border Background="{DynamicResource SystemChromeLowColor}" CornerRadius="8" Padding="14" BorderBrush="#10B981" BorderThickness="1">
+                                        <Grid ColumnDefinitions="Auto, *">
+                                            <TextBlock Text="⚡" FontSize="24" VerticalAlignment="Center" Margin="0,0,12,0" />
+                                            <StackPanel Grid.Column="1" Spacing="2">
+                                                <TextBlock Text="FDownloader Tarayıcı Köprüsü Devrede" FontWeight="Bold" FontSize="13" Foreground="#10B981" />
+                                                <TextBlock Text="127.0.0.1:9666 • Chrome, Edge, Brave, Opera ve Firefox ile çift yönlü haberleşir." FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+
+                                    <Border Background="{DynamicResource SystemChromeLowColor}" CornerRadius="8" Padding="14">
+                                        <StackPanel Spacing="10">
+                                            <TextBlock Text="📦 Tarayıcı Eklentisi (Manifest V3)" FontWeight="Bold" FontSize="13" />
+                                            <TextBlock Text="Web sayfalarındaki tüm indirmeleri tarayıcı indirmeden doğrudan FDownloader'a aktarır." TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                            
+                                            <Button Command="{Binding OpenBrowserExtensionFolderCommand}" Background="{DynamicResource AccentButtonBackground}" Foreground="{DynamicResource AccentButtonForeground}" FontWeight="SemiBold" Padding="14,7" HorizontalAlignment="Left">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <TextBlock Text="📁" VerticalAlignment="Center" />
+                                                    <TextBlock Text="Eklenti Klasörünü Aç (tools/browser-extension)" VerticalAlignment="Center" FontSize="12" />
+                                                </StackPanel>
+                                            </Button>
+
+                                            <Border Background="{DynamicResource SystemChromeMediumColor}" CornerRadius="6" Padding="12" Margin="0,4,0,0">
+                                                <StackPanel Spacing="5">
+                                                    <TextBlock Text="🚀 Hızlı Kurulum:" FontWeight="SemiBold" FontSize="12" />
+                                                    <TextBlock Text="1. Tarayıcınızda chrome://extensions adresine gidin." FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                                    <TextBlock Text="2. Sağ üstteki 'Geliştirici Modu' (Developer Mode) anahtarını açın." FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                                    <TextBlock Text="3. Sol üstteki 'Paketlenmemiş Öğe Yükle' butonuna tıklayıp bu klasörü seçin." FontSize="11" Foreground="#38BDF8" />
+                                                </StackPanel>
+                                            </Border>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <!-- SEKME 7: 🔄 GÜNCELLEME & HAKKINDA -->
+                        <TabItem Header="🔄 Güncelleme &amp; Hakkında">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <StackPanel Spacing="14" Margin="4,10,4,0">
+                                    <Border Background="{DynamicResource SystemChromeLowColor}" CornerRadius="8" Padding="14">
+                                        <StackPanel Spacing="10">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="⚡" FontSize="16" VerticalAlignment="Center" />
+                                                <TextBlock Text="Otomatik Güncelleme (Velopack &amp; GitHub Releases)" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                            <TextBlock Text="GitHub deposundaki en son yayınlanan sürümleri otomatik denetler ve sessizce günceller." FontSize="12" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                            
+                                            <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,6,0,0">
+                                                <Button Command="{Binding CheckForUpdatesManualCommand}" Background="{DynamicResource AccentButtonBackground}" Foreground="{DynamicResource AccentButtonForeground}" FontWeight="SemiBold" Padding="14,7">
+                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                        <TextBlock Text="🔍" VerticalAlignment="Center" />
+                                                        <TextBlock Text="Güncellemeleri Şimdi Denetle" VerticalAlignment="Center" />
+                                                    </StackPanel>
+                                                </Button>
+
+                                                <Button Command="{Binding ApplyUpdateCommand}" IsVisible="{Binding IsUpdateAvailable}" Background="#10B981" Foreground="White" FontWeight="Bold" Padding="14,7">
+                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                        <TextBlock Text="🚀" VerticalAlignment="Center" />
+                                                        <TextBlock Text="Yeni Sürümü İndir ve Yeniden Başlat" VerticalAlignment="Center" />
+                                                    </StackPanel>
+                                                </Button>
+                                            </StackPanel>
+
+                                            <!-- Durum Metni -->
+                                            <TextBlock Text="{Binding UpdateStatusText}" FontSize="12" Foreground="#38BDF8" Margin="0,4,0,0" IsVisible="{Binding UpdateStatusText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Depo Bilgisi -->
+                                    <Border Background="{DynamicResource SystemChromeLowColor}" CornerRadius="8" Padding="14">
+                                        <StackPanel Spacing="6">
+                                            <TextBlock Text="📦 Dağıtım Kanalı:" FontWeight="SemiBold" FontSize="12" />
+                                            <TextBlock Text="https://github.com/erbayfaruk61/FDownloader" FontSize="11" Foreground="#38BDF8" />
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+
+                    </TabControl>
+
+                    <!-- Alt Butonlar -->
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,12,0,0">
+                        <Button Command="{Binding CancelSettingsCommand}" Content="Vazgeç" Width="85" Height="32" FontSize="12" />
+                        <Button Command="{Binding SaveSettingsCommand}" Content="Ayarları Kaydet" Background="{Binding ThemeAccentBg}" Foreground="{Binding ThemeAccentFg}" FontWeight="Bold" Width="120" Height="32" FontSize="12" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Border>
+
+        <!-- ─── 6. MODAL: 🗑️ DOSYA SİLME / KALDIRMA ONAY DİYALOĞU ───────────── -->
+        <Border Background="#80000000" IsVisible="{Binding IsDeleteConfirmDialogOpen}">
+            <Border Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="12" Width="560" Padding="22" HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 10 30 0 #40000000">
+                <StackPanel Spacing="16">
+                    <!-- Başlık -->
+                    <Grid ColumnDefinitions="*, Auto">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="🗑️" FontSize="20" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding DeleteConfirmTitle}" FontSize="18" FontWeight="Bold" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <Button Grid.Column="1" Command="{Binding CancelDeleteDialogCommand}" Content="✕" Background="Transparent" BorderThickness="0" FontSize="16" />
+                    </Grid>
+
+                    <!-- Açıklama Metni -->
+                    <TextBlock Text="{Binding DeleteConfirmMessage}" TextWrapping="Wrap" FontSize="13" LineHeight="20" />
+
+                    <!-- MOD 1: DELETE TUŞU (Yalnızca Listeden Kaldır Sorusuna Evet / Hayır) -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,10,0,0" IsVisible="{Binding IsListOnlyMode}">
+                        <Button Command="{Binding CancelDeleteDialogCommand}" Content="Hayır (Vazgeç)" Padding="14,7" Height="36" />
+                        <Button Command="{Binding ConfirmDeleteListOnlyCommand}" Background="{DynamicResource AccentButtonBackground}" Foreground="{DynamicResource AccentButtonForeground}" FontWeight="Bold" Padding="14,7" Height="36">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="✓" VerticalAlignment="Center" FontWeight="Bold" />
+                                <TextBlock Text="Evet (Listeden Kaldır)" FontWeight="Bold" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- MOD 2: SHIFT + DELETE TUŞU (Diskten de Kalıcı Silme Sorusuna Evet / Hayır) -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,10,0,0" IsVisible="{Binding IsDiskAndListMode}">
+                        <Button Command="{Binding CancelDeleteDialogCommand}" Content="Hayır (Vazgeç)" Padding="14,7" Height="36" />
+                        <Button Command="{Binding ConfirmDeleteWithFileCommand}" Background="#EF4444" Foreground="White" FontWeight="Bold" Padding="14,7" Height="36">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="❌" VerticalAlignment="Center" />
+                                <TextBlock Text="Evet (Diskten de Kalıcı Olarak Sil)" FontWeight="Bold" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- MOD 3: GENEL SEÇİM (Araç Çubuğu veya Sağ Tık Menüsünden Tıklanınca) -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,10,0,0" IsVisible="{Binding IsGeneralChoiceMode}">
+                        <Button Command="{Binding CancelDeleteDialogCommand}" Content="Vazgeç" Padding="14,7" Height="36" />
+                        
+                        <!-- Hayır: Yalnızca Listeden Kaldır -->
+                        <Button Command="{Binding ConfirmDeleteListOnlyCommand}" Background="{DynamicResource SystemChromeLowColor}" Padding="12,7" Height="36">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="📋" VerticalAlignment="Center" />
+                                <TextBlock Text="Hayır (Listeden Kaldır)" FontWeight="Medium" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Evet: Diskten de Sil (Kırmızı Vurgulu - Asla Taşmaz) -->
+                        <Button Command="{Binding ConfirmDeleteWithFileCommand}" Background="#EF4444" Foreground="White" FontWeight="Bold" Padding="14,7" Height="36">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="❌" VerticalAlignment="Center" />
+                                <TextBlock Text="Evet (Diskten de Sil)" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+
+    </Grid>
+</Window>
