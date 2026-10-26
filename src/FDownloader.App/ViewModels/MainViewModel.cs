@@ -89,6 +89,10 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty] private string? _addDialogCookies;
     [ObservableProperty] private string? _addDialogUserAgent;
 
+    // Torrent İndirme Öncesi Dosya Seçim Listesi (qBittorrent Stili)
+    [ObservableProperty] private ObservableCollection<TorrentFileInfo> _addDialogTorrentFiles = new();
+    [ObservableProperty] private bool _addDialogHasTorrentFiles = false;
+
     // ─── Site Yakalayıcı (Site Grabber - hDM Özelliği) ────────────────────
     [ObservableProperty] private bool _isSiteGrabberDialogOpen;
     [ObservableProperty] private string _siteGrabberUrl = string.Empty;
@@ -491,7 +495,7 @@ public partial class MainViewModel : ViewModelBase
 
     // ─── Tam Boy Canlı Hız Grafiği (Üst Menü Altında) ──────────────────────
     [ObservableProperty] private bool _isSpeedGraphVisible = true;
-    [ObservableProperty] private string _graphTitle = "🌐 Toplam İndirme Hızı (Tüm Aktif İndirmeler)";
+    [ObservableProperty] private string _graphTitle = string.Empty;
     [ObservableProperty] private string _graphCurrentSpeedText = "0 B/s";
     [ObservableProperty] private string _graphMinSpeedText = "0 B/s";
     [ObservableProperty] private string _graphMaxSpeedText = "0 B/s";
@@ -1803,52 +1807,15 @@ public partial class MainViewModel : ViewModelBase
         }
     }
 
-    public async Task HandleDroppedFileOrUrlAsync(string pathOrUrl)
+    public Task HandleDroppedFileOrUrlAsync(string pathOrUrl)
     {
-        if (string.IsNullOrWhiteSpace(pathOrUrl)) return;
+        if (string.IsNullOrWhiteSpace(pathOrUrl)) return Task.CompletedTask;
 
         var clean = pathOrUrl.Trim().Trim('\"', '\'');
-        var saveDir = !string.IsNullOrWhiteSpace(AddDialogSavePath)
-            ? AddDialogSavePath
-            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
-
-        // .torrent dosyası veya magnet linki ise indirmeyi doğrudan başlat
-        if (clean.EndsWith(".torrent", StringComparison.OrdinalIgnoreCase) ||
-            clean.StartsWith("magnet:", StringComparison.OrdinalIgnoreCase))
-        {
-            try
-            {
-                var task = await _downloadManager.AddTorrentDownloadAsync(clean, saveDir, startImmediately: true);
-                var newItem = new DownloadItemViewModel
-                {
-                    Id = task.Id,
-                    FileName = task.FileName,
-                    OriginalUrl = task.OriginalUrl,
-                    Category = DownloadCategory.Torrent,
-                    Status = DownloadStatus.Downloading,
-                    CreatedAt = task.CreatedAt,
-                    SavePath = saveDir
-                };
-                Downloads.Insert(0, newItem);
-                ApplyFilter();
-                UpdateGlobalStats();
-                FocusNewDownload(newItem);
-            }
-            catch (Exception ex)
-            {
-                AddDialogUrl = clean;
-                AddDialogStatusText = $"Hata: {ex.Message}";
-                IsAddDialogOpen = true;
-                AnalyzeAddUrl(clean);
-            }
-        }
-        else
-        {
-            // Standart web veya medya linki ise diyaloğu doldur
-            AddDialogUrl = clean;
-            IsAddDialogOpen = true;
-            AnalyzeAddUrl(clean);
-        }
+        AddDialogUrl = clean;
+        IsAddDialogOpen = true;
+        AnalyzeAddUrl(clean);
+        return Task.CompletedTask;
     }
 
     [RelayCommand]
@@ -1857,6 +1824,8 @@ public partial class MainViewModel : ViewModelBase
         AddDialogUrl = string.Empty;
         AddDialogTitle = string.Empty;
         AddDialogThumbnailUrl = null;
+        AddDialogTorrentFiles.Clear();
+        AddDialogHasTorrentFiles = false;
         AddDialogIsMediaDetected = false;
         AddDialogIsTorrentDetected = false;
         AddDialogIsPlaylistDetected = false;
@@ -1943,7 +1912,8 @@ public partial class MainViewModel : ViewModelBase
             AddDialogIsMediaDetected = false;
             AddDialogIsPlaylistDetected = false;
             AddDialogTitle = url.StartsWith("magnet:") ? "Magnet Torrent" : Path.GetFileName(cleanUrl);
-            AddDialogStatusText = "BitTorrent indirmesi algılandı.";
+            AddDialogStatusText = "BitTorrent indirmesi algılandı. Dosyalar inceleniyor...";
+            _ = LoadAddDialogTorrentFilesAsync(cleanUrl);
             return;
         }
 
@@ -2075,6 +2045,23 @@ public partial class MainViewModel : ViewModelBase
             {
                 // BitTorrent İndirmesi
                 var task = await _downloadManager.AddTorrentDownloadAsync(url, saveDir, startImmediately: true);
+
+                // Kullanıcı dosya seçimi yapmışsa öncelikleri uygula (hiçbiri seçilmezse tümü iner)
+                if (AddDialogTorrentFiles.Count > 0)
+                {
+                    bool anySelected = AddDialogTorrentFiles.Any(f => f.IsSelected);
+                    if (anySelected)
+                    {
+                        for (int i = 0; i < AddDialogTorrentFiles.Count; i++)
+                        {
+                            if (!AddDialogTorrentFiles[i].IsSelected)
+                            {
+                                await _downloadManager.SetTorrentFilePriorityAsync(task.Id, i, false);
+                            }
+                        }
+                    }
+                }
+
                 var newItem = new DownloadItemViewModel
                 {
                     Id = task.Id,
@@ -2131,10 +2118,51 @@ public partial class MainViewModel : ViewModelBase
         }
     }
 
+    private async Task LoadAddDialogTorrentFilesAsync(string pathOrUrl)
+    {
+        AddDialogTorrentFiles.Clear();
+        AddDialogHasTorrentFiles = false;
+
+        try
+        {
+            var files = await _downloadManager.InspectTorrentFilesAsync(pathOrUrl);
+            if (files.Count > 0)
+            {
+                foreach (var f in files)
+                {
+                    AddDialogTorrentFiles.Add(f);
+                }
+                AddDialogHasTorrentFiles = true;
+                AddDialogStatusText = $"{files.Count} adet dosya listelendi. İndirmek istediklerinizi seçebilirsiniz.";
+            }
+            else
+            {
+                AddDialogStatusText = pathOrUrl.StartsWith("magnet:", StringComparison.OrdinalIgnoreCase)
+                    ? "Magnet linki (Meta verisi indirme başladığında alınacaktır)."
+                    : "BitTorrent indirmesi hazır.";
+            }
+        }
+        catch (Exception ex)
+        {
+            AddDialogStatusText = $"Torrent dosyaları okunamadı: {ex.Message}";
+        }
+    }
+
+    [RelayCommand]
+    public void SelectAllAddDialogTorrentFiles(bool selectAll)
+    {
+        foreach (var file in AddDialogTorrentFiles)
+        {
+            file.IsSelected = selectAll;
+        }
+    }
+
     [RelayCommand]
     public void CancelAddDownload()
     {
         IsAddDialogOpen = false;
+        AddDialogTorrentFiles.Clear();
+        AddDialogHasTorrentFiles = false;
     }
 
     [RelayCommand]
@@ -2236,9 +2264,7 @@ public partial class MainViewModel : ViewModelBase
                 : Downloads.Where(d => d.IsActive).ToList();
 
             var totalDownSpeed = activeList.Sum(d => d.SpeedBytesPerSecond);
-            GraphTitle = count > 1 
-                ? $"🌐 Seçilen {count} Dosyanın Toplam Hızı" 
-                : "🌐 Toplam İndirme Hızı (Tüm Aktif İndirmeler)";
+            GraphTitle = count > 1 ? $"🌐 {count} Dosya" : string.Empty;
 
             GraphCurrentSpeedText = totalDownSpeed > 0 ? SpeedCalculator.FormatSpeed(totalDownSpeed) : "0 B/s";
             GraphMinSpeedText = _globalMinSpeedRecorded > 0 ? SpeedCalculator.FormatSpeed(_globalMinSpeedRecorded) : "0 B/s";

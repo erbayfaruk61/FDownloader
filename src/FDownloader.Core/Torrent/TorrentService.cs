@@ -360,6 +360,54 @@ public sealed class TorrentService : IAsyncDisposable
     }
 
     /// <summary>
+    /// İndirme başlatılmadan önce bir .torrent dosyasının veya URL'sinin içindeki dosyaları listeler.
+    /// qBittorrent stili dosya seçimi için kullanılır.
+    /// </summary>
+    public async Task<List<TorrentFileInfo>> InspectTorrentFilesAsync(string sourceUrlOrPath)
+    {
+        var result = new List<TorrentFileInfo>();
+        try
+        {
+            var clean = sourceUrlOrPath.Trim().Trim('\"', '\'');
+            MonoTorrent.Torrent? torrent = null;
+
+            if (File.Exists(clean))
+            {
+                torrent = await MonoTorrent.Torrent.LoadAsync(clean);
+            }
+            else if (clean.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                     clean.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+                var bytes = await httpClient.GetByteArrayAsync(clean);
+                torrent = await MonoTorrent.Torrent.LoadAsync(bytes);
+            }
+
+            if (torrent != null && torrent.Files != null)
+            {
+                for (int i = 0; i < torrent.Files.Count; i++)
+                {
+                    var f = torrent.Files[i];
+                    result.Add(new TorrentFileInfo
+                    {
+                        Index = i,
+                        Path = f.Path,
+                        Length = f.Length,
+                        BytesDownloaded = 0,
+                        Priority = "Normal",
+                        IsSelected = true
+                    });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Torrent dosyaları ön inceleme sırasında okunamadı: {Source}", sourceUrlOrPath);
+        }
+        return result;
+    }
+
+    /// <summary>
     /// UI için anlık veya önbellekten BitTorrent detaylarını döner.
     /// </summary>
     public TorrentDetails? GetTorrentDetails(long taskId)
@@ -644,6 +692,17 @@ public class TorrentFileInfo
     public double ProgressPercent => Length > 0 ? Math.Min(100.0, BytesDownloaded * 100.0 / Length) : 0;
     public string Priority { get; set; } = "Normal";
     public bool IsSelected { get; set; } = true;
+
+    public string LengthDisplay
+    {
+        get
+        {
+            if (Length < 1024) return $"{Length} B";
+            if (Length < 1024 * 1024) return $"{Length / 1024.0:F1} KB";
+            if (Length < 1024 * 1024 * 1024) return $"{Length / (1024.0 * 1024):F1} MB";
+            return $"{Length / (1024.0 * 1024 * 1024):F2} GB";
+        }
+    }
 }
 
 public record TorrentPeerInfo(string Address, string Client, long DownloadSpeed, long UploadSpeed, double ProgressPercent);

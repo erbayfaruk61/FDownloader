@@ -659,6 +659,9 @@ public sealed class DownloadManager : IAsyncDisposable
     public Task SetAllTorrentFilesPriorityAsync(long taskId, bool downloadAll)
         => _torrentService.SetAllFilesPriorityAsync(taskId, downloadAll);
 
+    public Task<List<TorrentFileInfo>> InspectTorrentFilesAsync(string sourceUrlOrPath)
+        => _torrentService.InspectTorrentFilesAsync(sourceUrlOrPath);
+
     public async ValueTask DisposeAsync()
     {
         foreach (var downloader in _httpDownloaders.Values)

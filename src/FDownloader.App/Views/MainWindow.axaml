@@ -85,11 +85,8 @@
                         </Border>
 
                         <!-- Hız Grafiği Aç/Kapat Butonu -->
-                        <Button Command="{Binding ToggleSpeedGraphCommand}" ToolTip.Tip="Tam Boy Hız Grafiğini Aç / Kapat" Padding="8,5">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <TextBlock Text="📈" VerticalAlignment="Center" />
-                                <TextBlock Text="Hız Grafiği" VerticalAlignment="Center" />
-                            </StackPanel>
+                        <Button Command="{Binding ToggleSpeedGraphCommand}" ToolTip.Tip="Hız Grafiğini Göster / Gizle" Padding="8,5">
+                            <TextBlock Text="👁️" FontSize="13" VerticalAlignment="Center" />
                         </Button>
 
                         <!-- Toplam Hız Göstergesi Rozeti -->
@@ -107,17 +104,12 @@
             <Border Grid.Row="1" Background="{Binding ThemeSpeedGraphPanelBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="0,0,0,1" Padding="14,8" IsVisible="{Binding IsSpeedGraphVisible}">
                 <Grid ColumnDefinitions="Auto, *, Auto, Auto">
                     <!-- Sol Taraf: Hedef Başlığı ve Detay Bilgisi -->
-                    <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center" Margin="0,0,14,0">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="📈" FontSize="14" VerticalAlignment="Center" />
-                            <TextBlock Text="{Binding GraphTitle}" FontWeight="Bold" FontSize="13" Foreground="{Binding ThemeForeground}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="320" />
-                        </StackPanel>
-
-                        <!-- Detay Bilgisi (İlerleme, Boyut, Durum) -->
-                        <TextBlock Text="{Binding GraphDetailsText}" FontSize="11" Foreground="{Binding ThemeTextSecondary}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="320" />
+                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center" Margin="0,0,12,0">
+                        <TextBlock Text="{Binding GraphTitle}" FontWeight="Bold" FontSize="12" Foreground="{Binding ThemeForeground}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="280" IsVisible="{Binding !!GraphTitle.Length}" />
+                        <TextBlock Text="{Binding GraphDetailsText}" FontSize="11" Foreground="{Binding ThemeTextSecondary}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="280" />
                     </StackPanel>
 
-                    <!-- Orta Alan: TAM BOY CANLI HIZ GRAFİK ÇUBUKLARI (Sol Taraf Boşluksuz, Tam Dolu, Canlı Ölçeklenen) -->
+                    <!-- Orta Alan: TAM BOY CANLI HIZ GRAFİK ÇUBUKLARI -->
                     <Border Grid.Column="1" Height="44" Background="{Binding ThemeSpeedGraphInnerBg}" CornerRadius="6" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" Padding="4,2" VerticalAlignment="Center" ClipToBounds="True">
                         <Viewbox Stretch="Fill" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                             <Grid Height="40">
@@ -137,20 +129,13 @@
                         </Viewbox>
                     </Border>
 
-                    <!-- Sağ Taraf: Anlık, Min, Maks Hız Rozetleri (Grafiğin Sağında) -->
+                    <!-- Sağ Taraf: Anlık ve Maks Hız Rozetleri -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="14,0,6,0">
                         <!-- Anlık Hız -->
                         <Border Background="#1A10B981" BorderBrush="#10B981" BorderThickness="1" CornerRadius="4" Padding="8,4">
                             <StackPanel Orientation="Horizontal" Spacing="5">
                                 <TextBlock Text="⚡ Anlık:" FontSize="11" Foreground="#6EE7B7" VerticalAlignment="Center" />
                                 <TextBlock Text="{Binding GraphCurrentSpeedText}" FontWeight="Bold" FontSize="12" Foreground="#10B981" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Border>
-                        <!-- Min Hız -->
-                        <Border Background="#1A0284C7" BorderBrush="#0284C7" BorderThickness="1" CornerRadius="4" Padding="8,4">
-                            <StackPanel Orientation="Horizontal" Spacing="5">
-                                <TextBlock Text="📉 Min:" FontSize="11" Foreground="#7DD3FC" VerticalAlignment="Center" />
-                                <TextBlock Text="{Binding GraphMinSpeedText}" FontWeight="SemiBold" FontSize="11" Foreground="#38BDF8" VerticalAlignment="Center" />
                             </StackPanel>
                         </Border>
                         <!-- Maks Hız -->
@@ -162,9 +147,9 @@
                         </Border>
                     </StackPanel>
 
-                    <!-- En Sağ: Kapat / Gizle Butonu -->
-                    <Button Grid.Column="3" Command="{Binding ToggleSpeedGraphCommand}" Background="Transparent" BorderThickness="0" Padding="8,4" ToolTip.Tip="Hız Grafiğini Gizle" VerticalAlignment="Center" Margin="4,0,0,0">
-                        <TextBlock Text="✕" FontSize="12" Foreground="#64748B" />
+                    <!-- En Sağ: Göster / Gizle Butonu -->
+                    <Button Grid.Column="3" Command="{Binding ToggleSpeedGraphCommand}" Background="Transparent" BorderThickness="0" Padding="8,4" ToolTip.Tip="Hız Grafiğini Gizle / Göster" VerticalAlignment="Center" Margin="4,0,0,0">
+                        <TextBlock Text="👁️" FontSize="13" Foreground="#64748B" />
                     </Button>
                 </Grid>
             </Border>
@@ -473,9 +458,17 @@
                     <GridSplitter Grid.Row="1" Background="{Binding ThemeBorderColor}" ResizeDirection="Rows" />
 
                     <!-- ALT DETAY PANELİ (BitTorrent Sekmeleri) -->
-                    <Border Grid.Row="2" Background="{Binding ThemeDetailBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="0,1,0,0" Padding="8,4">
+                    <Border Grid.Row="2" Background="{Binding ThemeDetailBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="0,1,0,0" Padding="6,2">
                         <TabControl SelectedIndex="{Binding SelectedDetailTabIndex}">
-                            <TabItem Header="ℹ️ Genel Bilgi">
+                            <TabControl.Styles>
+                                <Style Selector="TabItem">
+                                    <Setter Property="FontSize" Value="11" />
+                                    <Setter Property="Padding" Value="7,3" />
+                                    <Setter Property="MinHeight" Value="24" />
+                                </Style>
+                            </TabControl.Styles>
+
+                            <TabItem Header="ℹ️ Genel">
                                 <ScrollViewer Margin="8">
                                     <Grid ColumnDefinitions="140, *" RowDefinitions="Auto, Auto, Auto, Auto, Auto" Margin="4">
                                         <TextBlock Grid.Row="0" Grid.Column="0" Text="Dosya Adı:" FontWeight="SemiBold" Margin="0,4" />
@@ -492,7 +485,7 @@
                                 </ScrollViewer>
                             </TabItem>
 
-                            <TabItem Header="🟩 Parçalar (Segmentler)">
+                            <TabItem Header="🟩 Parçalar">
                                 <ScrollViewer Margin="8">
                                     <StackPanel Spacing="8">
                                         <TextBlock Text="Segment / Parça Doluluk Haritası (Eşzamanlı Parçalar):" FontWeight="SemiBold" />
@@ -518,7 +511,7 @@
                             </TabItem>
 
                             <!-- Detaylı Torrent Sekmeleri -->
-                            <TabItem Header="🌊 Torrent Detayları" IsVisible="{Binding SelectedDownload.IsTorrent, FallbackValue=False}">
+                            <TabItem Header="🌊 Torrent" IsVisible="{Binding SelectedDownload.IsTorrent, FallbackValue=False}">
                                 <ScrollViewer Margin="8">
                                     <Grid ColumnDefinitions="*, *" RowDefinitions="Auto, Auto, Auto, Auto" Margin="4">
                                         <!-- Sol Kolon: Boyut ve İlerleme -->
@@ -575,17 +568,17 @@
                             </TabItem>
 
                             <!-- qBittorrent Stili Dosya & İçerik Seçimi -->
-                            <TabItem Header="📁 Dosyalar (İçerik)" IsVisible="{Binding SelectedDownload.IsTorrent, FallbackValue=False}">
+                            <TabItem Header="📁 Dosyalar" IsVisible="{Binding SelectedDownload.IsTorrent, FallbackValue=False}">
                                 <Grid RowDefinitions="Auto, *">
-                                    <Border Grid.Row="0" Background="{DynamicResource SystemControlBackgroundAltHighBrush}" Padding="8,4" BorderBrush="{DynamicResource SystemBaseLowColor}" BorderThickness="0,0,0,1">
-                                        <StackPanel Orientation="Horizontal" Spacing="10">
-                                            <Button Command="{Binding SelectAllTorrentFilesCommand}" CommandParameter="{x:True}" Padding="8,2" FontSize="11">
-                                                <TextBlock Text="✅ Tümünü İndir" />
+                                    <Border Grid.Row="0" Background="{DynamicResource SystemControlBackgroundAltHighBrush}" Padding="6,2" BorderBrush="{DynamicResource SystemBaseLowColor}" BorderThickness="0,0,0,1">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <Button Command="{Binding SelectAllTorrentFilesCommand}" CommandParameter="{x:True}" Padding="6,2" Height="22" FontSize="10">
+                                                <TextBlock Text="✅ Tümünü İndir" FontSize="10" />
                                             </Button>
-                                            <Button Command="{Binding SelectAllTorrentFilesCommand}" CommandParameter="{x:False}" Padding="8,2" FontSize="11">
-                                                <TextBlock Text="⬜ Tümünü Bırak" />
+                                            <Button Command="{Binding SelectAllTorrentFilesCommand}" CommandParameter="{x:False}" Padding="6,2" Height="22" FontSize="10">
+                                                <TextBlock Text="⬜ Tümünü Bırak" FontSize="10" />
                                             </Button>
-                                            <TextBlock Text="{Binding CurrentTorrentDetails.Files.Count, StringFormat='Toplam {0} dosya'}" VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                            <TextBlock Text="{Binding CurrentTorrentDetails.Files.Count, StringFormat='Toplam {0} dosya'}" VerticalAlignment="Center" FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" Margin="4,0,0,0" />
                                         </StackPanel>
                                     </Border>
                                     <ListBox Grid.Row="1" ItemsSource="{Binding CurrentTorrentDetails.Files}" MaxHeight="160">
@@ -615,7 +608,7 @@
                             </TabItem>
 
                             <!-- qBittorrent Stili Eşler (Peers) -->
-                            <TabItem Header="👥 Eşler (Peers)" IsVisible="{Binding SelectedDownload.IsTorrent, FallbackValue=False}">
+                            <TabItem Header="👥 Eşler" IsVisible="{Binding SelectedDownload.IsTorrent, FallbackValue=False}">
                                 <ListBox ItemsSource="{Binding CurrentTorrentDetails.Peers}" MaxHeight="160">
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
@@ -789,6 +782,44 @@
                                     </StackPanel>
                                 </StackPanel>
                             </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Torrent Dosya Listesi ve Seçim Kutuları (qBittorrent Stili) -->
+                    <Border Background="{Binding ThemeWindowBg}" BorderBrush="{Binding ThemeBorderColor}" CornerRadius="8" Padding="12" IsVisible="{Binding AddDialogHasTorrentFiles}" BorderThickness="1">
+                        <StackPanel Spacing="8">
+                            <Grid ColumnDefinitions="*, Auto">
+                                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                    <TextBlock Text="📁" FontSize="14" VerticalAlignment="Center" />
+                                    <TextBlock Text="İndirilecek Dosyalar:" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding AddDialogTorrentFiles.Count, StringFormat='({0} dosya)'}" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                                    <Button Command="{Binding SelectAllAddDialogTorrentFilesCommand}" CommandParameter="{x:True}" Padding="6,2" Height="22" FontSize="10">
+                                        <TextBlock Text="✅ Tümünü Seç" FontSize="10" />
+                                    </Button>
+                                    <Button Command="{Binding SelectAllAddDialogTorrentFilesCommand}" CommandParameter="{x:False}" Padding="6,2" Height="22" FontSize="10">
+                                        <TextBlock Text="⬜ Tümünü Bırak" FontSize="10" />
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+
+                            <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}" CornerRadius="4" BorderBrush="{DynamicResource SystemBaseLowColor}" BorderThickness="1" MaxHeight="160">
+                                <ScrollViewer>
+                                    <ItemsControl ItemsSource="{Binding AddDialogTorrentFiles}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid ColumnDefinitions="Auto, *, Auto" Margin="6,3">
+                                                    <CheckBox IsChecked="{Binding IsSelected}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                                    <TextBlock Grid.Column="1" Text="{Binding Path}" FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Grid.Column="2" Text="{Binding LengthDisplay}" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Right" Foreground="{DynamicResource SystemBaseMediumColor}" Margin="8,0,4,0" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </Border>
+                            <TextBlock Text="* Seçili olmayan dosyalar indirilmeyecektir. Hiçbiri seçilmezse tümü indirilir." FontSize="10" Foreground="{Binding ThemeTextSecondary}" />
                         </StackPanel>
                     </Border>
 
