@@ -9,7 +9,7 @@ namespace FDownloader.Core.Video;
 
 /// <summary>
 /// YouTube, Twitter, Instagram, TikTok vb. platformlardan video/ses indirmek için yt-dlp sarmalayıcısı.
-/// ClipGrab benzeri çalışır: Video meta verisini alır, MP4/MP3 format seçimini destekler ve canlı ilerleme yayını yapar.
+/// Video meta verisini alır, MP4/MP3 format seçimini destekler ve canlı ilerleme yayını yapar.
 /// </summary>
 public sealed class YtDlpMediaService
 {
@@ -344,7 +344,7 @@ public sealed class YtDlpMediaService
 
         if (isAudioOnlyMp3)
         {
-            // MP3 Ses dönüştürme (ClipGrab / YouTube to MP3 tarzı)
+            // MP3 Ses dönüştürme
             args = $"{commonArgs} {playlistFlag} {ffmpegFlag} {DefaultAudioFormat} --newline -o \"{outputTemplate}\" \"{url}\"";
         }
         else

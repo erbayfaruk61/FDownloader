@@ -71,6 +71,10 @@ jobs:
             --runtime win-x64 `
             --outputDir ./Releases
 
+          if (Test-Path tools/browser-extension) {
+            Compress-Archive -Path tools/browser-extension/* -DestinationPath ./Releases/FDownloader-Browser-Extension.zip -Force
+          }
+
       - name: GitHub Release Oluştur ve Paketleri Yükle
         uses: softprops/action-gh-release@v2
         with:

@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace FDownloader.Core.Utilities;
 
 /// <summary>
-/// Sistem panosunu (clipboard) izleyerek yeni kopyalanan indirme ve medya linklerini yakalar (ClipGrab / IDM tarzı).
+/// Sistem panosunu (clipboard) izleyerek kopyalanan indirme ve medya bağlantılarını otomatik yakalar.
 /// </summary>
 public sealed class ClipboardWatcher : IDisposable
 {

@@ -324,7 +324,7 @@ public sealed class DownloadManager : IAsyncDisposable
     }
 
     /// <summary>
-    /// YouTube / Medya indirme görevi ekler ve çalıştırır (ClipGrab tarzı MP4 veya MP3, tekil veya playlist).
+    /// Medya indirme görevi ekler ve çalıştırır (MP4 veya MP3, tekil veya oynatma listesi).
     /// </summary>
     public Task<DownloadTask> AddMediaDownloadAsync(
         string url,

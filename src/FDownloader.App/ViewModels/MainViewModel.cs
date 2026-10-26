@@ -1987,7 +1987,8 @@ public partial class MainViewModel : ViewModelBase
     private async void FetchMediaInfoInBackground(string url)
     {
         AddDialogIsLoading = true;
-        AddDialogStatusText = "Medya ve playlist bilgisi alınıyor (yt-dlp)...";
+        bool isYouTube = url.Contains("youtube.com", StringComparison.OrdinalIgnoreCase) || url.Contains("youtu.be", StringComparison.OrdinalIgnoreCase);
+        AddDialogStatusText = isYouTube ? "YouTube bilgisi alınıyor..." : "Medya bilgisi alınıyor...";
 
         try
         {

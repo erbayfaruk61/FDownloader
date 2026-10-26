@@ -8,7 +8,7 @@ namespace FDownloader.Core.Torrent;
 
 /// <summary>
 /// BitTorrent protokolü üzerinden dosya/klasör indirmelerini yönetir.
-/// MonoTorrent kütüphanesini kullanır ve qBittorrent düzeyinde gelişmiş torrent yönetimi sağlar.
+/// MonoTorrent kütüphanesini kullanarak gelişmiş torrent yönetimi sağlar.
 /// </summary>
 public sealed class TorrentService : IAsyncDisposable
 {

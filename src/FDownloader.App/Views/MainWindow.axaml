@@ -7,7 +7,7 @@
         x:Class="FDownloader.App.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         Icon="/Assets/logo.png"
-        Title="FDownloader — Çoklu Protokol İndirme Yöneticisi (IDM, BitTorrent &amp; YouTube)"
+        Title="FDownloader - İndirme Yöneticisi"
         Width="1260" Height="780"
         MinWidth="1000" MinHeight="640"
         WindowStartupLocation="CenterScreen"
@@ -182,8 +182,8 @@
                             <ListBoxItem Content="⚡ İndiriliyor" />
                             <ListBoxItem Content="✔️ Tamamlandı" />
                             <ListBoxItem Content="⏸ Duraklatıldı" />
-                            <ListBoxItem Content="🌊 BitTorrent" />
-                            <ListBoxItem Content="🎬 Videolar &amp; YouTube" />
+                            <ListBoxItem Content="🌊 Torrent" />
+                            <ListBoxItem Content="🎬 Videolar" />
                             <ListBoxItem Content="🎵 Ses &amp; MP3" />
                             <ListBoxItem Content="📦 Sıkıştırılmış" />
                             <ListBoxItem Content="📄 Belgeler" />
@@ -517,8 +517,8 @@
                                 </ScrollViewer>
                             </TabItem>
 
-                            <!-- qBittorrent Stili Detaylı BitTorrent Sekmeleri -->
-                            <TabItem Header="🌊 BitTorrent Genel" IsVisible="{Binding SelectedDownload.IsTorrent, FallbackValue=False}">
+                            <!-- Detaylı Torrent Sekmeleri -->
+                            <TabItem Header="🌊 Torrent Detayları" IsVisible="{Binding SelectedDownload.IsTorrent, FallbackValue=False}">
                                 <ScrollViewer Margin="8">
                                     <Grid ColumnDefinitions="*, *" RowDefinitions="Auto, Auto, Auto, Auto" Margin="4">
                                         <!-- Sol Kolon: Boyut ve İlerleme -->
@@ -737,7 +737,7 @@
                     </Grid>
 
                     <StackPanel Spacing="6">
-                        <TextBlock Text="Bağlantı (URL, YouTube Linki veya Magnet):" FontWeight="SemiBold" />
+                        <TextBlock Text="İndirme Bağlantısı (URL veya Magnet):" FontWeight="SemiBold" />
                         <Grid ColumnDefinitions="*, Auto">
                             <TextBox Grid.Column="0" Text="{Binding AddDialogUrl}" PlaceholderText="https://... veya magnet:?xt=... veya dosya yolu" Height="36" VerticalContentAlignment="Center" />
                             <Button Grid.Column="1" Command="{Binding BrowseTorrentFileCommand}" ToolTip.Tip="Bilgisayardan .torrent dosyası seçin" Content="📁 .torrent Seç..." Margin="8,0,0,0" Height="36" Padding="12,0" FontWeight="SemiBold" />
@@ -747,7 +747,7 @@
                     <Border Background="{Binding ThemeWindowBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="6" Padding="12,8">
                         <StackPanel Spacing="4">
                             <TextBlock Text="{Binding AddDialogStatusText}" FontWeight="Medium" Foreground="{DynamicResource SystemBaseHighColor}" />
-                            <TextBlock Text="YouTube, TikTok, Twitter vb. linklerde MP4 video veya MP3 ses seçebilirsiniz." FontSize="11" Foreground="{Binding ThemeTextSecondary}" />
+                            <TextBlock Text="Video veya ses bağlantılarında MP4 veya MP3 formatı seçebilirsiniz." FontSize="11" Foreground="{Binding ThemeTextSecondary}" />
                         </StackPanel>
                     </Border>
 
@@ -755,7 +755,7 @@
                         <StackPanel Spacing="10">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <TextBlock Text="🎬" FontSize="16" VerticalAlignment="Center" />
-                                <TextBlock Text="YouTube &amp; Medya Seçenekleri:" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                                <TextBlock Text="Medya Seçenekleri:" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
                             </StackPanel>
 
                             <TextBox Text="{Binding AddDialogTitle}" PlaceholderText="Dosya / Video Başlığı" Height="34" VerticalContentAlignment="Center" />
@@ -942,7 +942,7 @@
                                                                 </Grid>
                                                             </Border>
                                                         </Border>
-                                                        <TextBlock Text="Klasik IDM stili mavi" FontSize="10" Foreground="{Binding ThemeTextSecondary}" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Text="Klasik mavi" FontSize="10" Foreground="{Binding ThemeTextSecondary}" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis" />
                                                     </StackPanel>
                                                 </Border>
 
