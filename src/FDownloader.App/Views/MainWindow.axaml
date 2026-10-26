@@ -6,7 +6,7 @@
         mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="780"
         x:Class="FDownloader.App.Views.MainWindow"
         x:DataType="vm:MainViewModel"
-        Icon="/Assets/logo.png"
+        Icon="/Assets/logo.ico"
         Title="FDownloader - İndirme Yöneticisi"
         Width="1260" Height="780"
         MinWidth="1000" MinHeight="640"
@@ -167,7 +167,7 @@
                             <ListBoxItem Content="⚡ İndiriliyor" />
                             <ListBoxItem Content="✔️ Tamamlandı" />
                             <ListBoxItem Content="⏸ Duraklatıldı" />
-                            <ListBoxItem Content="🌊 Torrent" />
+                            <ListBoxItem Content="🌊 Torrent (Beta)" />
                             <ListBoxItem Content="🎬 Videolar" />
                             <ListBoxItem Content="🎵 Ses &amp; MP3" />
                             <ListBoxItem Content="📦 Sıkıştırılmış" />
@@ -511,7 +511,7 @@
                             </TabItem>
 
                             <!-- Detaylı Torrent Sekmeleri -->
-                            <TabItem Header="🌊 Torrent" IsVisible="{Binding SelectedDownload.IsTorrent, FallbackValue=False}">
+                            <TabItem Header="🌊 Torrent (Beta)" IsVisible="{Binding SelectedDownload.IsTorrent, FallbackValue=False}">
                                 <ScrollViewer Margin="8">
                                     <Grid ColumnDefinitions="*, *" RowDefinitions="Auto, Auto, Auto, Auto" Margin="4">
                                         <!-- Sol Kolon: Boyut ve İlerleme -->
@@ -819,7 +819,7 @@
                                     </ItemsControl>
                                 </ScrollViewer>
                             </Border>
-                            <TextBlock Text="* Seçili olmayan dosyalar indirilmeyecektir. Hiçbiri seçilmezse tümü indirilir." FontSize="10" Foreground="{Binding ThemeTextSecondary}" />
+                            <TextBlock Text="* BitTorrent modülü geliştirme (Beta) aşamasındadır. Seçili olmayan dosyalar indirilmeyecektir. Hiçbiri seçilmezse tümü indirilir." FontSize="10" Foreground="{Binding ThemeTextSecondary}" />
                         </StackPanel>
                     </Border>
 

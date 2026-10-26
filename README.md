@@ -28,7 +28,7 @@
 ## 🚀 Öne Çıkan Özellikler
 
 * ⚡ **Çok Kanallı & Parçalı İndirme:** Dosyaları dinamik parçalara bölerek bağlantı hızınızı maksimum seviyede kullanır; kesilen indirmeleri kaldığı yerden devam ettirir.
-* 🌊 **Torrent Desteği:** Magnet bağlantılarını ve `.torrent` dosyalarını doğrudan uygulama içerisinden indirip yönetebilme.
+* 🌊 **Torrent Desteği (Beta / Geliştirme Aşamasında):** Magnet bağlantılarını ve `.torrent` dosyalarını uygulama içerisinden indirme; indirme öncesi qBittorrent stili dosya seçimi ve eş/parça takibi.
 * 🎬 **Akıllı Medya Yakalama:** Video ve ses bağlantılarından doğrudan meta veri alıp MP4 video veya MP3 ses olarak kaydedebilme.
 * 📈 **Canlı Hız Grafiği:** Gerçek zamanlı indirme hızını ve istatistikleri görselleştiren pürüzsüz grafik paneli.
 * 🧩 **Tarayıcı Köprüsü & Eklenti:** Chrome, Edge, Brave ve Opera üzerinden web indirmelerini otomatik olarak yakalayan yerel köprü desteği.
