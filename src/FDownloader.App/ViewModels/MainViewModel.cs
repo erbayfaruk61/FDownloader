@@ -92,6 +92,15 @@ public partial class MainViewModel : ViewModelBase
     // Torrent İndirme Öncesi Dosya Seçim Listesi (qBittorrent Stili)
     [ObservableProperty] private ObservableCollection<TorrentFileInfo> _addDialogTorrentFiles = new();
     [ObservableProperty] private bool _addDialogHasTorrentFiles = false;
+    [ObservableProperty] private string _addDialogDiskSpaceText = string.Empty;
+    [ObservableProperty] private bool _addDialogHasDiskWarning = false;
+    [ObservableProperty] private string _addDialogDiskWarningText = string.Empty;
+    [ObservableProperty] private string _addDialogTorrentSelectedSizeText = string.Empty;
+
+    partial void OnAddDialogSavePathChanged(string value)
+    {
+        UpdateAddDialogDiskSpace();
+    }
 
     // ─── Site Yakalayıcı (Site Grabber - hDM Özelliği) ────────────────────
     [ObservableProperty] private bool _isSiteGrabberDialogOpen;
@@ -757,6 +766,24 @@ public partial class MainViewModel : ViewModelBase
                     item.EtaDisplay = "Bağlantı Kesildi";
                     ApplyFilter();
                     SoundPlayerService.PlayWarning();
+                }
+                UpdateGlobalStats();
+                UpdateHybridState();
+            });
+        });
+
+        // 6.5. Görev Yeniden Bağlanma / Deneme (Auto-retry)
+        _eventBus.Subscribe<TaskRetryingEvent>(e =>
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                var item = Downloads.FirstOrDefault(d => d.Id == e.TaskId);
+                if (item != null)
+                {
+                    item.Status = DownloadStatus.Retrying;
+                    item.IsStalled = false;
+                    item.EtaDisplay = $"Tekrar deneniyor ({e.AttemptNumber}. deneme, {(int)e.Delay.TotalSeconds}sn)";
+                    ApplyFilter();
                 }
                 UpdateGlobalStats();
                 UpdateHybridState();
@@ -1861,6 +1888,20 @@ public partial class MainViewModel : ViewModelBase
     // ─── Komutlar: Yeni İndirme Ekleme ────────────────────────────────────
 
     public Func<Task<string?>>? RequestBrowseTorrentFile { get; set; }
+    public Func<Task<string?>>? RequestBrowseFolder { get; set; }
+
+    [RelayCommand]
+    public async Task BrowseAddDialogSavePath()
+    {
+        if (RequestBrowseFolder != null)
+        {
+            var folder = await RequestBrowseFolder();
+            if (!string.IsNullOrWhiteSpace(folder))
+            {
+                AddDialogSavePath = folder;
+            }
+        }
+    }
 
     [RelayCommand]
     public async Task BrowseTorrentFile()
@@ -1904,6 +1945,7 @@ public partial class MainViewModel : ViewModelBase
         AddDialogDownloadSingleOnly = true;
         AddDialogDownloadWholePlaylist = false;
         AddDialogStatusText = "URL veya Magnet linki girin";
+        UpdateAddDialogDiskSpace();
         IsAddDialogOpen = true;
     }
 
@@ -2200,13 +2242,16 @@ public partial class MainViewModel : ViewModelBase
             {
                 foreach (var f in files)
                 {
+                    f.PropertyChanged += (_, _) => UpdateAddDialogDiskSpace();
                     AddDialogTorrentFiles.Add(f);
                 }
                 AddDialogHasTorrentFiles = true;
+                UpdateAddDialogDiskSpace();
                 AddDialogStatusText = $"{files.Count} adet dosya listelendi. İndirmek istediklerinizi seçebilirsiniz.";
             }
             else
             {
+                UpdateAddDialogDiskSpace();
                 AddDialogStatusText = pathOrUrl.StartsWith("magnet:", StringComparison.OrdinalIgnoreCase)
                     ? "Magnet linki (Meta verisi indirme başladığında alınacaktır)."
                     : "BitTorrent indirmesi hazır.";
@@ -2218,6 +2263,35 @@ public partial class MainViewModel : ViewModelBase
         }
     }
 
+    public void UpdateAddDialogDiskSpace()
+    {
+        AddDialogDiskSpaceText = DiskSpaceChecker.GetDriveInfoSummary(AddDialogSavePath);
+        if (AddDialogHasTorrentFiles && AddDialogTorrentFiles.Count > 0)
+        {
+            long selectedBytes = AddDialogTorrentFiles.Where(f => f.IsSelected).Sum(f => f.Length);
+            long totalBytes = AddDialogTorrentFiles.Sum(f => f.Length);
+            AddDialogTorrentSelectedSizeText = $"Seçilen: {SpeedCalculator.FormatBytes(selectedBytes)} / Toplam: {SpeedCalculator.FormatBytes(totalBytes)}";
+
+            long freeSpace = DiskSpaceChecker.GetAvailableSpace(AddDialogSavePath);
+            if (selectedBytes > 0 && selectedBytes > freeSpace)
+            {
+                AddDialogHasDiskWarning = true;
+                AddDialogDiskWarningText = $"⚠️ Yetersiz Disk Alanı! (Seçilen: {SpeedCalculator.FormatBytes(selectedBytes)}, Boş: {SpeedCalculator.FormatBytes(freeSpace)})";
+            }
+            else
+            {
+                AddDialogHasDiskWarning = false;
+                AddDialogDiskWarningText = string.Empty;
+            }
+        }
+        else
+        {
+            AddDialogTorrentSelectedSizeText = string.Empty;
+            AddDialogHasDiskWarning = false;
+            AddDialogDiskWarningText = string.Empty;
+        }
+    }
+
     [RelayCommand]
     public void SelectAllAddDialogTorrentFiles()
     {
@@ -2225,6 +2299,7 @@ public partial class MainViewModel : ViewModelBase
         {
             file.IsSelected = true;
         }
+        UpdateAddDialogDiskSpace();
     }
 
     [RelayCommand]
@@ -2234,6 +2309,7 @@ public partial class MainViewModel : ViewModelBase
         {
             file.IsSelected = false;
         }
+        UpdateAddDialogDiskSpace();
     }
 
     [RelayCommand]
@@ -2242,6 +2318,9 @@ public partial class MainViewModel : ViewModelBase
         IsAddDialogOpen = false;
         AddDialogTorrentFiles.Clear();
         AddDialogHasTorrentFiles = false;
+        AddDialogHasDiskWarning = false;
+        AddDialogDiskWarningText = string.Empty;
+        AddDialogTorrentSelectedSizeText = string.Empty;
     }
 
     [RelayCommand]

@@ -24,8 +24,28 @@ public partial class MainWindow : Window
             if (DataContext is MainViewModel vm)
             {
                 vm.RequestBrowseTorrentFile = BrowseTorrentFileAsync;
+                vm.RequestBrowseFolder = BrowseFolderAsync;
             }
         };
+    }
+
+    private async Task<string?> BrowseFolderAsync()
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel == null) return null;
+
+        var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "Kayıt Klasörü Seç",
+            AllowMultiple = false
+        });
+
+        if (folders != null && folders.Count > 0)
+        {
+            return folders[0].Path.LocalPath;
+        }
+
+        return null;
     }
 
     private async Task<string?> BrowseTorrentFileAsync()

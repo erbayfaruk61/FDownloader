@@ -849,6 +849,7 @@
                                     <TextBlock Text="📁" FontSize="14" VerticalAlignment="Center" />
                                     <TextBlock Text="İndirilecek Dosyalar:" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />
                                     <TextBlock Text="{Binding AddDialogTorrentFiles.Count, StringFormat='({0} dosya)'}" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding AddDialogTorrentSelectedSizeText}" FontSize="11" Foreground="#10B981" FontWeight="SemiBold" VerticalAlignment="Center" Margin="6,0,0,0" IsVisible="{Binding !!AddDialogTorrentSelectedSizeText.Length}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
                                     <Button Command="{Binding SelectAllAddDialogTorrentFilesCommand}" Padding="6,2" Height="22" FontSize="10">
@@ -875,13 +876,25 @@
                                     </ItemsControl>
                                 </ScrollViewer>
                             </Border>
+
+                            <!-- Yetersiz Disk Alanı Uyarısı -->
+                            <Border Background="#25EF4444" BorderBrush="#EF4444" BorderThickness="1" CornerRadius="6" Padding="8,6" IsVisible="{Binding AddDialogHasDiskWarning}">
+                                <TextBlock Text="{Binding AddDialogDiskWarningText}" Foreground="#F87171" FontWeight="Bold" FontSize="11" TextWrapping="Wrap" />
+                            </Border>
+
                             <TextBlock Text="* BitTorrent modülü geliştirme (Beta) aşamasındadır. Seçili olmayan dosyalar indirilmeyecektir. Hiçbiri seçilmezse tümü indirilir." FontSize="10" Foreground="{Binding ThemeTextSecondary}" />
                         </StackPanel>
                     </Border>
 
                     <StackPanel Spacing="6">
-                        <TextBlock Text="Kayıt Klasörü:" FontWeight="SemiBold" />
-                        <TextBox Text="{Binding AddDialogSavePath}" PlaceholderText="C:\Users\...\Downloads" />
+                        <Grid ColumnDefinitions="*, Auto">
+                            <TextBlock Text="Kayıt Klasörü:" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Text="{Binding AddDialogDiskSpaceText}" FontSize="11" Foreground="{Binding ThemeTextSecondary}" VerticalAlignment="Center" />
+                        </Grid>
+                        <Grid ColumnDefinitions="*, Auto">
+                            <TextBox Grid.Column="0" Text="{Binding AddDialogSavePath}" PlaceholderText="C:\Users\...\Downloads" Height="34" VerticalContentAlignment="Center" />
+                            <Button Grid.Column="1" Command="{Binding BrowseAddDialogSavePathCommand}" Content="📁 Gözat" Margin="6,0,0,0" Height="34" Padding="12,0" />
+                        </Grid>
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12" Margin="0,8,0,0">
