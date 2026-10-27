@@ -1618,20 +1618,26 @@ public partial class MainViewModel : ViewModelBase
                     PathSafetyHelper.SafeDeleteFile(tempPath);
                 }
 
-                // Klasör içi isim eşleşmeli geçici artıklar (Sadece fileName.* olanlar: ornek.mp4.part vb.)
+                // Klasör içi isim ve akış eşleşmeli geçici artıklar (.part, .ytdl, yt-dlp .f*.mp4 vb.)
                 var dir = Path.GetDirectoryName(path);
                 var fileName = Path.GetFileName(path);
                 if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir) && !string.IsNullOrEmpty(fileName))
                 {
                     try
                     {
-                        var matching = Directory.GetFiles(dir, $"{fileName}.*");
-                        foreach (var f in matching)
+                        var baseName = Path.GetFileNameWithoutExtension(fileName);
+                        if (!string.IsNullOrWhiteSpace(baseName) && baseName.Length >= 3)
                         {
-                            var fExt = Path.GetExtension(f).ToLowerInvariant();
-                            if (fExt is ".fdown" or ".fdtmp" or ".part" or ".ytdl" or ".tmp")
+                            var candidateFiles = Directory.GetFiles(dir, $"{baseName}*");
+                            foreach (var f in candidateFiles)
                             {
-                                PathSafetyHelper.SafeDeleteFile(f);
+                                var fName = Path.GetFileName(f);
+                                if (fName.StartsWith(baseName + ".", StringComparison.OrdinalIgnoreCase) ||
+                                    fName.StartsWith(baseName + "-", StringComparison.OrdinalIgnoreCase) ||
+                                    fName.Equals(fileName, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    PathSafetyHelper.SafeDeleteFile(f);
+                                }
                             }
                         }
                     }
@@ -1639,15 +1645,44 @@ public partial class MainViewModel : ViewModelBase
                 }
             }
 
-            // 3. Dosya henüz tamamlanmamışsa standart indirme klasörü altında FileName dosyasını kontrol et (yalnızca tekil dosya!)
+            // 3. Dosya henüz tamamlanmamışsa standart indirme klasörü altındaki akışları ve dosyaları temizle
             var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-            if (!string.IsNullOrWhiteSpace(target.FileName) && !string.IsNullOrWhiteSpace(userProfile))
+            if (!string.IsNullOrWhiteSpace(userProfile) && !string.IsNullOrWhiteSpace(target.FileName))
             {
-                var candidateFile1 = Path.Combine(userProfile, "Downloads", target.FileName);
-                PathSafetyHelper.SafeDeleteFile(candidateFile1);
+                var standardDirs = new[]
+                {
+                    Path.Combine(userProfile, "Downloads"),
+                    Path.Combine(userProfile, "İndirilenler")
+                };
 
-                var candidateFile2 = Path.Combine(userProfile, "İndirilenler", target.FileName);
-                PathSafetyHelper.SafeDeleteFile(candidateFile2);
+                var baseName = Path.GetFileNameWithoutExtension(target.FileName);
+
+                foreach (var sDir in standardDirs)
+                {
+                    if (!Directory.Exists(sDir)) continue;
+
+                    var singleFile = Path.Combine(sDir, target.FileName);
+                    PathSafetyHelper.SafeDeleteFile(singleFile);
+
+                    if (!string.IsNullOrWhiteSpace(baseName) && baseName.Length >= 3)
+                    {
+                        try
+                        {
+                            var matches = Directory.GetFiles(sDir, $"{baseName}*");
+                            foreach (var f in matches)
+                            {
+                                var fName = Path.GetFileName(f);
+                                if (fName.StartsWith(baseName + ".", StringComparison.OrdinalIgnoreCase) ||
+                                    fName.StartsWith(baseName + "-", StringComparison.OrdinalIgnoreCase) ||
+                                    fName.Equals(target.FileName, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    PathSafetyHelper.SafeDeleteFile(f);
+                                }
+                            }
+                        }
+                        catch { }
+                    }
+                }
             }
         }
         catch { }

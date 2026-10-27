@@ -501,7 +501,8 @@ public sealed class DownloadManager : IAsyncDisposable
 
         if (_mediaCtsList.TryGetValue(taskId, out var cts))
         {
-            cts.Cancel();
+            try { cts.Cancel(); } catch { }
+            _mediaService.StopDownload(taskId);
             task.Status = DownloadStatus.Paused;
             _repository.UpdateTaskStatus(task);
         }
@@ -521,6 +522,8 @@ public sealed class DownloadManager : IAsyncDisposable
             _logger.LogWarning(ex, "Görev duraklatılırken hata alındı (#{TaskId}), kaldırmaya devam ediliyor.", taskId);
         }
 
+        _mediaService.StopDownload(taskId);
+
         DownloadTask? task;
         lock (_lock)
         {
@@ -534,6 +537,8 @@ public sealed class DownloadManager : IAsyncDisposable
 
         if (deleteFile && task != null)
         {
+            // Windows'ta sürecin dosya tanıtıcısını tamamen bırakması için kısa bekleme
+            await System.Threading.Tasks.Task.Delay(150);
             DeleteTaskFiles(task);
         }
 
@@ -583,28 +588,42 @@ public sealed class DownloadManager : IAsyncDisposable
                     var p = task.FinalFilePath + ext;
                     PathSafetyHelper.SafeDeleteFile(p);
                 }
+            }
 
-                // yt-dlp format birleştirme aşamasındaki geçici dosyalar (ornek.f137.mp4, ornek.temp.mp4 vb.)
-                if (!string.IsNullOrEmpty(task.SaveDirectory) && Directory.Exists(task.SaveDirectory) && !string.IsNullOrEmpty(task.FileName))
+            // 4. SaveDirectory içindeki göreve ait parçalar (.part, .ytdl, yt-dlp akışları .f*.mp4, .f*.m4a vb.)
+            var saveDir = task.SaveDirectory ?? (!string.IsNullOrEmpty(task.FinalFilePath) ? Path.GetDirectoryName(task.FinalFilePath) : null);
+            var targetName = !string.IsNullOrEmpty(task.FileName) ? task.FileName : (!string.IsNullOrEmpty(task.FinalFilePath) ? Path.GetFileName(task.FinalFilePath) : null);
+
+            if (!string.IsNullOrEmpty(saveDir) && Directory.Exists(saveDir) && !string.IsNullOrEmpty(targetName))
+            {
+                try
                 {
-                    var exactName = task.FileName;
-                    try
+                    // Doğrudan hedef dosya
+                    var directTarget = Path.Combine(saveDir, targetName);
+                    PathSafetyHelper.SafeDeleteFile(directTarget);
+
+                    // Uzantısız temel isim (örneğin "VideoTitle.mp4" -> "VideoTitle")
+                    var baseName = Path.GetFileNameWithoutExtension(targetName);
+                    if (!string.IsNullOrWhiteSpace(baseName) && baseName.Length >= 3)
                     {
-                        var exactMatches = Directory.GetFiles(task.SaveDirectory, $"{exactName}.*");
-                        foreach (var f in exactMatches)
+                        var candidateFiles = Directory.GetFiles(saveDir, $"{baseName}*");
+                        foreach (var f in candidateFiles)
                         {
-                            var fExt = Path.GetExtension(f).ToLowerInvariant();
-                            if (fExt is ".fdown" or ".fdtmp" or ".part" or ".ytdl" or ".tmp")
+                            var fName = Path.GetFileName(f);
+                            // Sadece bu göreve ait akış ve geçici dosyaları sil (ör. baseName.f400.mp4, baseName.f140.m4a, baseName.part vb.)
+                            if (fName.StartsWith(baseName + ".", StringComparison.OrdinalIgnoreCase) ||
+                                fName.StartsWith(baseName + "-", StringComparison.OrdinalIgnoreCase) ||
+                                fName.Equals(targetName, StringComparison.OrdinalIgnoreCase))
                             {
                                 PathSafetyHelper.SafeDeleteFile(f);
                             }
                         }
                     }
-                    catch { }
                 }
+                catch { }
             }
 
-            // 4. Torrent görevi ise ve FinalFilePath henüz atanmamışsa SaveDirectory + FileName kontrolü
+            // 5. Torrent görevi ise ve FinalFilePath henüz atanmamışsa SaveDirectory + FileName kontrolü
             if (task.Category == DownloadCategory.Torrent && !string.IsNullOrEmpty(task.SaveDirectory) && !string.IsNullOrEmpty(task.FileName))
             {
                 var candidateSingleFile = Path.Combine(task.SaveDirectory, task.FileName);

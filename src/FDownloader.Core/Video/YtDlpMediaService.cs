@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -34,6 +35,29 @@ public sealed class YtDlpMediaService
     private readonly HttpClient _httpClient;
     private readonly string _toolsDir;
     private readonly string _ytDlpPath;
+    private readonly ConcurrentDictionary<long, Process> _runningProcesses = new();
+
+    /// <summary>
+    /// Belirtilen göreve ait çalışan yt-dlp ve ffmpeg süreç ağacını anında sonlandırır.
+    /// </summary>
+    public void StopDownload(long taskId)
+    {
+        if (_runningProcesses.TryRemove(taskId, out var proc))
+        {
+            try
+            {
+                if (!proc.HasExited)
+                {
+                    proc.Kill(entireProcessTree: true);
+                }
+            }
+            catch { }
+            finally
+            {
+                try { proc.Dispose(); } catch { }
+            }
+        }
+    }
 
     private static readonly Regex ProgressRegex = new(
         @"\[download\]\s+([0-9\.]+)%\s+of\s+~?([0-9\.]+[KMGkmg]?[iI]?[bB]?)\s+at\s+([0-9\.]+[KMGkmg]?[iI]?[bB]?/s)\s+ETA\s+([0-9:]+)",
@@ -409,103 +433,147 @@ public sealed class YtDlpMediaService
             CreateNoWindow = true
         };
 
-        using var proc = new Process { StartInfo = psi };
-        proc.Start();
-
-        var stopwatch = Stopwatch.StartNew();
-
-        string? downloadedFilePath = null;
-
-        // Canlı çıktı dinleme
-        while (!proc.StandardOutput.EndOfStream)
+        var proc = new Process { StartInfo = psi };
+        _runningProcesses[taskId] = proc;
+        using var registration = cancellationToken.Register(() =>
         {
-            if (cancellationToken.IsCancellationRequested)
+            try
             {
-                try { proc.Kill(); } catch { }
-                _eventBus.Publish(new TaskCancelledEvent(taskId));
-                return;
-            }
-
-            var line = await proc.StandardOutput.ReadLineAsync(cancellationToken);
-            if (string.IsNullOrWhiteSpace(line)) continue;
-
-            // İlerleme satırlarını ayrıştır
-            var match = ProgressRegex.Match(line);
-            if (match.Success)
-            {
-                if (double.TryParse(match.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture, out var percent))
+                if (!proc.HasExited)
                 {
-                    double speedBps = match.Groups.Count > 3 ? ParseSpeed(match.Groups[3].Value) : 0;
-                    long totalBytes = match.Groups.Count > 2 ? ParseBytes(match.Groups[2].Value) : 0;
-                    long downloadedBytes = totalBytes > 0 ? (long)(totalBytes * (percent / 100.0)) : 0;
-                    TimeSpan? eta = match.Groups.Count > 4 ? ParseEta(match.Groups[4].Value) : null;
-
-                    _eventBus.Publish(new ProgressUpdatedEvent(
-                        taskId,
-                        downloadedBytes,
-                        totalBytes,
-                        percent,
-                        speedBps,
-                        eta,
-                        Array.Empty<SegmentProgressInfo>()
-                    ));
+                    proc.Kill(entireProcessTree: true);
                 }
             }
-            else if (line.StartsWith("[download] Destination:", StringComparison.OrdinalIgnoreCase))
+            catch { }
+        });
+
+        try
+        {
+            proc.Start();
+
+            var stopwatch = Stopwatch.StartNew();
+
+            string? downloadedFilePath = null;
+
+            // Canlı çıktı dinleme
+            while (!proc.StandardOutput.EndOfStream)
             {
-                downloadedFilePath = line.Substring("[download] Destination:".Length).Trim().Trim('\"');
-            }
-            else if (line.StartsWith("[ExtractAudio] Destination:", StringComparison.OrdinalIgnoreCase))
-            {
-                downloadedFilePath = line.Substring("[ExtractAudio] Destination:".Length).Trim().Trim('\"');
-            }
-            else if (line.Contains("Merging formats into", StringComparison.OrdinalIgnoreCase))
-            {
-                const string prefix = "Merging formats into";
-                var pIdx = line.IndexOf(prefix, StringComparison.OrdinalIgnoreCase);
-                if (pIdx >= 0)
+                if (cancellationToken.IsCancellationRequested)
                 {
-                    downloadedFilePath = line.Substring(pIdx + prefix.Length).Trim().Trim('\"');
+                    try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { }
+                    _eventBus.Publish(new TaskCancelledEvent(taskId));
+                    return;
                 }
+
+                var line = await proc.StandardOutput.ReadLineAsync(cancellationToken);
+                if (string.IsNullOrWhiteSpace(line)) continue;
+
+                // İlerleme satırlarını ayrıştır
+                var match = ProgressRegex.Match(line);
+                if (match.Success)
+                {
+                    if (double.TryParse(match.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture, out var percent))
+                    {
+                        double speedBps = match.Groups.Count > 3 ? ParseSpeed(match.Groups[3].Value) : 0;
+                        long totalBytes = match.Groups.Count > 2 ? ParseBytes(match.Groups[2].Value) : 0;
+                        long downloadedBytes = totalBytes > 0 ? (long)(totalBytes * (percent / 100.0)) : 0;
+                        TimeSpan? eta = match.Groups.Count > 4 ? ParseEta(match.Groups[4].Value) : null;
+
+                        _eventBus.Publish(new ProgressUpdatedEvent(
+                            taskId,
+                            downloadedBytes,
+                            totalBytes,
+                            percent,
+                            speedBps,
+                            eta,
+                            Array.Empty<SegmentProgressInfo>()
+                        ));
+                    }
+                }
+                else if (line.StartsWith("[download] Destination:", StringComparison.OrdinalIgnoreCase))
+                {
+                    downloadedFilePath = line.Substring("[download] Destination:".Length).Trim().Trim('\"');
+                }
+                else if (line.StartsWith("[ExtractAudio] Destination:", StringComparison.OrdinalIgnoreCase))
+                {
+                    downloadedFilePath = line.Substring("[ExtractAudio] Destination:".Length).Trim().Trim('\"');
+                }
+                else if (line.Contains("Merging formats into", StringComparison.OrdinalIgnoreCase))
+                {
+                    const string prefix = "Merging formats into";
+                    var pIdx = line.IndexOf(prefix, StringComparison.OrdinalIgnoreCase);
+                    if (pIdx >= 0)
+                    {
+                        downloadedFilePath = line.Substring(pIdx + prefix.Length).Trim().Trim('\"');
+                    }
+                }
+            }
+
+            await proc.WaitForExitAsync(cancellationToken);
+
+            if (proc.ExitCode == 0)
+            {
+                stopwatch.Stop();
+                long finalBytes = 0;
+                if (!string.IsNullOrEmpty(downloadedFilePath) && File.Exists(downloadedFilePath))
+                {
+                    finalBytes = new FileInfo(downloadedFilePath).Length;
+                }
+                else if (!string.IsNullOrEmpty(outputDirectory) && Directory.Exists(outputDirectory))
+                {
+                    var candidate = new DirectoryInfo(outputDirectory)
+                        .GetFiles()
+                        .Where(f => !f.Name.EndsWith(".part", StringComparison.OrdinalIgnoreCase) && !f.Name.EndsWith(".ytdl", StringComparison.OrdinalIgnoreCase))
+                        .OrderByDescending(f => f.LastWriteTimeUtc)
+                        .FirstOrDefault();
+
+                    if (candidate != null && (DateTime.UtcNow - candidate.LastWriteTimeUtc).TotalMinutes < 5)
+                    {
+                        downloadedFilePath = candidate.FullName;
+                        finalBytes = candidate.Length;
+                    }
+                }
+
+                _eventBus.Publish(new TaskCompletedEvent(
+                    taskId,
+                    downloadedFilePath ?? outputDirectory,
+                    finalBytes,
+                    stopwatch.Elapsed
+                ));
+            }
+            else
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    _eventBus.Publish(new TaskCancelledEvent(taskId));
+                    return;
+                }
+                var err = await proc.StandardError.ReadToEndAsync(cancellationToken);
+                _eventBus.Publish(new TaskFailedEvent(taskId, $"yt-dlp hata kodu: {proc.ExitCode}. {err}", false));
             }
         }
-
-        await proc.WaitForExitAsync(cancellationToken);
-
-        if (proc.ExitCode == 0)
+        catch (OperationCanceledException)
         {
-            stopwatch.Stop();
-            long finalBytes = 0;
-            if (!string.IsNullOrEmpty(downloadedFilePath) && File.Exists(downloadedFilePath))
+            try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { }
+            _eventBus.Publish(new TaskCancelledEvent(taskId));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Medya indirme sırasında hata alındı (#{TaskId})", taskId);
+            _eventBus.Publish(new TaskFailedEvent(taskId, ex.Message, false));
+        }
+        finally
+        {
+            _runningProcesses.TryRemove(taskId, out _);
+            try
             {
-                finalBytes = new FileInfo(downloadedFilePath).Length;
-            }
-            else if (!string.IsNullOrEmpty(outputDirectory) && Directory.Exists(outputDirectory))
-            {
-                var candidate = new DirectoryInfo(outputDirectory)
-                    .GetFiles()
-                    .Where(f => !f.Name.EndsWith(".part", StringComparison.OrdinalIgnoreCase) && !f.Name.EndsWith(".ytdl", StringComparison.OrdinalIgnoreCase))
-                    .OrderByDescending(f => f.LastWriteTimeUtc)
-                    .FirstOrDefault();
-
-                if (candidate != null && (DateTime.UtcNow - candidate.LastWriteTimeUtc).TotalMinutes < 5)
+                if (!proc.HasExited)
                 {
-                    downloadedFilePath = candidate.FullName;
-                    finalBytes = candidate.Length;
+                    proc.Kill(entireProcessTree: true);
                 }
             }
-
-            _eventBus.Publish(new TaskCompletedEvent(
-                taskId,
-                downloadedFilePath ?? outputDirectory,
-                finalBytes,
-                stopwatch.Elapsed
-            ));
-        }
-        else
-        {
-            var err = await proc.StandardError.ReadToEndAsync(cancellationToken);
-            _eventBus.Publish(new TaskFailedEvent(taskId, $"yt-dlp hata kodu: {proc.ExitCode}. {err}", false));
+            catch { }
+            try { proc.Dispose(); } catch { }
         }
     }
 
