@@ -14,6 +14,27 @@
         DragDrop.AllowDrop="True"
         Background="{Binding ThemeWindowBg}">
 
+    <Window.Styles>
+        <Style Selector="Thumb.colResizer">
+            <Setter Property="Width" Value="10" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="Cursor" Value="SizeWestEast" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="Transparent" Width="10" HorizontalAlignment="Right" VerticalAlignment="Stretch">
+                        <Border x:Name="SeparatorLine" Width="1" Background="#33FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Stretch" Margin="0,2" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="Thumb.colResizer:pointerover /template/ Border#SeparatorLine">
+            <Setter Property="Background" Value="#38BDF8" />
+            <Setter Property="Width" Value="2" />
+        </Style>
+    </Window.Styles>
+
     <Grid>
         <!-- ANA DÜZEN (Üst Toolbar, Canlı Hız Grafiği Paneli, Orta Alan, Durum Çubuğu) -->
         <Grid RowDefinitions="Auto, Auto, *, Auto">
@@ -176,9 +197,10 @@
                     
                     <!-- İNDİRME LİSTESİ TABLOSU (ÇOKLU SEÇİM & SAĞ TIK MENÜLÜ) -->
                     <Border Grid.Row="0" Margin="8,8,8,4">
-                        <Grid RowDefinitions="Auto, *">
-                            <!-- Tablo Başlıkları (Sağ Tık ile Sütun Gizle/Göster & Tutamaçlarla Boyutlandır) -->
-                            <Border Grid.Row="0" Background="{Binding ThemeTableHeaderBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1,1,1,0" CornerRadius="6,6,0,0" Padding="10,6">
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                            <Grid RowDefinitions="Auto, *">
+                                <!-- Tablo Başlıkları (Sağ Tık ile Sütun Gizle/Göster & Tutamaçlarla Boyutlandır) -->
+                                <Border Grid.Row="0" Background="{Binding ThemeTableHeaderBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1,1,1,0" CornerRadius="6,6,0,0" Padding="10,6">
                                 <Border.ContextMenu>
                                     <ContextMenu>
                                         <MenuItem Header="Sütunları Göster / Gizle" IsEnabled="False" FontWeight="Bold" />
@@ -197,67 +219,64 @@
                                 </Border.ContextMenu>
 
                                 <Grid ColumnDefinitions="32, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto">
-                                    <TextBlock Grid.Column="0" Text="Durum" Width="32" FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    <!-- 0: Durum -->
+                                    <Grid Grid.Column="0" Width="32">
+                                        <TextBlock Text="Durum" FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        <Border Width="1" Background="#26FFFFFF" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,3" />
+                                    </Grid>
 
                                     <!-- 1: Tür -->
                                     <Grid Grid.Column="1" Width="32" IsVisible="{Binding ShowColCategory}">
                                         <TextBlock Text="Tür" FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        <Border Width="1" Background="#26FFFFFF" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,3" />
                                     </Grid>
 
                                     <!-- 2: Dosya Adı -->
                                     <Grid Grid.Column="2" Width="{Binding ColNameWidth}">
                                         <TextBlock Text="Dosya Adı" FontWeight="SemiBold" VerticalAlignment="Center" Margin="6,0" />
-                                        <Border Width="1" Background="#26FFFFFF" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,3" />
-                                        <Thumb DragDelta="OnColumnThumbDragDelta" Tag="Name" Width="10" HorizontalAlignment="Right" Cursor="SizeWestEast" Background="Transparent" />
+                                        <Thumb Classes="colResizer" Tag="Name" DragDelta="OnColumnThumbDragDelta" DoubleTapped="OnColumnThumbDoubleTapped" ToolTip.Tip="Genişliği değiştirmek için sürükleyin, sıfırlamak için çift tıklayın" />
                                     </Grid>
 
                                     <!-- 3: Boyut -->
                                     <Grid Grid.Column="3" Width="{Binding ColSizeWidth}" IsVisible="{Binding ShowColSize}">
                                         <TextBlock Text="Boyut" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0" />
-                                        <Border Width="1" Background="#26FFFFFF" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,3" />
-                                        <Thumb DragDelta="OnColumnThumbDragDelta" Tag="Size" Width="10" HorizontalAlignment="Right" Cursor="SizeWestEast" Background="Transparent" />
+                                        <Thumb Classes="colResizer" Tag="Size" DragDelta="OnColumnThumbDragDelta" DoubleTapped="OnColumnThumbDoubleTapped" ToolTip.Tip="Genişliği değiştirmek için sürükleyin, sıfırlamak için çift tıklayın" />
                                     </Grid>
 
                                     <!-- 4: İlerleme -->
                                     <Grid Grid.Column="4" Width="{Binding ColProgressWidth}" IsVisible="{Binding ShowColProgress}">
                                         <TextBlock Text="İlerleme" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0" />
-                                        <Border Width="1" Background="#26FFFFFF" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,3" />
-                                        <Thumb DragDelta="OnColumnThumbDragDelta" Tag="Progress" Width="10" HorizontalAlignment="Right" Cursor="SizeWestEast" Background="Transparent" />
+                                        <Thumb Classes="colResizer" Tag="Progress" DragDelta="OnColumnThumbDragDelta" DoubleTapped="OnColumnThumbDoubleTapped" ToolTip.Tip="Genişliği değiştirmek için sürükleyin, sıfırlamak için çift tıklayın" />
                                     </Grid>
 
                                     <!-- 5: Anlık Hız -->
                                     <Grid Grid.Column="5" Width="{Binding ColSpeedWidth}" IsVisible="{Binding ShowColSpeed}">
                                         <TextBlock Text="Anlık Hız" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0" />
-                                        <Border Width="1" Background="#26FFFFFF" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,3" />
-                                        <Thumb DragDelta="OnColumnThumbDragDelta" Tag="Speed" Width="10" HorizontalAlignment="Right" Cursor="SizeWestEast" Background="Transparent" />
+                                        <Thumb Classes="colResizer" Tag="Speed" DragDelta="OnColumnThumbDragDelta" DoubleTapped="OnColumnThumbDoubleTapped" ToolTip.Tip="Genişliği değiştirmek için sürükleyin, sıfırlamak için çift tıklayın" />
                                     </Grid>
 
                                     <!-- 6: Maks. Hız -->
                                     <Grid Grid.Column="6" Width="{Binding ColMaxSpeedWidth}" IsVisible="{Binding ShowColMaxSpeed}">
                                         <TextBlock Text="Maks. Hız" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0" />
-                                        <Border Width="1" Background="#26FFFFFF" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,3" />
-                                        <Thumb DragDelta="OnColumnThumbDragDelta" Tag="MaxSpeed" Width="10" HorizontalAlignment="Right" Cursor="SizeWestEast" Background="Transparent" />
+                                        <Thumb Classes="colResizer" Tag="MaxSpeed" DragDelta="OnColumnThumbDragDelta" DoubleTapped="OnColumnThumbDoubleTapped" ToolTip.Tip="Genişliği değiştirmek için sürükleyin, sıfırlamak için çift tıklayın" />
                                     </Grid>
 
                                     <!-- 7: Kalan Süre -->
                                     <Grid Grid.Column="7" Width="{Binding ColEtaWidth}" IsVisible="{Binding ShowColEta}">
                                         <TextBlock Text="Kalan Süre" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0" />
-                                        <Border Width="1" Background="#26FFFFFF" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,3" />
-                                        <Thumb DragDelta="OnColumnThumbDragDelta" Tag="Eta" Width="10" HorizontalAlignment="Right" Cursor="SizeWestEast" Background="Transparent" />
+                                        <Thumb Classes="colResizer" Tag="Eta" DragDelta="OnColumnThumbDragDelta" DoubleTapped="OnColumnThumbDoubleTapped" ToolTip.Tip="Genişliği değiştirmek için sürükleyin, sıfırlamak için çift tıklayın" />
                                     </Grid>
 
                                     <!-- 8: Eşler -->
                                     <Grid Grid.Column="8" Width="{Binding ColPeersWidth}" IsVisible="{Binding ShowColPeers}">
                                         <TextBlock Text="Eşler" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0" />
-                                        <Border Width="1" Background="#26FFFFFF" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,3" />
-                                        <Thumb DragDelta="OnColumnThumbDragDelta" Tag="Peers" Width="10" HorizontalAlignment="Right" Cursor="SizeWestEast" Background="Transparent" />
+                                        <Thumb Classes="colResizer" Tag="Peers" DragDelta="OnColumnThumbDragDelta" DoubleTapped="OnColumnThumbDoubleTapped" ToolTip.Tip="Genişliği değiştirmek için sürükleyin, sıfırlamak için çift tıklayın" />
                                     </Grid>
 
                                     <!-- 9: Durum -->
                                     <Grid Grid.Column="9" Width="{Binding ColStatusWidth}" IsVisible="{Binding ShowColStatus}">
                                         <TextBlock Text="Durum" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0" />
-                                        <Border Width="1" Background="#26FFFFFF" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,3" />
-                                        <Thumb DragDelta="OnColumnThumbDragDelta" Tag="Status" Width="10" HorizontalAlignment="Right" Cursor="SizeWestEast" Background="Transparent" />
+                                        <Thumb Classes="colResizer" Tag="Status" DragDelta="OnColumnThumbDragDelta" DoubleTapped="OnColumnThumbDoubleTapped" ToolTip.Tip="Genişliği değiştirmek için sürükleyin, sıfırlamak için çift tıklayın" />
                                     </Grid>
                                 </Grid>
                             </Border>
@@ -448,6 +467,7 @@
                                 </ListBox.ItemTemplate>
                             </ListBox>
                         </Grid>
+                        </ScrollViewer>
                     </Border>
 
                     <GridSplitter Grid.Row="1" Background="{Binding ThemeBorderColor}" ResizeDirection="Rows" />

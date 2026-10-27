@@ -290,6 +290,14 @@ public partial class MainWindow : Window
         }
     }
 
+    private void OnColumnThumbDoubleTapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is Control thumb && thumb.Tag is string colName && DataContext is MainViewModel vm)
+        {
+            vm.ResetSingleColumnWidth(colName);
+        }
+    }
+
     [DllImport("user32.dll")]
     private static extern bool SetForegroundWindow(IntPtr hWnd);
 

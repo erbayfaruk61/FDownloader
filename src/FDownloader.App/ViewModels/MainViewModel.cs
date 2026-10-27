@@ -1387,7 +1387,7 @@ public partial class MainViewModel : ViewModelBase
         switch (columnName)
         {
             case "Name":
-                ColNameWidth = Math.Max(120, ColNameWidth + deltaX);
+                ColNameWidth = Math.Max(100, ColNameWidth + deltaX);
                 break;
             case "Size":
                 ColSizeWidth = Math.Max(50, ColSizeWidth + deltaX);
@@ -1402,7 +1402,7 @@ public partial class MainViewModel : ViewModelBase
                 ColMaxSpeedWidth = Math.Max(50, ColMaxSpeedWidth + deltaX);
                 break;
             case "Eta":
-                ColEtaWidth = Math.Max(50, ColEtaWidth + deltaX);
+                ColEtaWidth = Math.Max(60, ColEtaWidth + deltaX);
                 break;
             case "Peers":
                 ColPeersWidth = Math.Max(50, ColPeersWidth + deltaX);
@@ -1410,6 +1410,21 @@ public partial class MainViewModel : ViewModelBase
             case "Status":
                 ColStatusWidth = Math.Max(50, ColStatusWidth + deltaX);
                 break;
+        }
+    }
+
+    public void ResetSingleColumnWidth(string columnName)
+    {
+        switch (columnName)
+        {
+            case "Name": ColNameWidth = 260; break;
+            case "Size": ColSizeWidth = 95; break;
+            case "Progress": ColProgressWidth = 130; break;
+            case "Speed": ColSpeedWidth = 90; break;
+            case "MaxSpeed": ColMaxSpeedWidth = 90; break;
+            case "Eta": ColEtaWidth = 80; break;
+            case "Peers": ColPeersWidth = 85; break;
+            case "Status": ColStatusWidth = 95; break;
         }
     }
 
