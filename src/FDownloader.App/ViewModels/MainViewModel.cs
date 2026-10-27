@@ -520,6 +520,7 @@ public partial class MainViewModel : ViewModelBase
     private ObservableCollection<double> _globalSpeedHistory = new();
     private double _globalMinSpeedRecorded = 0;
     private double _globalMaxSpeedRecorded = 0;
+    private readonly DispatcherTimer _uiUpdateTimer;
 
     // Alt durum çubuğu sayaçları (hDM stili)
     [ObservableProperty] private int _totalCount = 0;
@@ -543,6 +544,14 @@ public partial class MainViewModel : ViewModelBase
         _mediaService = mediaService;
         _siteGrabberService = siteGrabberService;
         _updateService = updateService;
+
+        // UI Performans Zamanlayıcısı: Global istatistikleri ve sparkline grafiğini saniyede 2 kez (500ms) düzenli günceller
+        _uiUpdateTimer = new DispatcherTimer(DispatcherPriority.Background)
+        {
+            Interval = TimeSpan.FromMilliseconds(500)
+        };
+        _uiUpdateTimer.Tick += (_, _) => UpdateGlobalStats();
+        _uiUpdateTimer.Start();
 
         _clipboardWatcher.IsEnabled = true;
 
@@ -696,8 +705,6 @@ public partial class MainViewModel : ViewModelBase
                             }
                         }
                     }
-
-                    UpdateGlobalStats();
                 }
             });
         });

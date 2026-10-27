@@ -323,7 +323,13 @@
                                      KeyDown="OnDownloadsListBoxKeyDown"
                                      PointerPressed="OnDownloadsListBoxPointerPressed"
                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                     ScrollViewer.IsScrollInertiaEnabled="True"
                                      Background="Transparent">
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <VirtualizingStackPanel />
+                                    </ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
                                 <ListBox.KeyBindings>
                                     <KeyBinding Gesture="Ctrl+A" Command="{Binding SelectAllCommand}" />
                                     <KeyBinding Gesture="Delete" Command="{Binding RequestListOnlyDeleteCommand}" />
