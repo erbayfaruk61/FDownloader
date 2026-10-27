@@ -86,4 +86,245 @@
       });
     }
   }, true);
+
+  // ─── 6. IDM Tarzı Video Köşesinde İndirme Paneli (Floating Video Grabber) ───
+  let currentActiveVideo = null;
+  let panelHideTimer = null;
+  let shadowRoot = null;
+  let panelContainer = null;
+  let buttonEl = null;
+
+  function ensureGrabberHost() {
+    let host = document.getElementById("fdownloader-video-host");
+    if (!host) {
+      host = document.createElement("div");
+      host.id = "fdownloader-video-host";
+      host.style.position = "absolute";
+      host.style.top = "0";
+      host.style.left = "0";
+      host.style.width = "0";
+      host.style.height = "0";
+      host.style.zIndex = "2147483647";
+      host.style.pointerEvents = "none";
+      document.documentElement.appendChild(host);
+
+      shadowRoot = host.attachShadow({ mode: "open" });
+
+      const style = document.createElement("style");
+      style.textContent = `
+        .fdown-wrap {
+          position: fixed;
+          display: none;
+          pointer-events: auto;
+          z-index: 2147483647;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          user-select: none;
+          transition: opacity 0.18s ease, transform 0.18s ease;
+          opacity: 0;
+          transform: translateY(-4px);
+        }
+        .fdown-wrap.visible {
+          display: flex;
+          opacity: 1;
+          transform: translateY(0);
+        }
+        .fdown-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          background: rgba(15, 23, 42, 0.90);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          color: #F8FAFC;
+          border: 1px solid rgba(56, 189, 248, 0.65);
+          border-radius: 6px;
+          padding: 5px 10px;
+          font-size: 11px;
+          font-weight: 600;
+          cursor: pointer;
+          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), 0 0 8px rgba(56, 189, 248, 0.25);
+          transition: all 0.15s ease;
+        }
+        .fdown-btn:hover {
+          background: #0284C7;
+          border-color: #38BDF8;
+          box-shadow: 0 4px 18px rgba(2, 132, 199, 0.5), 0 0 12px rgba(56, 189, 248, 0.45);
+          transform: scale(1.03);
+          color: #FFFFFF;
+        }
+        .fdown-btn:active {
+          transform: scale(0.97);
+        }
+        .fdown-badge {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background: linear-gradient(135deg, #0EA5E9, #38BDF8);
+          color: #FFFFFF;
+          border-radius: 4px;
+          width: 16px;
+          height: 16px;
+          font-size: 10px;
+          font-weight: 800;
+        }
+      `;
+      shadowRoot.appendChild(style);
+
+      panelContainer = document.createElement("div");
+      panelContainer.className = "fdown-wrap";
+
+      buttonEl = document.createElement("button");
+      buttonEl.className = "fdown-btn";
+      buttonEl.innerHTML = `<span class="fdown-badge">⚡</span><span class="fdown-label">Bu Videoyu İndir</span>`;
+
+      buttonEl.addEventListener("click", onGrabberButtonClick);
+      panelContainer.addEventListener("mouseenter", () => {
+        if (panelHideTimer) clearTimeout(panelHideTimer);
+      });
+      panelContainer.addEventListener("mouseleave", () => {
+        scheduleHideGrabber();
+      });
+
+      panelContainer.appendChild(buttonEl);
+      shadowRoot.appendChild(panelContainer);
+    }
+  }
+
+  function resolveVideoTarget(video) {
+    const isYouTube = window.location.hostname.includes("youtube.com") || window.location.hostname.includes("youtu.be");
+    if (isYouTube) {
+      return {
+        url: window.location.href,
+        filename: document.title ? document.title.replace(/\s*-\s*YouTube$/i, "").trim() + ".mp4" : "YouTube Video.mp4"
+      };
+    }
+
+    // Doğrudan video kaynağı
+    const src = video.currentSrc || video.src || "";
+    if (src && !src.startsWith("blob:") && !src.startsWith("data:")) {
+      let candidateName = "";
+      try {
+        const u = new URL(src);
+        candidateName = u.pathname.split("/").pop() || "";
+      } catch (e) { }
+
+      return {
+        url: src,
+        filename: candidateName || (document.title ? document.title.trim() + ".mp4" : "Video.mp4")
+      };
+    }
+
+    // Eğer blob veya MSE ise sayfa URL'i streaming indiriciye (yt-dlp) paslanır
+    return {
+      url: window.location.href,
+      filename: document.title ? document.title.trim() + ".mp4" : "Video.mp4"
+    };
+  }
+
+  function onGrabberButtonClick(e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!currentActiveVideo) return;
+
+    const target = resolveVideoTarget(currentActiveVideo);
+    if (!target.url) return;
+
+    const label = buttonEl.querySelector(".fdown-label");
+    const originalText = label ? label.textContent : "Bu Videoyu İndir";
+    if (label) label.textContent = "⚡ FDownloader'a Gönderiliyor...";
+
+    chrome.runtime.sendMessage({
+      type: "INTERCEPT_LINK",
+      url: target.url,
+      filename: target.filename,
+      referrer: window.location.href
+    }, (res) => {
+      setTimeout(() => {
+        if (label) label.textContent = originalText;
+        hideGrabberImmediately();
+      }, 900);
+    });
+  }
+
+  function updateGrabberPosition(video) {
+    if (!video || !panelContainer) return;
+    const rect = video.getBoundingClientRect();
+
+    // Çok küçük videolar (ikon, thumbnail vb.) için gösterme
+    if (rect.width < 140 || rect.height < 90) {
+      hideGrabberImmediately();
+      return;
+    }
+
+    // Ekran dışındaysa gizle
+    if (rect.bottom < 0 || rect.top > window.innerHeight || rect.right < 0 || rect.left > window.innerWidth) {
+      hideGrabberImmediately();
+      return;
+    }
+
+    const top = Math.max(10, rect.top + 10);
+    const right = Math.max(10, window.innerWidth - rect.right + 10);
+
+    panelContainer.style.top = `${top}px`;
+    panelContainer.style.right = `${right}px`;
+    panelContainer.style.left = "auto";
+    panelContainer.classList.add("visible");
+  }
+
+  function showGrabberForVideo(video) {
+    ensureGrabberHost();
+    if (panelHideTimer) clearTimeout(panelHideTimer);
+    currentActiveVideo = video;
+    updateGrabberPosition(video);
+  }
+
+  function scheduleHideGrabber() {
+    if (panelHideTimer) clearTimeout(panelHideTimer);
+    panelHideTimer = setTimeout(() => {
+      hideGrabberImmediately();
+    }, 1200);
+  }
+
+  function hideGrabberImmediately() {
+    if (panelContainer) {
+      panelContainer.classList.remove("visible");
+    }
+  }
+
+  function attachVideoListeners(video) {
+    if (video._fdownloader_attached) return;
+    video._fdownloader_attached = true;
+
+    video.addEventListener("mouseenter", () => showGrabberForVideo(video));
+    video.addEventListener("play", () => showGrabberForVideo(video));
+    video.addEventListener("playing", () => showGrabberForVideo(video));
+    video.addEventListener("mouseleave", () => scheduleHideGrabber());
+  }
+
+  function scanForVideos() {
+    const videos = document.querySelectorAll("video");
+    videos.forEach(attachVideoListeners);
+  }
+
+  // İlk yüklemede ve sayfa değişimlerinde videoları bağla
+  scanForVideos();
+
+  const observer = new MutationObserver(() => {
+    scanForVideos();
+  });
+  observer.observe(document.documentElement, { childList: true, subtree: true });
+
+  window.addEventListener("scroll", () => {
+    if (currentActiveVideo && panelContainer && panelContainer.classList.contains("visible")) {
+      updateGrabberPosition(currentActiveVideo);
+    }
+  }, { passive: true });
+
+  window.addEventListener("resize", () => {
+    if (currentActiveVideo && panelContainer && panelContainer.classList.contains("visible")) {
+      updateGrabberPosition(currentActiveVideo);
+    }
+  }, { passive: true });
 })();
+
