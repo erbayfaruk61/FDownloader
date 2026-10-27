@@ -204,6 +204,19 @@ public sealed class TorrentService : IAsyncDisposable
                 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
                 var pauseTask = manager.PauseAsync();
                 await System.Threading.Tasks.Task.WhenAny(pauseTask, System.Threading.Tasks.Task.Delay(3000, cts.Token));
+
+                var totalSize = manager.Torrent?.Size ?? 0;
+                var downloaded = (long)(totalSize * (manager.Progress / 100.0));
+
+                _eventBus.Publish(new ProgressUpdatedEvent(
+                    taskId,
+                    downloaded,
+                    totalSize,
+                    manager.Progress,
+                    0,
+                    null,
+                    Array.Empty<SegmentProgressInfo>()
+                ));
                 _eventBus.Publish(new TaskPausedEvent(taskId));
             }
             catch (Exception ex)
@@ -555,25 +568,29 @@ public sealed class TorrentService : IAsyncDisposable
                         _lastKnownDetails[taskId] = details;
                     }
 
+                    var isPausedOrStopped = manager.State is TorrentState.Paused or TorrentState.Stopped;
                     var totalSize = manager.Torrent?.Size ?? 0;
                     var downloaded = (long)(totalSize * (manager.Progress / 100.0));
-                    var speed = (double)manager.Monitor.DownloadRate;
+                    var speed = isPausedOrStopped ? 0 : (double)manager.Monitor.DownloadRate;
 
                     TimeSpan? eta = null;
-                    if (speed > 0 && totalSize > downloaded)
+                    if (!isPausedOrStopped && speed > 0 && totalSize > downloaded)
                     {
                         eta = TimeSpan.FromSeconds((totalSize - downloaded) / speed);
                     }
 
-                    _eventBus.Publish(new ProgressUpdatedEvent(
-                        taskId,
-                        downloaded,
-                        totalSize,
-                        manager.Progress,
-                        speed,
-                        eta,
-                        Array.Empty<SegmentProgressInfo>()
-                    ));
+                    if (!isPausedOrStopped)
+                    {
+                        _eventBus.Publish(new ProgressUpdatedEvent(
+                            taskId,
+                            downloaded,
+                            totalSize,
+                            manager.Progress,
+                            speed,
+                            eta,
+                            Array.Empty<SegmentProgressInfo>()
+                        ));
+                    }
 
                     if (manager.Complete)
                     {

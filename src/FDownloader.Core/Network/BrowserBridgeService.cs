@@ -39,16 +39,38 @@ public sealed class BrowserBridgeService : IDisposable
     {
         if (IsRunning) return;
 
+        _cts = new CancellationTokenSource();
+        _listener = new HttpListener();
+        _listener.Prefixes.Add($"http://127.0.0.1:{DefaultPort}/");
+
         try
         {
-            _cts = new CancellationTokenSource();
-            _listener = new HttpListener();
-            _listener.Prefixes.Add($"http://127.0.0.1:{DefaultPort}/");
             _listener.Prefixes.Add($"http://localhost:{DefaultPort}/");
+        }
+        catch { }
+
+        try
+        {
             _listener.Start();
             _logger.LogInformation("FDownloader Tarayıcı Köprüsü aktif: http://127.0.0.1:{Port}/", DefaultPort);
-
             Task.Run(() => ListenLoopAsync(_cts.Token));
+        }
+        catch (HttpListenerException hex)
+        {
+            _logger.LogWarning(hex, "FDownloader Tarayıcı Köprüsü localhost ile başlatılamadı, salt 127.0.0.1 deneniyor...");
+            try
+            {
+                _listener.Close();
+                _listener = new HttpListener();
+                _listener.Prefixes.Add($"http://127.0.0.1:{DefaultPort}/");
+                _listener.Start();
+                _logger.LogInformation("FDownloader Tarayıcı Köprüsü aktif (127.0.0.1): http://127.0.0.1:{Port}/", DefaultPort);
+                Task.Run(() => ListenLoopAsync(_cts.Token));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "FDownloader Tarayıcı Köprüsü başlatılamadı (Port: {Port})", DefaultPort);
+            }
         }
         catch (Exception ex)
         {
@@ -82,9 +104,9 @@ public sealed class BrowserBridgeService : IDisposable
         var response = context.Response;
 
         // CORS Başlıkları (Tarayıcı uzantısının localhost'a fetch yapabilmesi için)
-        response.Headers.Add("Access-Control-Allow-Origin", "*");
-        response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-        response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Accept, X-Requested-With");
+        response.AppendHeader("Access-Control-Allow-Origin", "*");
+        response.AppendHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        response.AppendHeader("Access-Control-Allow-Headers", "Content-Type, Accept, X-Requested-With");
 
         try
         {

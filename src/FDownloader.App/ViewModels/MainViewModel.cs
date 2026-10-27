@@ -642,6 +642,11 @@ public partial class MainViewModel : ViewModelBase
                 var item = Downloads.FirstOrDefault(d => d.Id == e.TaskId);
                 if (item != null)
                 {
+                    if (item.Status is DownloadStatus.Paused or DownloadStatus.Completed or DownloadStatus.Cancelled or DownloadStatus.Failed)
+                    {
+                        return;
+                    }
+
                     item.Status = DownloadStatus.Downloading;
                     item.DownloadedBytes = e.DownloadedBytes;
                     if (e.TotalBytes > 0) item.TotalBytes = e.TotalBytes;
@@ -750,6 +755,7 @@ public partial class MainViewModel : ViewModelBase
                 {
                     item.Status = DownloadStatus.Paused;
                     item.SpeedBytesPerSecond = 0;
+                    item.PushSpeedBar(0);
                     item.EtaDisplay = "Duraklatıldı";
                     ApplyFilter();
                 }
@@ -1346,19 +1352,24 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     public void RequestDeleteItem(DownloadItemViewModel? item)
     {
-        var selectedList = FilteredDownloads.Where(d => d.IsSelected).ToList();
-        if (selectedList.Count == 0 && SelectedDownloads.Count > 0)
+        var target = item;
+        if (target == null)
         {
-            selectedList = SelectedDownloads.ToList();
+            var selectedList = FilteredDownloads.Where(d => d.IsSelected).ToList();
+            if (selectedList.Count == 0 && SelectedDownloads.Count > 0)
+            {
+                selectedList = SelectedDownloads.ToList();
+            }
+
+            if (selectedList.Count > 1)
+            {
+                RequestDeleteSelected();
+                return;
+            }
+
+            target = selectedList.FirstOrDefault() ?? SelectedDownload;
         }
 
-        if (selectedList.Count > 1 && (item == null || selectedList.Contains(item)))
-        {
-            RequestDeleteSelected();
-            return;
-        }
-
-        var target = item ?? SelectedDownload;
         if (target == null) return;
 
         _pendingDeleteItems = new List<DownloadItemViewModel> { target };

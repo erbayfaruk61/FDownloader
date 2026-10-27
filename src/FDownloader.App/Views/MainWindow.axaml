@@ -314,7 +314,7 @@
                                 </Grid>
                             </Border>
 
-                            <!-- Liste Satırları (Çoklu Seçim, ScrollViewer Taşması Engellendi) -->
+                            <!-- Liste Satırları (Avalonia Çoklu Seçim, ScrollViewer Taşması Engellendi) -->
                             <ListBox Grid.Row="1" 
                                      x:Name="DownloadsListBox"
                                      ItemsSource="{Binding FilteredDownloads}" 
@@ -372,19 +372,19 @@
                                                 <MenuItem Header="📂 Dosya Konumunu Aç" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).OpenFolderCommand}" CommandParameter="{Binding}" />
                                                 <MenuItem Header="🚀 Dosyayı Aç" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).OpenFileCommand}" CommandParameter="{Binding}" />
                                                 <Separator />
-                                                <MenuItem Header="▶ Seçilenleri Başlat / Devam Et" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).StartSelectedCommand}">
+                                                <MenuItem Header="▶ Başlat / Devam Et" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).StartSelectedCommand}">
                                                     <MenuItem.Icon>
                                                         <TextBlock Text="▶" Foreground="#10B981" FontWeight="Bold" VerticalAlignment="Center" />
                                                     </MenuItem.Icon>
                                                 </MenuItem>
-                                                <MenuItem Header="⏸ Seçilenleri Duraklat" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).PauseSelectedCommand}">
+                                                <MenuItem Header="⏸ Duraklat" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).PauseSelectedCommand}">
                                                     <MenuItem.Icon>
                                                         <TextBlock Text="⏸" Foreground="#F59E0B" FontWeight="Bold" VerticalAlignment="Center" />
                                                     </MenuItem.Icon>
                                                 </MenuItem>
                                                 <Separator />
                                                 <MenuItem Header="📋 Bağlantıyı Kopyala" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).CopyUrlCommand}" CommandParameter="{Binding}" />
-                                                <MenuItem Header="🗑 Seçilenleri Kaldır / Sil..." Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).RequestDeleteSelectedCommand}">
+                                                <MenuItem Header="🗑 Kaldır / Sil..." Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).RequestDeleteItemCommand}" CommandParameter="{Binding}">
                                                     <MenuItem.Icon>
                                                         <TextBlock Text="🗑" Foreground="#EF4444" VerticalAlignment="Center" />
                                                     </MenuItem.Icon>
@@ -850,21 +850,25 @@
                     <!-- Torrent Dosya Listesi ve Seçim Kutuları (qBittorrent Stili) -->
                     <Border Background="{Binding ThemeWindowBg}" BorderBrush="{Binding ThemeBorderColor}" CornerRadius="8" Padding="12" IsVisible="{Binding AddDialogHasTorrentFiles}" BorderThickness="1">
                         <StackPanel Spacing="8">
-                            <Grid ColumnDefinitions="*, Auto">
-                                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                    <TextBlock Text="📁" FontSize="14" VerticalAlignment="Center" />
-                                    <TextBlock Text="İndirilecek Dosyalar:" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />
-                                    <TextBlock Text="{Binding AddDialogTorrentFiles.Count, StringFormat='({0} dosya)'}" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" VerticalAlignment="Center" />
-                                    <TextBlock Text="{Binding AddDialogTorrentSelectedSizeText}" FontSize="11" Foreground="#10B981" FontWeight="SemiBold" VerticalAlignment="Center" Margin="6,0,0,0" IsVisible="{Binding !!AddDialogTorrentSelectedSizeText.Length}" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                    <Button Command="{Binding SelectAllAddDialogTorrentFilesCommand}" Padding="6,2" Height="22" FontSize="10">
-                                        <TextBlock Text="✅ Tümünü Seç" FontSize="10" />
-                                    </Button>
-                                    <Button Command="{Binding DeselectAllAddDialogTorrentFilesCommand}" Padding="6,2" Height="22" FontSize="10">
-                                        <TextBlock Text="⬜ Tümünü Bırak" FontSize="10" />
-                                    </Button>
-                                </StackPanel>
+                            <Grid RowDefinitions="Auto, Auto" RowSpacing="6">
+                                <Grid Grid.Row="0" ColumnDefinitions="*, Auto">
+                                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                        <TextBlock Text="📁" FontSize="14" VerticalAlignment="Center" />
+                                        <TextBlock Text="İndirilecek Dosyalar:" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding AddDialogTorrentFiles.Count, StringFormat='({0} dosya)'}" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                                        <Button Command="{Binding SelectAllAddDialogTorrentFilesCommand}" Padding="6,2" Height="22" FontSize="10">
+                                            <TextBlock Text="✅ Tümünü Seç" FontSize="10" />
+                                        </Button>
+                                        <Button Command="{Binding DeselectAllAddDialogTorrentFilesCommand}" Padding="6,2" Height="22" FontSize="10">
+                                            <TextBlock Text="⬜ Tümünü Bırak" FontSize="10" />
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                                <Border Grid.Row="1" Background="#1510B981" CornerRadius="4" Padding="6,3" HorizontalAlignment="Left" IsVisible="{Binding !!AddDialogTorrentSelectedSizeText.Length}">
+                                    <TextBlock Text="{Binding AddDialogTorrentSelectedSizeText}" FontSize="11" Foreground="#10B981" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                </Border>
                             </Grid>
 
                             <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}" CornerRadius="4" BorderBrush="{DynamicResource SystemBaseLowColor}" BorderThickness="1" MaxHeight="160">

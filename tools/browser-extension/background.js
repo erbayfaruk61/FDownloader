@@ -140,7 +140,7 @@ function shouldCapture(downloadItem, allowedExtensions) {
 async function isBridgeAlive() {
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 1200);
+    const timer = setTimeout(() => controller.abort(), 2500);
     const res = await fetch(`${BRIDGE_URL}/health`, { signal: controller.signal });
     clearTimeout(timer);
     return res.ok;
