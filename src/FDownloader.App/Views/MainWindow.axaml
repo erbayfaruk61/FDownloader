@@ -930,12 +930,36 @@
 
                     <!-- Ayarlar Sekmeleri (Görünüm, Ses, Hız & Ağ, Depolama, Araçlar) -->
                     <TabControl Grid.Row="1" SelectedIndex="{Binding SettingsTabIndex}">
+                        <TabControl.Template>
+                            <ControlTemplate TargetType="TabControl">
+                                <Grid RowDefinitions="Auto, *">
+                                    <Border Grid.Row="0"
+                                            Background="{Binding ThemeSpeedGraphInnerBg}"
+                                            BorderBrush="{Binding ThemeBorderColor}"
+                                            BorderThickness="1"
+                                            CornerRadius="8"
+                                            Padding="6,4"
+                                            Margin="0,0,0,12">
+                                        <ItemsPresenter Name="PART_ItemsPresenter"
+                                                        ItemsPanel="{TemplateBinding ItemsPanel}" />
+                                    </Border>
+                                    <ContentPresenter Name="PART_SelectedContentPresenter"
+                                                      Grid.Row="1"
+                                                      HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                      VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                      Content="{TemplateBinding SelectedContent}"
+                                                      ContentTemplate="{TemplateBinding SelectedContentTemplate}" />
+                                </Grid>
+                            </ControlTemplate>
+                        </TabControl.Template>
                         <TabControl.Styles>
                             <Style Selector="TabItem">
                                 <Setter Property="FontSize" Value="11" />
                                 <Setter Property="FontWeight" Value="SemiBold" />
-                                <Setter Property="Padding" Value="8,4" />
-                                <Setter Property="MinHeight" Value="26" />
+                                <Setter Property="Padding" Value="10,5" />
+                                <Setter Property="MinHeight" Value="28" />
+                                <Setter Property="CornerRadius" Value="6" />
+                                <Setter Property="Margin" Value="2,0" />
                             </Style>
                         </TabControl.Styles>
                         
