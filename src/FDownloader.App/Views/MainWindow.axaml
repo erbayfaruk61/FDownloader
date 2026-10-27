@@ -57,14 +57,7 @@
                             </StackPanel>
                         </Button>
 
-                        <!-- Torrent Dosyası Aç -->
-                        <Button Command="{Binding BrowseTorrentFileCommand}" ToolTip.Tip="Bilgisayardan bir .torrent dosyası seçerek indirmeyi başlatır" Padding="10,6" Height="34">
-                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                <TextBlock Text="🌊" VerticalAlignment="Center" />
-                                <TextBlock Text="Torrent Aç" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
-                        <Separator Width="1" Margin="3,2" />
+
 
                         <!-- Toplu İşlem Butonları -->
                         <Button Command="{Binding StartAllCommand}" ToolTip.Tip="Bekleyen ve duraklatılmış tüm indirmeleri başlatır" Padding="10,6">
@@ -760,12 +753,12 @@
                     </Grid>
 
                     <StackPanel Spacing="6">
-                        <TextBlock Text="İndirme Bağlantısı (URL veya Magnet):" FontWeight="SemiBold" />
+                        <TextBlock Text="İndirme Bağlantısı (URL, Magnet veya Dosya):" FontWeight="SemiBold" />
                         <Grid ColumnDefinitions="*, Auto">
                             <TextBox Grid.Column="0" Text="{Binding AddDialogUrl}" PlaceholderText="https://... veya magnet:?xt=... veya dosya yolu" Height="36" VerticalContentAlignment="Center" />
                             <Button Grid.Column="1" Command="{Binding BrowseTorrentFileCommand}" 
                                     IsVisible="{Binding !AddDialogIsMediaDetected}"
-                                    ToolTip.Tip="Bilgisayardan .torrent dosyası seçin" Content="📁 .torrent Seç..." Margin="8,0,0,0" Height="36" Padding="12,0" FontWeight="SemiBold" />
+                                    ToolTip.Tip="Bilgisayardan .torrent dosyası seçin" Content="📁 Dosya / Torrent Seç..." Margin="8,0,0,0" Height="36" Padding="12,0" FontWeight="SemiBold" />
                         </Grid>
                     </StackPanel>
 
