@@ -33,6 +33,43 @@
             <Setter Property="Background" Value="#38BDF8" />
             <Setter Property="Width" Value="2" />
         </Style>
+
+        <!-- Buton Mikro Animasyonları & Yumuşak Etkileşimler -->
+        <Style Selector="Button">
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.1" />
+                    <BrushTransition Property="Background" Duration="0:0:0.15" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button:pointerover">
+            <Setter Property="RenderTransform" Value="scale(1.02)" />
+        </Style>
+        <Style Selector="Button:pressed">
+            <Setter Property="RenderTransform" Value="scale(0.97)" />
+        </Style>
+
+        <!-- İndirme Listesi Satır Hover ve Yumuşak Geçişler -->
+        <Style Selector="Border.downloadRow">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.15" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
+                    <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.15" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="ListBoxItem:pointerover Border.downloadRow">
+            <Setter Property="BorderBrush" Value="#4538BDF8" />
+            <Setter Property="BoxShadow" Value="0 2 8 0 #20000000" />
+        </Style>
+        <Style Selector="ListBoxItem:selected Border.downloadRow">
+            <Setter Property="BorderBrush" Value="#803B82F6" />
+            <Setter Property="BoxShadow" Value="0 2 12 0 #303B82F6" />
+        </Style>
     </Window.Styles>
 
     <Grid>
@@ -130,7 +167,15 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Width="4" Height="{Binding}" Background="#10B981" CornerRadius="1.5" VerticalAlignment="Bottom" />
+                                            <Border Width="4" Height="{Binding}" CornerRadius="2" VerticalAlignment="Bottom">
+                                                <Border.Background>
+                                                    <LinearGradientBrush StartPoint="0%,100%" EndPoint="0%,0%">
+                                                        <GradientStop Color="#059669" Offset="0"/>
+                                                        <GradientStop Color="#10B981" Offset="0.5"/>
+                                                        <GradientStop Color="#34D399" Offset="1"/>
+                                                    </LinearGradientBrush>
+                                                </Border.Background>
+                                            </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
@@ -300,14 +345,20 @@
                                 <ListBox.Styles>
                                     <Style Selector="ListBoxItem">
                                         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                                        <Setter Property="Padding" Value="4,4" />
-                                        <Setter Property="CornerRadius" Value="4" />
+                                        <Setter Property="Padding" Value="2,1" />
+                                        <Setter Property="Margin" Value="0,1" />
+                                        <Setter Property="CornerRadius" Value="6" />
+                                        <Setter Property="Transitions">
+                                            <Transitions>
+                                                <BrushTransition Property="Background" Duration="0:0:0.12" />
+                                            </Transitions>
+                                        </Setter>
                                     </Style>
                                     <Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
-                                        <Setter Property="Background" Value="#353B82F6" />
+                                        <Setter Property="Background" Value="#253B82F6" />
                                     </Style>
                                     <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-                                        <Setter Property="Background" Value="#15FFFFFF" />
+                                        <Setter Property="Background" Value="#10FFFFFF" />
                                     </Style>
                                     <Style Selector="ListBoxItem" x:DataType="vm:DownloadItemViewModel">
                                         <Setter Property="ContextMenu">
@@ -350,7 +401,7 @@
                                 <ListBox.ItemTemplate>
                                     <DataTemplate DataType="vm:DownloadItemViewModel">
                                         <!-- Satır Hücreleri (Sütunlar Arası Asla Taşmaz, Hata/Kopma Durumunda Sarı-Turuncu Vurgulu) -->
-                                        <Border Background="{Binding RowBackground}" BorderBrush="{Binding RowBorderBrush}" BorderThickness="1" CornerRadius="6" Margin="0,1" Padding="2,2">
+                                        <Border Classes="downloadRow" Background="{Binding RowBackground}" BorderBrush="{Binding RowBorderBrush}" BorderThickness="1" CornerRadius="6" Margin="0,1" Padding="2,2">
                                             <Grid ColumnDefinitions="32, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto" HorizontalAlignment="Left" Background="Transparent">
 
                                             <!-- 0: En Solda Durum Rozeti -->
