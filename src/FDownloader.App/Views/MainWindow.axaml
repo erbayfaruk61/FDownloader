@@ -461,44 +461,48 @@
                                             <Border Grid.Column="4" Width="{Binding $parent[Window].((vm:MainViewModel)DataContext).ColProgressWidth}" IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).ShowColProgress}" VerticalAlignment="Center" ClipToBounds="True" Padding="6,0,14,0">
                                                 <Grid RowDefinitions="14, Auto">
                                                     <!-- KLASIK: Standart Avalonia ProgressBar (indeterminate desteğiyle) -->
-                                                    <ProgressBar Grid.Row="0"
-                                                        Value="{Binding ProgressPercent}" Minimum="0" Maximum="100"
-                                                        Height="8" CornerRadius="4" VerticalAlignment="Center"
-                                                        Foreground="#0284C7" Background="#1E293B"
-                                                        IsIndeterminate="{Binding IsProgressIndeterminate}"
-                                                        IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).IsProgressStyleKlasik}" />
+                                                    <Border Grid.Row="0" Height="8" CornerRadius="4" Background="#1E293B" ClipToBounds="True" VerticalAlignment="Center"
+                                                            IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).IsProgressStyleKlasik}">
+                                                        <ProgressBar Value="{Binding ProgressPercent}" Minimum="0" Maximum="100"
+                                                                     Height="8" CornerRadius="4" VerticalAlignment="Center"
+                                                                     Foreground="#0284C7" Background="Transparent" ClipToBounds="True"
+                                                                     IsIndeterminate="{Binding IsProgressIndeterminate}" />
+                                                    </Border>
 
                                                     <!-- GRADYAN: Mavi→Mor→Yeşil gradient -->
-                                                    <ProgressBar Grid.Row="0"
-                                                        Value="{Binding ProgressPercent}" Minimum="0" Maximum="100"
-                                                        Height="8" CornerRadius="4" VerticalAlignment="Center"
-                                                        Background="#1E293B"
-                                                        IsIndeterminate="{Binding IsProgressIndeterminate}"
-                                                        IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).IsProgressStyleGradyan}">
-                                                        <ProgressBar.Foreground>
-                                                            <LinearGradientBrush StartPoint="0%,50%" EndPoint="100%,50%">
-                                                                <GradientStop Color="#3B82F6" Offset="0"/>
-                                                                <GradientStop Color="#8B5CF6" Offset="0.45"/>
-                                                                <GradientStop Color="#10B981" Offset="1"/>
-                                                            </LinearGradientBrush>
-                                                        </ProgressBar.Foreground>
-                                                    </ProgressBar>
+                                                    <Border Grid.Row="0" Height="8" CornerRadius="4" Background="#1E293B" ClipToBounds="True" VerticalAlignment="Center"
+                                                            IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).IsProgressStyleGradyan}">
+                                                        <ProgressBar Value="{Binding ProgressPercent}" Minimum="0" Maximum="100"
+                                                                     Height="8" CornerRadius="4" VerticalAlignment="Center"
+                                                                     Background="Transparent" ClipToBounds="True"
+                                                                     IsIndeterminate="{Binding IsProgressIndeterminate}">
+                                                            <ProgressBar.Foreground>
+                                                                <LinearGradientBrush StartPoint="0%,50%" EndPoint="100%,50%">
+                                                                    <GradientStop Color="#3B82F6" Offset="0"/>
+                                                                    <GradientStop Color="#8B5CF6" Offset="0.45"/>
+                                                                    <GradientStop Color="#10B981" Offset="1"/>
+                                                                </LinearGradientBrush>
+                                                            </ProgressBar.Foreground>
+                                                        </ProgressBar>
+                                                    </Border>
 
                                                     <!-- NEON: Parlak cyan renkli çubuk -->
-                                                    <ProgressBar Grid.Row="0"
-                                                        Value="{Binding ProgressPercent}" Minimum="0" Maximum="100"
-                                                        Height="8" CornerRadius="4" VerticalAlignment="Center"
-                                                        Foreground="#38BDF8" Background="#1E293B"
-                                                        IsIndeterminate="{Binding IsProgressIndeterminate}"
-                                                        IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).IsProgressStyleNeon}" />
+                                                    <Border Grid.Row="0" Height="8" CornerRadius="4" Background="#1E293B" ClipToBounds="True" VerticalAlignment="Center"
+                                                            IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).IsProgressStyleNeon}">
+                                                        <ProgressBar Value="{Binding ProgressPercent}" Minimum="0" Maximum="100"
+                                                                     Height="8" CornerRadius="4" VerticalAlignment="Center"
+                                                                     Foreground="#38BDF8" Background="Transparent" ClipToBounds="True"
+                                                                     IsIndeterminate="{Binding IsProgressIndeterminate}" />
+                                                    </Border>
 
                                                     <!-- İNCE ÇİZGİ: Çok ince, minimalist -->
-                                                    <ProgressBar Grid.Row="0"
-                                                        Value="{Binding ProgressPercent}" Minimum="0" Maximum="100"
-                                                        Height="3" CornerRadius="1.5" VerticalAlignment="Center"
-                                                        Foreground="#10B981" Background="#1E293B"
-                                                        IsIndeterminate="{Binding IsProgressIndeterminate}"
-                                                        IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).IsProgressStyleInce}" />
+                                                    <Border Grid.Row="0" Height="3" CornerRadius="1.5" Background="#1E293B" ClipToBounds="True" VerticalAlignment="Center"
+                                                            IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).IsProgressStyleInce}">
+                                                        <ProgressBar Value="{Binding ProgressPercent}" Minimum="0" Maximum="100"
+                                                                     Height="3" CornerRadius="1.5" VerticalAlignment="Center"
+                                                                     Foreground="#10B981" Background="Transparent" ClipToBounds="True"
+                                                                     IsIndeterminate="{Binding IsProgressIndeterminate}" />
+                                                    </Border>
 
                                                     <!-- Yüzde Metni (tüm stillerde ortak) -->
                                                     <TextBlock Grid.Row="1" Text="{Binding ProgressPercent, StringFormat='{}{0:F1}%'}" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" HorizontalAlignment="Right" Margin="0,2,0,0" />
@@ -581,9 +585,9 @@
                                             </ItemsControl.ItemsPanel>
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Border Width="65" Height="28" Margin="4" CornerRadius="4" Background="#1E293B" BorderBrush="#334155" BorderThickness="1">
+                                                    <Border Width="65" Height="28" Margin="4" CornerRadius="4" Background="#1E293B" BorderBrush="#334155" BorderThickness="1" ClipToBounds="True">
                                                         <Grid>
-                                                            <ProgressBar Value="{Binding}" Minimum="0" Maximum="1" Height="28" Foreground="#10B981" Background="Transparent" CornerRadius="4" />
+                                                            <ProgressBar Value="{Binding}" Minimum="0" Maximum="1" Height="28" Foreground="#10B981" Background="Transparent" CornerRadius="4" ClipToBounds="True" />
                                                             <TextBlock Text="{Binding, StringFormat='{}{0:P0}'}" FontSize="10" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                         </Grid>
                                                     </Border>
@@ -1148,9 +1152,11 @@
                                                             <TextBlock Grid.Column="1" Text="{Binding PreviewProgressKlasik, StringFormat='{}{0:F0}%'}" FontSize="11" Foreground="#0284C7" FontWeight="Bold" VerticalAlignment="Center" />
                                                         </Grid>
                                                         <Border Height="28" CornerRadius="4" Background="{Binding ThemeSpeedGraphInnerBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" Padding="8,0" ClipToBounds="True">
-                                                            <ProgressBar Value="{Binding PreviewProgressKlasik}" Minimum="0" Maximum="100"
-                                                                         Height="8" CornerRadius="4" VerticalAlignment="Center"
-                                                                         Foreground="#0284C7" Background="#1E293B" />
+                                                            <Border Height="8" CornerRadius="4" Background="#1E293B" ClipToBounds="True" VerticalAlignment="Center">
+                                                                <ProgressBar Value="{Binding PreviewProgressKlasik}" Minimum="0" Maximum="100"
+                                                                             Height="8" CornerRadius="4" VerticalAlignment="Center"
+                                                                             Foreground="#0284C7" Background="Transparent" ClipToBounds="True" />
+                                                            </Border>
                                                         </Border>
                                                         <TextBlock Text="Klasik mavi" FontSize="10" Foreground="{Binding ThemeTextSecondary}" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis" />
                                                     </StackPanel>
@@ -1171,17 +1177,19 @@
                                                             <TextBlock Grid.Column="1" Text="{Binding PreviewProgressGradyan, StringFormat='{}{0:F0}%'}" FontSize="11" Foreground="#8B5CF6" FontWeight="Bold" VerticalAlignment="Center" />
                                                         </Grid>
                                                         <Border Height="28" CornerRadius="4" Background="{Binding ThemeSpeedGraphInnerBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" Padding="8,0" ClipToBounds="True">
-                                                            <ProgressBar Value="{Binding PreviewProgressGradyan}" Minimum="0" Maximum="100"
-                                                                         Height="8" CornerRadius="4" VerticalAlignment="Center"
-                                                                         Background="#1E293B">
-                                                                <ProgressBar.Foreground>
-                                                                    <LinearGradientBrush StartPoint="0%,50%" EndPoint="100%,50%">
-                                                                        <GradientStop Color="#3B82F6" Offset="0"/>
-                                                                        <GradientStop Color="#8B5CF6" Offset="0.5"/>
-                                                                        <GradientStop Color="#10B981" Offset="1"/>
-                                                                    </LinearGradientBrush>
-                                                                </ProgressBar.Foreground>
-                                                            </ProgressBar>
+                                                            <Border Height="8" CornerRadius="4" Background="#1E293B" ClipToBounds="True" VerticalAlignment="Center">
+                                                                <ProgressBar Value="{Binding PreviewProgressGradyan}" Minimum="0" Maximum="100"
+                                                                             Height="8" CornerRadius="4" VerticalAlignment="Center"
+                                                                             Background="Transparent" ClipToBounds="True">
+                                                                    <ProgressBar.Foreground>
+                                                                        <LinearGradientBrush StartPoint="0%,50%" EndPoint="100%,50%">
+                                                                            <GradientStop Color="#3B82F6" Offset="0"/>
+                                                                            <GradientStop Color="#8B5CF6" Offset="0.5"/>
+                                                                            <GradientStop Color="#10B981" Offset="1"/>
+                                                                        </LinearGradientBrush>
+                                                                    </ProgressBar.Foreground>
+                                                                </ProgressBar>
+                                                            </Border>
                                                         </Border>
                                                         <TextBlock Text="Mavi-Mor-Yeşil geçiş" FontSize="10" Foreground="{Binding ThemeTextSecondary}" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis" />
                                                     </StackPanel>
@@ -1202,9 +1210,11 @@
                                                             <TextBlock Grid.Column="1" Text="{Binding PreviewProgressNeon, StringFormat='{}{0:F0}%'}" FontSize="11" Foreground="#38BDF8" FontWeight="Bold" VerticalAlignment="Center" />
                                                         </Grid>
                                                         <Border Height="28" CornerRadius="4" Background="{Binding ThemeSpeedGraphInnerBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" Padding="8,0" ClipToBounds="True">
-                                                            <ProgressBar Value="{Binding PreviewProgressNeon}" Minimum="0" Maximum="100"
-                                                                         Height="8" CornerRadius="4" VerticalAlignment="Center"
-                                                                         Foreground="#38BDF8" Background="#1E293B" />
+                                                            <Border Height="8" CornerRadius="4" Background="#1E293B" ClipToBounds="True" VerticalAlignment="Center">
+                                                                <ProgressBar Value="{Binding PreviewProgressNeon}" Minimum="0" Maximum="100"
+                                                                             Height="8" CornerRadius="4" VerticalAlignment="Center"
+                                                                             Foreground="#38BDF8" Background="Transparent" ClipToBounds="True" />
+                                                            </Border>
                                                         </Border>
                                                         <TextBlock Text="Parlak cyan parlama" FontSize="10" Foreground="{Binding ThemeTextSecondary}" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis" />
                                                     </StackPanel>
@@ -1225,9 +1235,11 @@
                                                             <TextBlock Grid.Column="1" Text="{Binding PreviewProgressInce, StringFormat='{}{0:F0}%'}" FontSize="11" Foreground="#10B981" FontWeight="Bold" VerticalAlignment="Center" />
                                                         </Grid>
                                                         <Border Height="28" CornerRadius="4" Background="{Binding ThemeSpeedGraphInnerBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" Padding="8,0" ClipToBounds="True">
-                                                            <ProgressBar Value="{Binding PreviewProgressInce}" Minimum="0" Maximum="100"
-                                                                         Height="3" CornerRadius="1.5" VerticalAlignment="Center"
-                                                                         Foreground="#10B981" Background="#1E293B" />
+                                                            <Border Height="3" CornerRadius="1.5" Background="#1E293B" ClipToBounds="True" VerticalAlignment="Center">
+                                                                <ProgressBar Value="{Binding PreviewProgressInce}" Minimum="0" Maximum="100"
+                                                                             Height="3" CornerRadius="1.5" VerticalAlignment="Center"
+                                                                             Foreground="#10B981" Background="Transparent" ClipToBounds="True" />
+                                                            </Border>
                                                         </Border>
                                                         <TextBlock Text="Minimalist zarif çizgi" FontSize="10" Foreground="{Binding ThemeTextSecondary}" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis" />
                                                     </StackPanel>
