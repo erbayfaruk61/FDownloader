@@ -109,9 +109,9 @@
                 </Grid>
             </Border>
 
-            <!-- ─── 1.5. TAM BOY CANLI HIZ GRAFİK PANELİ (TOOLBAR'IN HEMEN ALTINDA) ── -->
-            <Border Grid.Row="1" Background="{Binding ThemeSpeedGraphPanelBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="0,0,0,1" Padding="14,8" IsVisible="{Binding IsSpeedGraphVisible}">
-                <Grid ColumnDefinitions="Auto, *, Auto, Auto">
+            <!-- ─── 1.5. TAM BOY CANLI HIZ GRAFİK PANELİ (TOOLBAR'IN HEMEN ALTINDA - SABİT) ── -->
+            <Border Grid.Row="1" Background="{Binding ThemeSpeedGraphPanelBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="0,0,0,1" Padding="14,8">
+                <Grid ColumnDefinitions="Auto, *, Auto">
                     <!-- Sol Taraf: Hedef Başlığı ve Detay Bilgisi -->
                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center" Margin="0,0,12,0">
                         <TextBlock Text="{Binding GraphTitle}" FontWeight="Bold" FontSize="12" Foreground="{Binding ThemeForeground}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="280" IsVisible="{Binding !!GraphTitle.Length}" />
@@ -139,7 +139,7 @@
                     </Border>
 
                     <!-- Sağ Taraf: Anlık ve Maks Hız Rozetleri -->
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="14,0,6,0">
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="14,0,0,0">
                         <!-- Anlık Hız -->
                         <Border Background="#1A10B981" BorderBrush="#10B981" BorderThickness="1" CornerRadius="4" Padding="8,4">
                             <StackPanel Orientation="Horizontal" Spacing="5">
@@ -155,11 +155,6 @@
                             </StackPanel>
                         </Border>
                     </StackPanel>
-
-                    <!-- En Sağ: Kapat Butonu -->
-                    <Button Grid.Column="3" Command="{Binding ToggleSpeedGraphCommand}" Background="Transparent" BorderThickness="0" Padding="8,4" ToolTip.Tip="Hız Grafiğini Kapat" VerticalAlignment="Center" Margin="4,0,0,0">
-                        <TextBlock Text="✕" FontSize="12" Foreground="#64748B" />
-                    </Button>
                 </Grid>
             </Border>
 
@@ -721,20 +716,7 @@
                             </Grid>
                         </Border>
 
-                        <TextBlock Text="|" Foreground="{DynamicResource SystemBaseLowColor}" VerticalAlignment="Center" />
 
-                        <!-- Hız Grafiği Sabit Göster / Gizle Butonu (Aşağıda En Sağda Sabit) -->
-                        <Button Command="{Binding ToggleSpeedGraphCommand}" 
-                                ToolTip.Tip="{Binding SpeedGraphToggleTooltip}" 
-                                Height="26" Padding="8,2" 
-                                Background="{Binding ThemeCardBg}" 
-                                BorderBrush="{Binding ThemeBorderColor}" 
-                                BorderThickness="1" CornerRadius="5">
-                            <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
-                                <TextBlock Text="👁️" FontSize="12" VerticalAlignment="Center" />
-                                <TextBlock Text="Hız Grafiği" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
                     </StackPanel>
                 </Grid>
             </Border>
