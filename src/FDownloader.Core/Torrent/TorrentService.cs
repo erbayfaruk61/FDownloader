@@ -1,7 +1,11 @@
+using System.Collections.Concurrent;
 using System.ComponentModel;
+using System.Net;
 using System.Runtime.CompilerServices;
 using MonoTorrent;
 using MonoTorrent.Client;
+using MonoTorrent.Connections;
+using MonoTorrent.PiecePicking;
 using Microsoft.Extensions.Logging;
 using FDownloader.Core.Domain;
 using FDownloader.Core.Events;
@@ -21,32 +25,87 @@ public sealed class TorrentService : IAsyncDisposable
     private readonly Dictionary<long, TorrentManager> _activeManagers = new();
     private readonly Dictionary<long, TorrentDetails> _lastKnownDetails = new();
     private readonly HashSet<long> _metadataNotifiedTasks = new();
+    private readonly ConcurrentDictionary<long, bool> _sequentialTasks = new();
     private readonly string _downloadDirectory;
     private readonly string _cacheDirectory;
     private readonly CancellationTokenSource _cts = new();
+    private TorrentSettings _settings;
+
+    public TorrentSettings Settings => _settings;
 
     public TorrentService(
         DownloadEventBus eventBus,
         ILogger<TorrentService> logger,
-        string? downloadDirectory = null)
+        string? downloadDirectory = null,
+        TorrentSettings? settings = null)
     {
         _eventBus = eventBus;
         _logger = logger;
+        _settings = settings ?? new TorrentSettings();
         _downloadDirectory = downloadDirectory ?? Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
 
         _cacheDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "torrent_cache");
         Directory.CreateDirectory(_cacheDirectory);
 
-        var engineSettings = new EngineSettingsBuilder
-        {
-            AllowPortForwarding = true,
-            AutoSaveLoadFastResume = true,
-            CacheDirectory = _cacheDirectory
-        }.ToSettings();
-
+        var engineSettings = CreateEngineSettings(_settings);
         _engine = new ClientEngine(engineSettings);
         _ = MonitorTorrentsLoopAsync(_cts.Token);
+    }
+
+    private EngineSettings CreateEngineSettings(TorrentSettings settings)
+    {
+        var builder = new EngineSettingsBuilder
+        {
+            AllowPortForwarding = settings.EnableUpnp,
+            AllowLocalPeerDiscovery = settings.EnableLsd,
+            AutoSaveLoadFastResume = true,
+            CacheDirectory = _cacheDirectory,
+            MaximumConnections = settings.MaxConnectionsTotal
+        };
+
+        if (settings.ListeningPort > 0)
+        {
+            builder.ListenEndPoints = new Dictionary<string, IPEndPoint>
+            {
+                { "ipv4", new IPEndPoint(IPAddress.Any, settings.ListeningPort) }
+            };
+
+            if (settings.EnableDht)
+            {
+                builder.DhtEndPoint = new IPEndPoint(IPAddress.Any, settings.ListeningPort);
+                builder.AutoSaveLoadDhtCache = true;
+            }
+        }
+
+        var encList = settings.EncryptionMode switch
+        {
+            1 => new List<EncryptionType> { EncryptionType.RC4Full, EncryptionType.RC4Header },
+            2 => new List<EncryptionType> { EncryptionType.PlainText },
+            _ => new List<EncryptionType> { EncryptionType.RC4Full, EncryptionType.RC4Header, EncryptionType.PlainText }
+        };
+        builder.AllowedEncryption = encList;
+
+        return builder.ToSettings();
+    }
+
+    /// <summary>
+    /// BitTorrent motorunun çalışma parametrelerini (Port, UPnP, DHT, Şifreleme vb.) dinamik olarak günceller.
+    /// </summary>
+    public async Task ApplySettingsAsync(TorrentSettings settings)
+    {
+        _settings = settings;
+        try
+        {
+            var newEngineSettings = CreateEngineSettings(settings);
+            await _engine.UpdateSettingsAsync(newEngineSettings);
+            _logger.LogInformation("BitTorrent motor ayarları güncellendi. Port: {Port}, UPnP: {Upnp}, DHT: {Dht}, EncryptionMode: {Enc}",
+                settings.ListeningPort, settings.EnableUpnp, settings.EnableDht, settings.EncryptionMode);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "BitTorrent motor ayarları güncellenirken hata alındı.");
+        }
     }
 
     /// <summary>
@@ -163,6 +222,17 @@ public sealed class TorrentService : IAsyncDisposable
         if (manager.Torrent != null && !_metadataNotifiedTasks.Contains(taskId))
         {
             NotifyMetadataLoaded(taskId, manager.Torrent, localCachePath);
+        }
+
+        if (_settings.EnableAutoSequentialForVideo && manager.Torrent != null && manager.Torrent.Files != null &&
+            manager.Torrent.Files.Any(f => f.Path.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase) || f.Path.EndsWith(".mkv", StringComparison.OrdinalIgnoreCase) || f.Path.EndsWith(".avi", StringComparison.OrdinalIgnoreCase)))
+        {
+            try
+            {
+                await manager.ChangePickerAsync(new StreamingPieceRequester());
+                _sequentialTasks[taskId] = true;
+            }
+            catch { }
         }
 
         if (startImmediately)
@@ -334,9 +404,152 @@ public sealed class TorrentService : IAsyncDisposable
     }
 
     /// <summary>
-    /// Torrent içerisindeki tek bir dosyanın indirme önceliğini ayarlar (İndir / İndirme).
+    /// Torrent için sıralı indirmeyi (Streaming/Sequential) açar veya kapatır.
+    /// Açıkken parçalar baştan sona sırayla indirilir, böylece video indirilirken medya oynatıcıda izlenebilir.
     /// </summary>
-    public async Task SetFilePriorityAsync(long taskId, int fileIndex, bool download)
+    public async Task<bool> ToggleSequentialDownloadAsync(long taskId)
+    {
+        TorrentManager? manager;
+        lock (_activeManagers)
+        {
+            _activeManagers.TryGetValue(taskId, out manager);
+        }
+
+        if (manager == null) return false;
+
+        var isCurrentlySequential = _sequentialTasks.TryGetValue(taskId, out var seq) && seq;
+        var newSequentialState = !isCurrentlySequential;
+
+        try
+        {
+            if (newSequentialState)
+            {
+                await manager.ChangePickerAsync(new StreamingPieceRequester());
+                _sequentialTasks[taskId] = true;
+                _logger.LogInformation("Torrent #{TaskId} için sıralı indirme (Streaming/Sequential) etkinleştirildi.", taskId);
+            }
+            else
+            {
+                await manager.ChangePickerAsync(new StandardPieceRequester(new PieceRequesterSettings()));
+                _sequentialTasks[taskId] = false;
+                _logger.LogInformation("Torrent #{TaskId} için standart indirme moduna dönüldü.", taskId);
+            }
+            return newSequentialState;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Sıralı indirme modu değiştirilirken hata alındı (#{TaskId})", taskId);
+            return isCurrentlySequential;
+        }
+    }
+
+    /// <summary>
+    /// Görevin sıralı indirme modunda olup olmadığını döner.
+    /// </summary>
+    public bool IsSequentialDownload(long taskId)
+    {
+        return _sequentialTasks.TryGetValue(taskId, out var seq) && seq;
+    }
+
+    /// <summary>
+    /// Torrent dosyalarını diskten baştan sona hash kontrolüne tabi tutar (Zorla Yeniden Doğrula).
+    /// </summary>
+    public async Task ForceRecheckAsync(long taskId)
+    {
+        TorrentManager? manager;
+        lock (_activeManagers)
+        {
+            _activeManagers.TryGetValue(taskId, out manager);
+        }
+
+        if (manager != null)
+        {
+            try
+            {
+                _logger.LogInformation("Torrent #{TaskId} için zorla hash doğrulaması başlatılıyor.", taskId);
+                await manager.HashCheckAsync(autoStart: true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Hash doğrulaması başlatılamadı (#{TaskId})", taskId);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Torrente yeni izleyiciler (tracker) ekler ve duyuru yapar.
+    /// </summary>
+    public async Task<int> AddTrackersAsync(long taskId, IEnumerable<string> trackerUrls)
+    {
+        TorrentManager? manager;
+        lock (_activeManagers)
+        {
+            _activeManagers.TryGetValue(taskId, out manager);
+        }
+
+        if (manager == null) return 0;
+
+        int addedCount = 0;
+        foreach (var rawUrl in trackerUrls)
+        {
+            var url = rawUrl.Trim();
+            if (string.IsNullOrWhiteSpace(url)) continue;
+
+            if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            {
+                try
+                {
+                    await manager.TrackerManager.AddTrackerAsync(uri);
+                    addedCount++;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug(ex, "Tracker eklenemedi: {Url}", url);
+                }
+            }
+        }
+
+        if (addedCount > 0)
+        {
+            try
+            {
+                await manager.TrackerManager.AnnounceAsync(CancellationToken.None);
+            }
+            catch { }
+        }
+
+        return addedCount;
+    }
+
+    /// <summary>
+    /// Tüm izleyicilere zorla bildirim gönderip yeni eşler (peers) sorgular.
+    /// </summary>
+    public async Task ForceReannounceAsync(long taskId)
+    {
+        TorrentManager? manager;
+        lock (_activeManagers)
+        {
+            _activeManagers.TryGetValue(taskId, out manager);
+        }
+
+        if (manager != null)
+        {
+            try
+            {
+                _logger.LogInformation("Torrent #{TaskId} için izleyiciler yeniden uyarılıyor (Force Reannounce).", taskId);
+                await manager.TrackerManager.AnnounceAsync(CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "İzleyici duyurusu başarısız (#{TaskId})", taskId);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Torrent içerisindeki tek bir dosyanın indirme önceliğini ayarlar (Düşük, Normal, Yüksek, İndirme).
+    /// </summary>
+    public async Task SetFilePriorityAsync(long taskId, int fileIndex, Priority priority)
     {
         TorrentManager? manager;
         lock (_activeManagers)
@@ -347,10 +560,17 @@ public sealed class TorrentService : IAsyncDisposable
         if (manager != null && manager.Files != null && fileIndex >= 0 && fileIndex < manager.Files.Count)
         {
             var file = manager.Files[fileIndex];
-            var priority = download ? Priority.Normal : Priority.DoNotDownload;
             await manager.SetFilePriorityAsync(file, priority);
             _logger.LogDebug("Torrent dosya önceliği güncellendi: Task #{TaskId}, Dosya #{Index} -> {Priority}", taskId, fileIndex, priority);
         }
+    }
+
+    /// <summary>
+    /// Torrent içerisindeki tek bir dosyanın indirme önceliğini ayarlar (İndir / İndirme).
+    /// </summary>
+    public Task SetFilePriorityAsync(long taskId, int fileIndex, bool download)
+    {
+        return SetFilePriorityAsync(taskId, fileIndex, download ? Priority.Normal : Priority.DoNotDownload);
     }
 
     /// <summary>
@@ -594,6 +814,17 @@ public sealed class TorrentService : IAsyncDisposable
 
                     if (manager.Complete)
                     {
+                        var ratio = (manager.Torrent?.Size > 0) ? (double)manager.Monitor.DataBytesSent / manager.Torrent.Size : 0;
+                        if (_settings.StopSeedingWhenRatioReached && _settings.SeedRatioLimit > 0 && ratio >= _settings.SeedRatioLimit && manager.State == TorrentState.Seeding)
+                        {
+                            try
+                            {
+                                await manager.PauseAsync();
+                                _logger.LogInformation("Torrent #{TaskId} hedeflenen paylaşım oranına ulaştığı için durduruldu: {Ratio:F2}", taskId, ratio);
+                            }
+                            catch { }
+                        }
+
                         string finalTorrentPath = manager.SavePath;
                         if (manager.Torrent != null && !string.IsNullOrWhiteSpace(manager.Torrent.Name))
                         {

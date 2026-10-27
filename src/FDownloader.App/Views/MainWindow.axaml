@@ -394,6 +394,17 @@
                                                     </MenuItem.Icon>
                                                 </MenuItem>
                                                 <Separator />
+                                                <MenuItem Header="▶️ Sıralı İndir (Ardışık / Akış)" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).ToggleSequentialDownloadCommand}" CommandParameter="{Binding}" IsVisible="{Binding IsTorrent}">
+                                                    <MenuItem.Icon>
+                                                        <CheckBox IsChecked="{Binding IsSequentialDownload}" IsHitTestVisible="False" VerticalAlignment="Center" />
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Header="🔍 Zorla Yeniden Kontrol Et" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).ForceRecheckTorrentCommand}" CommandParameter="{Binding}" IsVisible="{Binding IsTorrent}">
+                                                    <MenuItem.Icon>
+                                                        <TextBlock Text="🔍" VerticalAlignment="Center" />
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <Separator IsVisible="{Binding IsTorrent}" />
                                                 <MenuItem Header="📋 Bağlantıyı Kopyala" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).CopyUrlCommand}" CommandParameter="{Binding}" />
                                                 <MenuItem Header="🗑 Kaldır / Sil..." Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).RequestDeleteItemCommand}" CommandParameter="{Binding}">
                                                     <MenuItem.Icon>
@@ -696,16 +707,35 @@
 
                             <!-- qBittorrent Stili İzleyiciler (Trackers) -->
                             <TabItem Header="📡 İzleyiciler" IsVisible="{Binding SelectedDownload.IsTorrent, FallbackValue=False}">
-                                <ListBox ItemsSource="{Binding CurrentTorrentDetails.Trackers}" MaxHeight="160">
-                                    <ListBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <Grid ColumnDefinitions="*, 140" Margin="0,2">
-                                                <TextBlock Text="{Binding Uri}" FontSize="11" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                                                <TextBlock Grid.Column="1" Text="{Binding Status}" FontSize="11" HorizontalAlignment="Right" Foreground="#10B981" VerticalAlignment="Center" />
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ListBox.ItemTemplate>
-                                </ListBox>
+                                <Grid RowDefinitions="Auto, *">
+                                    <Border Grid.Row="0" Background="{DynamicResource SystemChromeLowColor}" Padding="8,4" Margin="0,0,0,4" CornerRadius="4">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Button Command="{Binding OpenAddTrackerDialogCommand}" Padding="8,3" Height="26" FontSize="11">
+                                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                                    <TextBlock Text="➕" FontSize="11" VerticalAlignment="Center" />
+                                                    <TextBlock Text="İzleyici Ekle..." FontSize="11" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Command="{Binding ForceReannounceTrackersCommand}" Padding="8,3" Height="26" FontSize="11">
+                                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                                    <TextBlock Text="🔄" FontSize="11" VerticalAlignment="Center" />
+                                                    <TextBlock Text="Yeniden İlet (Reannounce)" FontSize="11" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Button>
+                                            <TextBlock Text="{Binding CurrentTorrentDetails.Trackers.Count, StringFormat='Toplam {0} izleyici'}" VerticalAlignment="Center" FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" Margin="8,0,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                    <ListBox Grid.Row="1" ItemsSource="{Binding CurrentTorrentDetails.Trackers}" MaxHeight="140">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid ColumnDefinitions="*, 140" Margin="0,2">
+                                                    <TextBlock Text="{Binding Uri}" FontSize="11" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="1" Text="{Binding Status}" FontSize="11" HorizontalAlignment="Right" Foreground="#10B981" VerticalAlignment="Center" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Grid>
                             </TabItem>
                         </TabControl>
                     </Border>
@@ -1362,6 +1392,76 @@
                             </ScrollViewer>
                         </TabItem>
 
+                        <!-- SEKME 4.5: 🧲 BITTORRENT AYARLARI (qBittorrent Eşdeğeri) -->
+                        <TabItem Header="🧲 BitTorrent">
+                            <ScrollViewer Margin="0,10,0,0" VerticalScrollBarVisibility="Auto">
+                                <StackPanel Spacing="14">
+                                    <!-- Ağ ve Port Ayarları -->
+                                    <Border Background="{DynamicResource SystemChromeLowColor}" CornerRadius="8" Padding="14">
+                                        <StackPanel Spacing="10">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="🔌" FontSize="14" VerticalAlignment="Center" />
+                                                <TextBlock Text="Dinleme Portu ve Bağlantılar" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                                            </StackPanel>
+
+                                            <Grid ColumnDefinitions="200, *" RowDefinitions="Auto, Auto, Auto" Margin="6,4,0,0">
+                                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Gelen Bağlantı Portu:" VerticalAlignment="Center" FontSize="12" />
+                                                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding TorrentListeningPort}" Margin="0,4" Width="90" HorizontalAlignment="Left" Height="30" VerticalContentAlignment="Center" />
+
+                                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Genel Azami Bağlantı Sayısı:" VerticalAlignment="Center" FontSize="12" />
+                                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding TorrentMaxConnectionsTotal}" Margin="0,4" Width="90" HorizontalAlignment="Left" Height="30" VerticalContentAlignment="Center" />
+
+                                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Torrent Başına Azami Bağlantı:" VerticalAlignment="Center" FontSize="12" />
+                                                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding TorrentMaxConnectionsPerTorrent}" Margin="0,4" Width="90" HorizontalAlignment="Left" Height="30" VerticalContentAlignment="Center" />
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Protokol Özellikleri ve Eş Keşfi -->
+                                    <Border Background="{DynamicResource SystemChromeLowColor}" CornerRadius="8" Padding="14">
+                                        <StackPanel Spacing="10">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="🌐" FontSize="14" VerticalAlignment="Center" />
+                                                <TextBlock Text="Protokol Özellikleri ve Gizlilik" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                                            </StackPanel>
+
+                                            <CheckBox IsChecked="{Binding TorrentEnableUpnp}" Content="UPnP / NAT-PMP Port Yönlendirmeyi Etkinleştir" FontSize="12" Margin="6,2,0,2" />
+                                            <CheckBox IsChecked="{Binding TorrentEnableDht}" Content="DHT (Dağıtık Ağ) ile Eş Bulmayı Etkinleştir" FontSize="12" Margin="6,2,0,2" />
+                                            <CheckBox IsChecked="{Binding TorrentEnablePex}" Content="PeX (Eş Değişimi - Peer Exchange) Etkinleştir" FontSize="12" Margin="6,2,0,2" />
+                                            <CheckBox IsChecked="{Binding TorrentEnableLsd}" Content="LSD (Yerel Ağ Eş Keşfi) Etkinleştir" FontSize="12" Margin="6,2,0,2" />
+
+                                            <Grid ColumnDefinitions="200, *" Margin="6,8,0,0">
+                                                <TextBlock Text="Protokol Şifreleme (Encryption):" VerticalAlignment="Center" FontSize="12" />
+                                                <ComboBox Grid.Column="1" SelectedIndex="{Binding TorrentEncryptionMode}" HorizontalAlignment="Left" Width="220">
+                                                    <ComboBoxItem Content="İzin Ver (Tercih Edilen)" />
+                                                    <ComboBoxItem Content="Zorunlu Kıl (Yalnızca Şifreli)" />
+                                                    <ComboBoxItem Content="Devre Dışı" />
+                                                </ComboBox>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- İndirme Davranışı ve Paylaşım (Seeding) -->
+                                    <Border Background="{DynamicResource SystemChromeLowColor}" CornerRadius="8" Padding="14">
+                                        <StackPanel Spacing="10">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="⚡" FontSize="14" VerticalAlignment="Center" />
+                                                <TextBlock Text="İndirme ve Gönderme (Seeding) Kuralları" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                                            </StackPanel>
+
+                                            <CheckBox IsChecked="{Binding TorrentEnableAutoSequential}" Content="Yeni eklenen torrentleri otomatik 'Sıralı İndir' (Streaming) modunda başlat" FontSize="12" Margin="6,2,0,2" />
+
+                                            <StackPanel Orientation="Horizontal" Spacing="8" Margin="6,4,0,2">
+                                                <CheckBox IsChecked="{Binding TorrentStopSeedingWhenRatioReached}" Content="Paylaşım Oranına Ulaşılınca Göndermeyi Durdur:" VerticalAlignment="Center" FontSize="12" />
+                                                <TextBox Text="{Binding TorrentSeedRatioLimit}" Width="60" Height="28" VerticalContentAlignment="Center" IsEnabled="{Binding TorrentStopSeedingWhenRatioReached}" />
+                                                <TextBlock Text="(Örn: 1.00 veya 2.00 katı)" VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+
                         <!-- SEKME 5: 🌐 SİTE YAKALAYICI -->
                         <TabItem Header="🌐 Yakalayıcı">
                             <Grid RowDefinitions="Auto, Auto, *, Auto" Margin="0,10,0,0">
@@ -1541,6 +1641,32 @@
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <TextBlock Text="❌" VerticalAlignment="Center" />
                                 <TextBlock Text="Evet (Diskten de Sil)" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- ─── İZLEYİCİ (TRACKER) EKLEME MODAL DİYALOĞU ─── -->
+        <Border Background="#80000000" IsVisible="{Binding IsAddTrackerDialogOpen}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ZIndex="100">
+            <Border Background="{DynamicResource SystemChromeMediumColor}" CornerRadius="12" Padding="24" Width="520" HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 8 32 #40000000" BorderBrush="{DynamicResource SystemBaseLowColor}" BorderThickness="1">
+                <StackPanel Spacing="14">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="📡" FontSize="20" VerticalAlignment="Center" />
+                        <TextBlock Text="Torrent İzleyicileri (Trackers) Ekle" FontWeight="Bold" FontSize="16" VerticalAlignment="Center" />
+                    </StackPanel>
+                    
+                    <TextBlock Text="Aşağıdaki alana her satıra bir adet gelecek şekilde izleyici (tracker) URL'lerini girin:" FontSize="12" Foreground="{DynamicResource SystemBaseMediumColor}" TextWrapping="Wrap" />
+
+                    <TextBox Text="{Binding NewTrackerUrlsText, Mode=TwoWay}" AcceptsReturn="True" Height="140" TextWrapping="Wrap" FontFamily="Consolas, monospace" FontSize="12" PlaceholderText="udp://tracker.opentrackr.org:1337/announce&#x0a;http://tracker.example.com/announce" />
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,10,0,0">
+                        <Button Command="{Binding CancelAddTrackerDialogCommand}" Content="Vazgeç" Padding="14,7" Height="36" />
+                        <Button Command="{Binding ConfirmAddTrackersCommand}" Background="{DynamicResource AccentButtonBackground}" Foreground="{DynamicResource AccentButtonForeground}" FontWeight="Bold" Padding="14,7" Height="36">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="➕" VerticalAlignment="Center" />
+                                <TextBlock Text="İzleyicileri Ekle" FontWeight="Bold" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
                     </StackPanel>

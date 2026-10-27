@@ -53,6 +53,7 @@ public sealed class DownloadManager : IAsyncDisposable
 
         SubscribeToEvents();
         LoadExistingTasks();
+        _ = _torrentService.ApplySettingsAsync(GetTorrentSettings());
     }
 
     private void SubscribeToEvents()
@@ -675,11 +676,86 @@ public sealed class DownloadManager : IAsyncDisposable
     public Task SetTorrentFilePriorityAsync(long taskId, int fileIndex, bool download)
         => _torrentService.SetFilePriorityAsync(taskId, fileIndex, download);
 
+    public Task SetTorrentFilePriorityAsync(long taskId, int fileIndex, MonoTorrent.Priority priority)
+        => _torrentService.SetFilePriorityAsync(taskId, fileIndex, priority);
+
     public Task SetAllTorrentFilesPriorityAsync(long taskId, bool downloadAll)
         => _torrentService.SetAllFilesPriorityAsync(taskId, downloadAll);
 
     public Task<List<TorrentFileInfo>> InspectTorrentFilesAsync(string sourceUrlOrPath)
         => _torrentService.InspectTorrentFilesAsync(sourceUrlOrPath);
+
+    public Task<bool> ToggleTorrentSequentialDownloadAsync(long taskId)
+        => _torrentService.ToggleSequentialDownloadAsync(taskId);
+
+    public bool IsTorrentSequentialDownload(long taskId)
+        => _torrentService.IsSequentialDownload(taskId);
+
+    public Task ForceRecheckTorrentAsync(long taskId)
+        => _torrentService.ForceRecheckAsync(taskId);
+
+    public Task<int> AddTrackersToTorrentAsync(long taskId, IEnumerable<string> trackerUrls)
+        => _torrentService.AddTrackersAsync(taskId, trackerUrls);
+
+    public Task ForceReannounceTorrentAsync(long taskId)
+        => _torrentService.ForceReannounceAsync(taskId);
+
+    public TorrentSettings GetTorrentSettings()
+    {
+        var settings = new TorrentSettings();
+
+        if (int.TryParse(_repository.GetSetting("Torrent.ListeningPort"), out var port) && port > 0)
+            settings.ListeningPort = port;
+
+        if (bool.TryParse(_repository.GetSetting("Torrent.EnableUpnp"), out var upnp))
+            settings.EnableUpnp = upnp;
+
+        if (bool.TryParse(_repository.GetSetting("Torrent.EnableDht"), out var dht))
+            settings.EnableDht = dht;
+
+        if (bool.TryParse(_repository.GetSetting("Torrent.EnablePeX"), out var pex))
+            settings.EnablePeX = pex;
+
+        if (bool.TryParse(_repository.GetSetting("Torrent.EnableLsd"), out var lsd))
+            settings.EnableLsd = lsd;
+
+        if (int.TryParse(_repository.GetSetting("Torrent.EncryptionMode"), out var enc))
+            settings.EncryptionMode = enc;
+
+        if (int.TryParse(_repository.GetSetting("Torrent.MaxConnectionsTotal"), out var maxConn) && maxConn > 0)
+            settings.MaxConnectionsTotal = maxConn;
+
+        if (int.TryParse(_repository.GetSetting("Torrent.MaxConnectionsPerTorrent"), out var maxPer) && maxPer > 0)
+            settings.MaxConnectionsPerTorrent = maxPer;
+
+        if (bool.TryParse(_repository.GetSetting("Torrent.EnableAutoSequentialForVideo"), out var autoSeq))
+            settings.EnableAutoSequentialForVideo = autoSeq;
+
+        if (double.TryParse(_repository.GetSetting("Torrent.SeedRatioLimit"), System.Globalization.CultureInfo.InvariantCulture, out var ratio))
+            settings.SeedRatioLimit = ratio;
+
+        if (bool.TryParse(_repository.GetSetting("Torrent.StopSeedingWhenRatioReached"), out var stopSeed))
+            settings.StopSeedingWhenRatioReached = stopSeed;
+
+        return settings;
+    }
+
+    public async Task SaveTorrentSettingsAsync(TorrentSettings settings)
+    {
+        _repository.SetSetting("Torrent.ListeningPort", settings.ListeningPort.ToString());
+        _repository.SetSetting("Torrent.EnableUpnp", settings.EnableUpnp.ToString());
+        _repository.SetSetting("Torrent.EnableDht", settings.EnableDht.ToString());
+        _repository.SetSetting("Torrent.EnablePeX", settings.EnablePeX.ToString());
+        _repository.SetSetting("Torrent.EnableLsd", settings.EnableLsd.ToString());
+        _repository.SetSetting("Torrent.EncryptionMode", settings.EncryptionMode.ToString());
+        _repository.SetSetting("Torrent.MaxConnectionsTotal", settings.MaxConnectionsTotal.ToString());
+        _repository.SetSetting("Torrent.MaxConnectionsPerTorrent", settings.MaxConnectionsPerTorrent.ToString());
+        _repository.SetSetting("Torrent.EnableAutoSequentialForVideo", settings.EnableAutoSequentialForVideo.ToString());
+        _repository.SetSetting("Torrent.SeedRatioLimit", settings.SeedRatioLimit.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        _repository.SetSetting("Torrent.StopSeedingWhenRatioReached", settings.StopSeedingWhenRatioReached.ToString());
+
+        await _torrentService.ApplySettingsAsync(settings);
+    }
 
     public async ValueTask DisposeAsync()
     {

@@ -31,6 +31,7 @@ public partial class DownloadItemViewModel : ViewModelBase
     [ObservableProperty] private string _savePath = string.Empty;
     [ObservableProperty] private bool _isSelected;
     [ObservableProperty] private bool _isStalled;
+    [ObservableProperty] private bool _isSequentialDownload;
 
     public int ConsecutiveZeroSpeedCount { get; set; }
 

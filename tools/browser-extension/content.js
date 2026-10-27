@@ -155,6 +155,14 @@
         .fdown-btn:active {
           transform: scale(0.97);
         }
+        .fdown-logo {
+          width: 17px;
+          height: 17px;
+          border-radius: 4px;
+          object-fit: contain;
+          vertical-align: middle;
+          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+        }
         .fdown-badge {
           display: inline-flex;
           align-items: center;
@@ -162,9 +170,9 @@
           background: linear-gradient(135deg, #0EA5E9, #38BDF8);
           color: #FFFFFF;
           border-radius: 4px;
-          width: 16px;
-          height: 16px;
-          font-size: 10px;
+          width: 17px;
+          height: 17px;
+          font-size: 11px;
           font-weight: 800;
         }
       `;
@@ -173,9 +181,20 @@
       panelContainer = document.createElement("div");
       panelContainer.className = "fdown-wrap";
 
+      let iconUrl = "";
+      try {
+        if (chrome && chrome.runtime && chrome.runtime.getURL) {
+          iconUrl = chrome.runtime.getURL("icons/icon-48.png");
+        }
+      } catch (e) { }
+
+      const iconHtml = iconUrl
+        ? `<img class="fdown-logo" src="${iconUrl}" width="17" height="17" alt="FDownloader" />`
+        : `<span class="fdown-badge">F</span>`;
+
       buttonEl = document.createElement("button");
       buttonEl.className = "fdown-btn";
-      buttonEl.innerHTML = `<span class="fdown-badge">⚡</span><span class="fdown-label">Bu Videoyu İndir</span>`;
+      buttonEl.innerHTML = `${iconHtml}<span class="fdown-label">Bu Videoyu İndir</span>`;
 
       buttonEl.addEventListener("click", onGrabberButtonClick);
       panelContainer.addEventListener("mouseenter", () => {

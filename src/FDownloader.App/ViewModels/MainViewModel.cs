@@ -494,6 +494,23 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty] private int _settingsMaxConcurrentDownloads = 4;
     [ObservableProperty] private int _settingsDefaultSegments = 8;
 
+    // ─── BitTorrent Ayarları (qBittorrent Modülü) ───────────────────────────
+    [ObservableProperty] private int _torrentListeningPort = 55123;
+    [ObservableProperty] private bool _torrentEnableUpnp = true;
+    [ObservableProperty] private bool _torrentEnableDht = true;
+    [ObservableProperty] private bool _torrentEnablePex = true;
+    [ObservableProperty] private bool _torrentEnableLsd = true;
+    [ObservableProperty] private int _torrentEncryptionMode = 0; // 0: Tercih Et, 1: Zorunlu Kıl, 2: Devre Dışı
+    [ObservableProperty] private int _torrentMaxConnectionsTotal = 200;
+    [ObservableProperty] private int _torrentMaxConnectionsPerTorrent = 60;
+    [ObservableProperty] private bool _torrentEnableAutoSequential = false;
+    [ObservableProperty] private double _torrentSeedRatioLimit = 1.0;
+    [ObservableProperty] private bool _torrentStopSeedingWhenRatioReached = false;
+
+    // İzleyici Ekleme Modalı
+    [ObservableProperty] private bool _isAddTrackerDialogOpen = false;
+    [ObservableProperty] private string _newTrackerUrlsText = string.Empty;
+
     // ─── İstatistikler, Canlı Hız Grafiği ve Durum Çubuğu ─────────────────
     [ObservableProperty] private string _totalDownloadSpeedText = "0 B/s";
     [ObservableProperty] private string _totalUploadSpeedText = "0 B/s";
@@ -595,6 +612,20 @@ public partial class MainViewModel : ViewModelBase
         SubscribeToEvents();
         LoadExistingTasks();
         _ = CheckForUpdatesSilentlyAsync();
+
+        // BitTorrent ayarlarını yükle
+        var tSettings = _downloadManager.GetTorrentSettings();
+        TorrentListeningPort = tSettings.ListeningPort;
+        TorrentEnableUpnp = tSettings.EnableUpnp;
+        TorrentEnableDht = tSettings.EnableDht;
+        TorrentEnablePex = tSettings.EnablePeX;
+        TorrentEnableLsd = tSettings.EnableLsd;
+        TorrentEncryptionMode = tSettings.EncryptionMode;
+        TorrentMaxConnectionsTotal = tSettings.MaxConnectionsTotal;
+        TorrentMaxConnectionsPerTorrent = tSettings.MaxConnectionsPerTorrent;
+        TorrentEnableAutoSequential = tSettings.EnableAutoSequentialForVideo;
+        TorrentSeedRatioLimit = tSettings.SeedRatioLimit;
+        TorrentStopSeedingWhenRatioReached = tSettings.StopSeedingWhenRatioReached;
     }
 
     private void SubscribeToEvents()
@@ -1843,6 +1874,24 @@ public partial class MainViewModel : ViewModelBase
         ApplyThemeMode(_currentThemeMode);
         UpdateLimitDisplays();
         UpdateDiskSpace();
+
+        // BitTorrent ayarlarını kaydet ve motora uygula
+        var tSettings = new TorrentSettings
+        {
+            ListeningPort = TorrentListeningPort,
+            EnableUpnp = TorrentEnableUpnp,
+            EnableDht = TorrentEnableDht,
+            EnablePeX = TorrentEnablePex,
+            EnableLsd = TorrentEnableLsd,
+            EncryptionMode = TorrentEncryptionMode,
+            MaxConnectionsTotal = TorrentMaxConnectionsTotal,
+            MaxConnectionsPerTorrent = TorrentMaxConnectionsPerTorrent,
+            EnableAutoSequentialForVideo = TorrentEnableAutoSequential,
+            SeedRatioLimit = TorrentSeedRatioLimit,
+            StopSeedingWhenRatioReached = TorrentStopSeedingWhenRatioReached
+        };
+        _ = _downloadManager.SaveTorrentSettingsAsync(tSettings);
+
         IsSettingsDialogOpen = false;
     }
 
@@ -1854,6 +1903,83 @@ public partial class MainViewModel : ViewModelBase
             SetThemeMode(_savedThemeMode);
         }
         IsSettingsDialogOpen = false;
+    }
+
+    // ─── BitTorrent qBittorrent Gelişmiş Komutları ────────────────────────
+
+    [RelayCommand]
+    public async Task ToggleSequentialDownload(DownloadItemViewModel? item)
+    {
+        var target = item ?? SelectedDownload;
+        if (target == null || !target.IsTorrent) return;
+
+        var newState = await _downloadManager.ToggleTorrentSequentialDownloadAsync(target.Id);
+        target.IsSequentialDownload = newState;
+    }
+
+    [RelayCommand]
+    public async Task ForceRecheckTorrent(DownloadItemViewModel? item)
+    {
+        var target = item ?? SelectedDownload;
+        if (target == null || !target.IsTorrent) return;
+
+        await _downloadManager.ForceRecheckTorrentAsync(target.Id);
+        target.Status = DownloadStatus.Verifying;
+    }
+
+    [RelayCommand]
+    public void OpenAddTrackerDialog()
+    {
+        if (SelectedDownload == null || !SelectedDownload.IsTorrent) return;
+        NewTrackerUrlsText = string.Empty;
+        IsAddTrackerDialogOpen = true;
+    }
+
+    [RelayCommand]
+    public void CancelAddTrackerDialog()
+    {
+        IsAddTrackerDialogOpen = false;
+        NewTrackerUrlsText = string.Empty;
+    }
+
+    [RelayCommand]
+    public async Task ConfirmAddTrackers()
+    {
+        IsAddTrackerDialogOpen = false;
+        if (SelectedDownload == null || !SelectedDownload.IsTorrent || string.IsNullOrWhiteSpace(NewTrackerUrlsText))
+            return;
+
+        var urls = NewTrackerUrlsText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        await _downloadManager.AddTrackersToTorrentAsync(SelectedDownload.Id, urls);
+        NewTrackerUrlsText = string.Empty;
+
+        CurrentTorrentDetails = _downloadManager.GetTorrentDetails(SelectedDownload.Id);
+    }
+
+    [RelayCommand]
+    public async Task ForceReannounceTrackers()
+    {
+        if (SelectedDownload == null || !SelectedDownload.IsTorrent) return;
+        await _downloadManager.ForceReannounceTorrentAsync(SelectedDownload.Id);
+    }
+
+    [RelayCommand]
+    public async Task SetTorrentFilePriorityLevel(object? parameter)
+    {
+        if (parameter is not string paramStr || SelectedDownload == null || !SelectedDownload.IsTorrent) return;
+        var parts = paramStr.Split(':');
+        if (parts.Length != 2 || !int.TryParse(parts[0], out var index)) return;
+
+        var priority = parts[1] switch
+        {
+            "DoNotDownload" => MonoTorrent.Priority.DoNotDownload,
+            "Low" => MonoTorrent.Priority.Low,
+            "High" => MonoTorrent.Priority.High,
+            _ => MonoTorrent.Priority.Normal
+        };
+
+        await _downloadManager.SetTorrentFilePriorityAsync(SelectedDownload.Id, index, priority);
+        CurrentTorrentDetails = _downloadManager.GetTorrentDetails(SelectedDownload.Id);
     }
 
     // ─── Komutlar: 🌐 Site Yakalayıcı (Site Grabber) ──────────────────────
