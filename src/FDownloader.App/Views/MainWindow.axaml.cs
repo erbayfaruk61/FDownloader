@@ -298,6 +298,22 @@ public partial class MainWindow : Window
         }
     }
 
+    private void OnThemeCardPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (sender is Control c && c.Tag is string themeName && DataContext is MainViewModel vm)
+        {
+            vm.SelectTheme(themeName);
+        }
+    }
+
+    private void OnProgressCardPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (sender is Control c && c.Tag is string styleName && DataContext is MainViewModel vm)
+        {
+            vm.SelectProgressStyle(styleName);
+        }
+    }
+
     [DllImport("user32.dll")]
     private static extern bool SetForegroundWindow(IntPtr hWnd);
 

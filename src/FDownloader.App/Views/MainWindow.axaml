@@ -899,7 +899,8 @@
                                             <Grid ColumnDefinitions="*, *, *, *" Margin="0,4,0,0">
                                                 <!-- 1: Koyu Grafit -->
                                                 <Border Grid.Column="0" Margin="4" Padding="10" CornerRadius="8" BorderThickness="1.5"
-                                                        Background="#181D28" BorderBrush="#334155">
+                                                        Background="#181D28" BorderBrush="#334155" Cursor="Hand"
+                                                        Tag="DarkGraphite" PointerPressed="OnThemeCardPointerPressed">
                                                     <StackPanel Spacing="8">
                                                         <RadioButton IsChecked="{Binding IsThemeDarkGraphite, Mode=TwoWay}"
                                                                      Command="{Binding SelectThemeCommand}"
@@ -920,7 +921,8 @@
 
                                                 <!-- 2: Okyanus Mavisi -->
                                                 <Border Grid.Column="1" Margin="4" Padding="10" CornerRadius="8" BorderThickness="1.5"
-                                                        Background="#0F172A" BorderBrush="#0284C7">
+                                                        Background="#0F172A" BorderBrush="#0284C7" Cursor="Hand"
+                                                        Tag="OceanBlue" PointerPressed="OnThemeCardPointerPressed">
                                                     <StackPanel Spacing="8">
                                                         <RadioButton IsChecked="{Binding IsThemeOceanBlue, Mode=TwoWay}"
                                                                      Command="{Binding SelectThemeCommand}"
@@ -941,7 +943,8 @@
 
                                                 <!-- 3: Siber Mor -->
                                                 <Border Grid.Column="2" Margin="4" Padding="10" CornerRadius="8" BorderThickness="1.5"
-                                                        Background="#181126" BorderBrush="#7C3AED">
+                                                        Background="#181126" BorderBrush="#7C3AED" Cursor="Hand"
+                                                        Tag="CyberPurple" PointerPressed="OnThemeCardPointerPressed">
                                                     <StackPanel Spacing="8">
                                                         <RadioButton IsChecked="{Binding IsThemeCyberPurple, Mode=TwoWay}"
                                                                      Command="{Binding SelectThemeCommand}"
@@ -962,7 +965,8 @@
 
                                                 <!-- 4: Aydınlık -->
                                                 <Border Grid.Column="3" Margin="4" Padding="10" CornerRadius="8" BorderThickness="1.5"
-                                                        Background="#F1F5F9" BorderBrush="#CBD5E1">
+                                                        Background="#F1F5F9" BorderBrush="#CBD5E1" Cursor="Hand"
+                                                        Tag="LightClean" PointerPressed="OnThemeCardPointerPressed">
                                                     <StackPanel Spacing="8">
                                                         <RadioButton IsChecked="{Binding IsThemeLightClean, Mode=TwoWay}"
                                                                      Command="{Binding SelectThemeCommand}"
@@ -996,7 +1000,8 @@
                                             <Grid ColumnDefinitions="*, *, *, *" Margin="0,4,0,0">
                                                 <!-- Klasik -->
                                                 <Border Grid.Column="0" Margin="4" Padding="10" CornerRadius="8" BorderThickness="1.5"
-                                                        Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}">
+                                                        Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" Cursor="Hand"
+                                                        Tag="Klasik" PointerPressed="OnProgressCardPointerPressed">
                                                     <StackPanel Spacing="8">
                                                         <RadioButton Content="Klasik"
                                                                      IsChecked="{Binding IsProgressStyleKlasik, Mode=TwoWay}"
@@ -1016,7 +1021,8 @@
 
                                                 <!-- Gradyan -->
                                                 <Border Grid.Column="1" Margin="4" Padding="10" CornerRadius="8" BorderThickness="1.5"
-                                                        Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}">
+                                                        Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" Cursor="Hand"
+                                                        Tag="Gradyan" PointerPressed="OnProgressCardPointerPressed">
                                                     <StackPanel Spacing="8">
                                                         <RadioButton Content="Gradyan"
                                                                      IsChecked="{Binding IsProgressStyleGradyan, Mode=TwoWay}"
@@ -1044,7 +1050,8 @@
 
                                                 <!-- Neon -->
                                                 <Border Grid.Column="2" Margin="4" Padding="10" CornerRadius="8" BorderThickness="1.5"
-                                                        Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}">
+                                                        Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" Cursor="Hand"
+                                                        Tag="Neon" PointerPressed="OnProgressCardPointerPressed">
                                                     <StackPanel Spacing="8">
                                                         <RadioButton Content="Neon"
                                                                      IsChecked="{Binding IsProgressStyleNeon, Mode=TwoWay}"
@@ -1064,7 +1071,8 @@
 
                                                 <!-- İnce -->
                                                 <Border Grid.Column="3" Margin="4" Padding="10" CornerRadius="8" BorderThickness="1.5"
-                                                        Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}">
+                                                        Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" Cursor="Hand"
+                                                        Tag="Ince" PointerPressed="OnProgressCardPointerPressed">
                                                     <StackPanel Spacing="8">
                                                         <RadioButton Content="İnce Çizgi"
                                                                      IsChecked="{Binding IsProgressStyleInce, Mode=TwoWay}"
