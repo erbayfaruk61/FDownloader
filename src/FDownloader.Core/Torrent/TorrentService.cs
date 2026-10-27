@@ -1,3 +1,5 @@
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using MonoTorrent;
 using MonoTorrent.Client;
 using Microsoft.Extensions.Logging;
@@ -683,15 +685,64 @@ public class TorrentDetails
     public List<TorrentTrackerInfo> Trackers { get; set; } = new();
 }
 
-public class TorrentFileInfo
+public class TorrentFileInfo : INotifyPropertyChanged
 {
+    private bool _isSelected = true;
+    private string _priority = "Normal";
+    private long _bytesDownloaded;
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
     public int Index { get; set; }
     public string Path { get; set; } = string.Empty;
     public long Length { get; set; }
-    public long BytesDownloaded { get; set; }
+
+    public long BytesDownloaded
+    {
+        get => _bytesDownloaded;
+        set
+        {
+            if (_bytesDownloaded != value)
+            {
+                _bytesDownloaded = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(ProgressPercent));
+            }
+        }
+    }
+
     public double ProgressPercent => Length > 0 ? Math.Min(100.0, BytesDownloaded * 100.0 / Length) : 0;
-    public string Priority { get; set; } = "Normal";
-    public bool IsSelected { get; set; } = true;
+
+    public string Priority
+    {
+        get => _priority;
+        set
+        {
+            if (_priority != value)
+            {
+                _priority = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set
+        {
+            if (_isSelected != value)
+            {
+                _isSelected = value;
+                OnPropertyChanged();
+            }
+        }
+    }
 
     public string LengthDisplay
     {

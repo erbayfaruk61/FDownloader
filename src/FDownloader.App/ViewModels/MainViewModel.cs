@@ -982,10 +982,18 @@ public partial class MainViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    public async Task SelectAllTorrentFiles(bool selectAll)
+    public async Task SelectAllTorrentFiles()
     {
         if (SelectedDownload == null || !SelectedDownload.IsTorrent) return;
-        await _downloadManager.SetAllTorrentFilesPriorityAsync(SelectedDownload.Id, selectAll);
+        await _downloadManager.SetAllTorrentFilesPriorityAsync(SelectedDownload.Id, true);
+        CurrentTorrentDetails = _downloadManager.GetTorrentDetails(SelectedDownload.Id);
+    }
+
+    [RelayCommand]
+    public async Task DeselectAllTorrentFiles()
+    {
+        if (SelectedDownload == null || !SelectedDownload.IsTorrent) return;
+        await _downloadManager.SetAllTorrentFilesPriorityAsync(SelectedDownload.Id, false);
         CurrentTorrentDetails = _downloadManager.GetTorrentDetails(SelectedDownload.Id);
     }
 
@@ -2156,11 +2164,20 @@ public partial class MainViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    public void SelectAllAddDialogTorrentFiles(bool selectAll)
+    public void SelectAllAddDialogTorrentFiles()
     {
         foreach (var file in AddDialogTorrentFiles)
         {
-            file.IsSelected = selectAll;
+            file.IsSelected = true;
+        }
+    }
+
+    [RelayCommand]
+    public void DeselectAllAddDialogTorrentFiles()
+    {
+        foreach (var file in AddDialogTorrentFiles)
+        {
+            file.IsSelected = false;
         }
     }
 

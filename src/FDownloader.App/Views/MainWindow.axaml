@@ -567,10 +567,10 @@
                                 <Grid RowDefinitions="Auto, *">
                                     <Border Grid.Row="0" Background="{DynamicResource SystemControlBackgroundAltHighBrush}" Padding="6,2" BorderBrush="{DynamicResource SystemBaseLowColor}" BorderThickness="0,0,0,1">
                                         <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <Button Command="{Binding SelectAllTorrentFilesCommand}" CommandParameter="{x:True}" Padding="6,2" Height="22" FontSize="10">
+                                            <Button Command="{Binding SelectAllTorrentFilesCommand}" Padding="6,2" Height="22" FontSize="10">
                                                 <TextBlock Text="✅ Tümünü İndir" FontSize="10" />
                                             </Button>
-                                            <Button Command="{Binding SelectAllTorrentFilesCommand}" CommandParameter="{x:False}" Padding="6,2" Height="22" FontSize="10">
+                                            <Button Command="{Binding DeselectAllTorrentFilesCommand}" Padding="6,2" Height="22" FontSize="10">
                                                 <TextBlock Text="⬜ Tümünü Bırak" FontSize="10" />
                                             </Button>
                                             <TextBlock Text="{Binding CurrentTorrentDetails.Files.Count, StringFormat='Toplam {0} dosya'}" VerticalAlignment="Center" FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" Margin="4,0,0,0" />
@@ -805,10 +805,10 @@
                                     <TextBlock Text="{Binding AddDialogTorrentFiles.Count, StringFormat='({0} dosya)'}" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" VerticalAlignment="Center" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                    <Button Command="{Binding SelectAllAddDialogTorrentFilesCommand}" CommandParameter="{x:True}" Padding="6,2" Height="22" FontSize="10">
+                                    <Button Command="{Binding SelectAllAddDialogTorrentFilesCommand}" Padding="6,2" Height="22" FontSize="10">
                                         <TextBlock Text="✅ Tümünü Seç" FontSize="10" />
                                     </Button>
-                                    <Button Command="{Binding SelectAllAddDialogTorrentFilesCommand}" CommandParameter="{x:False}" Padding="6,2" Height="22" FontSize="10">
+                                    <Button Command="{Binding DeselectAllAddDialogTorrentFilesCommand}" Padding="6,2" Height="22" FontSize="10">
                                         <TextBlock Text="⬜ Tümünü Bırak" FontSize="10" />
                                     </Button>
                                 </StackPanel>
