@@ -89,49 +89,50 @@
             <!-- ─── 1. ÜST ARAÇ ÇUBUĞU (TOOLBAR) ────────────────────────────── -->
             <Border Grid.Row="0" Background="{Binding ThemeToolbarBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="0,0,0,1" Padding="12,8">
                 <Grid ColumnDefinitions="Auto, *, Auto">
-                    <!-- Sol Butonlar -->
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
-                        <!-- Marka Logosu (Ekle Butonunun Yanında) -->
+                    <!-- Sol Taraf: Marka Logosu ve Yeni İndirme Ekle -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <!-- Marka Logosu -->
                         <Border CornerRadius="8" ClipToBounds="True" Width="34" Height="34" VerticalAlignment="Center" Margin="0,0,4,0" BoxShadow="0 2 6 0 #30000000">
                             <Image Source="/Assets/logo.png" Width="34" Height="34" Stretch="UniformToFill" />
                         </Border>
 
                         <!-- Yeni İndirme Ekle -->
-                        <Button Command="{Binding OpenAddDownloadDialogCommand}" Background="{Binding ThemeAccentBg}" Foreground="{Binding ThemeAccentFg}" FontWeight="SemiBold" Padding="12,6" Height="34">
+                        <Button Command="{Binding OpenAddDownloadDialogCommand}" Background="{Binding ThemeAccentBg}" Foreground="{Binding ThemeAccentFg}" FontWeight="SemiBold" Padding="14,6" Height="34" VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                 <TextBlock Text="➕" VerticalAlignment="Center" />
                                 <TextBlock Text="Ekle" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
+                    </StackPanel>
 
-
-
+                    <!-- Orta Bölüm: İşlem Butonları (Toolbar Ortalanmış Buton Grubu) -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <!-- Toplu İşlem Butonları -->
-                        <Button Command="{Binding StartAllCommand}" ToolTip.Tip="Bekleyen ve duraklatılmış tüm indirmeleri başlatır" Padding="10,6">
-                            <TextBlock Text="▶ Bekleyenleri Başlat" />
+                        <Button Command="{Binding StartAllCommand}" ToolTip.Tip="Bekleyen ve duraklatılmış tüm indirmeleri başlatır" Padding="10,6" Height="34" VerticalAlignment="Center">
+                            <TextBlock Text="▶ Bekleyenleri Başlat" VerticalAlignment="Center" />
                         </Button>
-                        <Button Command="{Binding PauseAllCommand}" ToolTip.Tip="Tüm aktif indirmeleri duraklatır" Padding="10,6">
-                            <TextBlock Text="⏸ Tümünü Duraklat" />
+                        <Button Command="{Binding PauseAllCommand}" ToolTip.Tip="Tüm aktif indirmeleri duraklatır" Padding="10,6" Height="34" VerticalAlignment="Center">
+                            <TextBlock Text="⏸ Tümünü Duraklat" VerticalAlignment="Center" />
                         </Button>
-                        <Separator Width="1" Margin="3,2" />
+                        <Separator Width="1" Height="20" Margin="4,0" VerticalAlignment="Center" />
 
-                        <!-- Hibrit Başlat / Duraklat Butonu (Dosyanın o anki durumuna göre otomatik değişir) -->
+                        <!-- Hibrit Başlat / Duraklat Butonu -->
                         <Button Command="{Binding ToggleStartPauseSelectedCommand}" 
                                 ToolTip.Tip="{Binding SelectedHybridTooltip}" 
-                                Padding="10,6" Height="34">
+                                Padding="12,6" Height="34" VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                 <TextBlock Text="{Binding SelectedHybridIcon}" Foreground="{Binding SelectedHybridColor}" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
                                 <TextBlock Text="{Binding SelectedHybridText}" FontWeight="SemiBold" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
-                        <Button Command="{Binding RequestDeleteSelectedCommand}" ToolTip.Tip="Seçileni Sil (Diskten silme seçeneğiyle)" Padding="8,6">
-                            <TextBlock Text="🗑 Sil" />
+                        <Button Command="{Binding RequestDeleteSelectedCommand}" ToolTip.Tip="Seçileni Sil (Diskten silme seçeneğiyle)" Padding="10,6" Height="34" VerticalAlignment="Center">
+                            <TextBlock Text="🗑 Sil" VerticalAlignment="Center" />
                         </Button>
-                        <Separator Width="1" Margin="3,2" />
+                        <Separator Width="1" Height="20" Margin="4,0" VerticalAlignment="Center" />
 
-                        <!-- Ayarlar (Çark Butonu — Site Yakalayıcı ve Hız Ayarları Buradadır) -->
-                        <Button Command="{Binding OpenSettingsDialogCommand}" ToolTip.Tip="Ayarlar, Hız Sınırları ve Site Yakalayıcı" Padding="10,6">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
+                        <!-- Ayarlar -->
+                        <Button Command="{Binding OpenSettingsDialogCommand}" ToolTip.Tip="Ayarlar, Hız Sınırları ve Site Yakalayıcı" Padding="12,6" Height="34" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                 <TextBlock Text="⚙️" VerticalAlignment="Center" />
                                 <TextBlock Text="Ayarlar" VerticalAlignment="Center" />
                             </StackPanel>
@@ -141,15 +142,15 @@
                     <!-- Sağ Taraf: Pano İzleyici ve Toplam Hız Rozeti -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                         <!-- Pano İzleme Anahtarı -->
-                        <Border Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="6" Padding="8,4">
+                        <Border Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="6" Padding="8,4" Height="34" VerticalAlignment="Center">
                             <CheckBox IsChecked="{Binding IsClipboardMonitoringEnabled}" Content="📋 Pano İzleyici" VerticalAlignment="Center" />
                         </Border>
 
                         <!-- Toplam Hız Göstergesi Rozeti -->
-                        <Border Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="6" Padding="10,4" VerticalAlignment="Center">
+                        <Border Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="6" Padding="10,4" Height="34" VerticalAlignment="Center">
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="{Binding TotalDownloadSpeedText}" Foreground="#10B981" FontWeight="Bold" FontSize="13" />
-                                <TextBlock Text="{Binding ActiveCountText}" FontSize="10" Foreground="{Binding ThemeTextSecondary}" />
+                                <TextBlock Text="{Binding TotalDownloadSpeedText}" Foreground="#10B981" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding ActiveCountText}" FontSize="10" Foreground="{Binding ThemeTextSecondary}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Border>
                     </StackPanel>
