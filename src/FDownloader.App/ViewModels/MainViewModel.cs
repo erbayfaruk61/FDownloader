@@ -1375,11 +1375,31 @@ public partial class MainViewModel : ViewModelBase
         {
             await _downloadManager.RemoveTaskAsync(item.Id, deleteFile: false);
             Downloads.Remove(item);
+            SelectedDownloads.Remove(item);
         }
 
-        SelectedDownload = null;
+        if (SelectedDownload != null && (completedList.Contains(SelectedDownload) || !Downloads.Contains(SelectedDownload)))
+        {
+            SelectedDownload = null;
+        }
+
+        if (SelectedDownloads.Count == 0)
+        {
+            SelectedDownload = null;
+        }
+        else if (SelectedDownloads.Count == 1)
+        {
+            SelectedDownload = SelectedDownloads[0];
+        }
+
+        CurrentTorrentDetails = SelectedDownload != null && SelectedDownload.IsTorrent
+            ? _downloadManager.GetTorrentDetails(SelectedDownload.Id)
+            : null;
+
         ApplyFilter();
         UpdateGlobalStats();
+        RefreshSpeedGraph();
+        UpdateHybridState();
     }
 
     public void AdjustColumnWidth(string columnName, double deltaX)
@@ -1504,11 +1524,31 @@ public partial class MainViewModel : ViewModelBase
 
             // Hata olsun veya olmasın seçilen öğeyi arayüz listesinden mutlaka kaldır
             Downloads.Remove(target);
+            SelectedDownloads.Remove(target);
         }
 
-        SelectedDownload = null;
+        if (SelectedDownload != null && (items.Contains(SelectedDownload) || !Downloads.Contains(SelectedDownload)))
+        {
+            SelectedDownload = null;
+        }
+
+        if (SelectedDownloads.Count == 0)
+        {
+            SelectedDownload = null;
+        }
+        else if (SelectedDownloads.Count == 1)
+        {
+            SelectedDownload = SelectedDownloads[0];
+        }
+
+        CurrentTorrentDetails = SelectedDownload != null && SelectedDownload.IsTorrent
+            ? _downloadManager.GetTorrentDetails(SelectedDownload.Id)
+            : null;
+
         ApplyFilter();
         UpdateGlobalStats();
+        RefreshSpeedGraph();
+        UpdateHybridState();
     }
 
     private static void DeleteLocalFilesForDownload(DownloadItemViewModel target)
@@ -2258,11 +2298,28 @@ public partial class MainViewModel : ViewModelBase
 
     public void RefreshSpeedGraph()
     {
+        // 1. Artık Downloads içinde yer almayan silinmiş öğeleri temizle
+        if (SelectedDownloads != null && SelectedDownloads.Count > 0)
+        {
+            for (int i = SelectedDownloads.Count - 1; i >= 0; i--)
+            {
+                if (!Downloads.Contains(SelectedDownloads[i]))
+                {
+                    SelectedDownloads.RemoveAt(i);
+                }
+            }
+        }
+
+        if (SelectedDownload != null && !Downloads.Contains(SelectedDownload))
+        {
+            SelectedDownload = null;
+        }
+
         DownloadItemViewModel? singleTarget = null;
 
         var selectedList = SelectedDownloads != null && SelectedDownloads.Count > 0
-            ? SelectedDownloads.ToList()
-            : Downloads.Where(d => d.IsSelected).ToList();
+            ? SelectedDownloads.Where(d => Downloads.Contains(d)).ToList()
+            : Downloads.Where(d => d.IsSelected && Downloads.Contains(d)).ToList();
 
         if (selectedList.Count == 1)
         {
@@ -2274,7 +2331,7 @@ public partial class MainViewModel : ViewModelBase
             // Birden fazla kayıt seçili
             singleTarget = null;
         }
-        else if (SelectedDownload != null)
+        else if (SelectedDownload != null && Downloads.Contains(SelectedDownload))
         {
             // Doğrudan seçili olan tekil kayıt
             singleTarget = SelectedDownload;
@@ -2298,21 +2355,35 @@ public partial class MainViewModel : ViewModelBase
         {
             // HİÇ SEÇİLİ YOK VEYA BİRDEN FAZLA SEÇİLİ: Toplam indirme durumunu göster
             int count = selectedList.Count;
-            var activeList = count > 1 
-                ? selectedList.Where(d => d.IsActive).ToList() 
-                : Downloads.Where(d => d.IsActive).ToList();
 
-            var totalDownSpeed = activeList.Sum(d => d.SpeedBytesPerSecond);
-            GraphTitle = count > 1 ? $"🌐 {count} Dosya" : string.Empty;
-
-            GraphCurrentSpeedText = totalDownSpeed > 0 ? SpeedCalculator.FormatSpeed(totalDownSpeed) : "0 B/s";
-            GraphMinSpeedText = _globalMinSpeedRecorded > 0 ? SpeedCalculator.FormatSpeed(_globalMinSpeedRecorded) : "0 B/s";
-            GraphMaxSpeedText = _globalMaxSpeedRecorded > 0 ? SpeedCalculator.FormatSpeed(_globalMaxSpeedRecorded) : "0 B/s";
-            GraphDetailsText = $"{activeList.Count} İndiriliyor • {Downloads.Count(d => d.IsCompleted)} Tamamlandı • Toplam {Downloads.Count}";
-
-            if (DisplaySpeedHistory != _globalSpeedHistory)
+            if (Downloads.Count == 0)
             {
+                GraphTitle = string.Empty;
+                GraphCurrentSpeedText = "0 B/s";
+                GraphMinSpeedText = "0 B/s";
+                GraphMaxSpeedText = "0 B/s";
+                GraphDetailsText = "İndirme listesi boş";
+                _globalSpeedHistory.Clear();
                 DisplaySpeedHistory = _globalSpeedHistory;
+            }
+            else
+            {
+                var activeList = count > 1 
+                    ? selectedList.Where(d => d.IsActive).ToList() 
+                    : Downloads.Where(d => d.IsActive).ToList();
+
+                var totalDownSpeed = activeList.Sum(d => d.SpeedBytesPerSecond);
+                GraphTitle = count > 1 ? $"🌐 {count} Dosya" : string.Empty;
+
+                GraphCurrentSpeedText = totalDownSpeed > 0 ? SpeedCalculator.FormatSpeed(totalDownSpeed) : "0 B/s";
+                GraphMinSpeedText = _globalMinSpeedRecorded > 0 ? SpeedCalculator.FormatSpeed(_globalMinSpeedRecorded) : "0 B/s";
+                GraphMaxSpeedText = _globalMaxSpeedRecorded > 0 ? SpeedCalculator.FormatSpeed(_globalMaxSpeedRecorded) : "0 B/s";
+                GraphDetailsText = $"{activeList.Count} İndiriliyor • {Downloads.Count(d => d.IsCompleted)} Tamamlandı • Toplam {Downloads.Count}";
+
+                if (DisplaySpeedHistory != _globalSpeedHistory)
+                {
+                    DisplaySpeedHistory = _globalSpeedHistory;
+                }
             }
         }
     }
