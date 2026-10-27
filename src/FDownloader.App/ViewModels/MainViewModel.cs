@@ -181,23 +181,7 @@ public partial class MainViewModel : ViewModelBase
     }
 
     // ─── Tema Modu Sabitleri ve Renk Paletleri ────────────────────────────
-    // 1. Koyu Grafit
-    private const string DarkGraphiteWindowBg = "#0B0F17";
-    private const string DarkGraphiteToolbarBg = "#131A26";
-    private const string DarkGraphiteSidebarBg = "#0F1520";
-    private const string DarkGraphiteCardBg = "#182232";
-    private const string DarkGraphiteTableHeaderBg = "#151E2D";
-    private const string DarkGraphiteDetailBg = "#0D131C";
-    private const string DarkGraphiteStatusBarBg = "#131A26";
-    private const string DarkGraphiteBorderColor = "#1F2E43";
-    private const string DarkGraphiteForeground = "#F1F5F9";
-    private const string DarkGraphiteTextSecondary = "#94A3B8";
-    private const string DarkGraphiteAccent = "#38BDF8";
-    private const string DarkGraphiteAccentFg = "#FFFFFF";
-    private const string DarkGraphiteSpeedGraphPanelBg = "#0F1622";
-    private const string DarkGraphiteSpeedGraphInnerBg = "#090D15";
-
-    // 2. Okyanus Mavisi
+    // 1. Okyanus Mavisi (Varsayılan)
     private const string OceanBlueWindowBg = "#06121E";
     private const string OceanBlueToolbarBg = "#0C2238";
     private const string OceanBlueSidebarBg = "#091B2E";
@@ -213,7 +197,7 @@ public partial class MainViewModel : ViewModelBase
     private const string OceanBlueSpeedGraphPanelBg = "#0A1C2E";
     private const string OceanBlueSpeedGraphInnerBg = "#05101C";
 
-    // 3. Siber Mor
+    // 2. Siber Mor
     private const string CyberPurpleWindowBg = "#12071C";
     private const string CyberPurpleToolbarBg = "#210E36";
     private const string CyberPurpleSidebarBg = "#19092B";
@@ -228,6 +212,22 @@ public partial class MainViewModel : ViewModelBase
     private const string CyberPurpleAccentFg = "#FFFFFF";
     private const string CyberPurpleSpeedGraphPanelBg = "#1B0A2E";
     private const string CyberPurpleSpeedGraphInnerBg = "#0D0317";
+
+    // 3. Platin Gri (Aydınlık gibi ama daha mat/gri tonlar)
+    private const string PlatinumGrayWindowBg = "#D8DCE3";
+    private const string PlatinumGrayToolbarBg = "#E5E9F0";
+    private const string PlatinumGraySidebarBg = "#CED4DE";
+    private const string PlatinumGrayCardBg = "#EAEFF5";
+    private const string PlatinumGrayTableHeaderBg = "#C5CBD6";
+    private const string PlatinumGrayDetailBg = "#D8DCE3";
+    private const string PlatinumGrayStatusBarBg = "#E5E9F0";
+    private const string PlatinumGrayBorderColor = "#9CA3AF";
+    private const string PlatinumGrayForeground = "#111827";
+    private const string PlatinumGrayTextSecondary = "#4B5563";
+    private const string PlatinumGrayAccent = "#0284C7";
+    private const string PlatinumGrayAccentFg = "#FFFFFF";
+    private const string PlatinumGraySpeedGraphPanelBg = "#C5CBD6";
+    private const string PlatinumGraySpeedGraphInnerBg = "#EAEFF5";
 
     // 4. Aydınlık (Ferah & Temiz)
     private const string LightCleanWindowBg = "#F8FAFC";
@@ -245,31 +245,25 @@ public partial class MainViewModel : ViewModelBase
     private const string LightCleanSpeedGraphPanelBg = "#E2E8F0";
     private const string LightCleanSpeedGraphInnerBg = "#FFFFFF";
 
-    // Canlı Tema Özellikleri (UI Bindingleri)
-    [ObservableProperty] private string _themeWindowBg = DarkGraphiteWindowBg;
-    [ObservableProperty] private string _themeToolbarBg = DarkGraphiteToolbarBg;
-    [ObservableProperty] private string _themeSidebarBg = DarkGraphiteSidebarBg;
-    [ObservableProperty] private string _themeCardBg = DarkGraphiteCardBg;
-    [ObservableProperty] private string _themeTableHeaderBg = DarkGraphiteTableHeaderBg;
-    [ObservableProperty] private string _themeDetailBg = DarkGraphiteDetailBg;
-    [ObservableProperty] private string _themeStatusBarBg = DarkGraphiteStatusBarBg;
-    [ObservableProperty] private string _themeBorderColor = DarkGraphiteBorderColor;
-    [ObservableProperty] private string _themeForeground = DarkGraphiteForeground;
-    [ObservableProperty] private string _themeTextSecondary = DarkGraphiteTextSecondary;
-    [ObservableProperty] private string _themeAccentBg = DarkGraphiteAccent;
-    [ObservableProperty] private string _themeAccentFg = DarkGraphiteAccentFg;
-    [ObservableProperty] private string _themeSpeedGraphPanelBg = DarkGraphiteSpeedGraphPanelBg;
-    [ObservableProperty] private string _themeSpeedGraphInnerBg = DarkGraphiteSpeedGraphInnerBg;
+    // Canlı Tema Özellikleri (UI Bindingleri - Varsayılan: Okyanus)
+    [ObservableProperty] private string _themeWindowBg = OceanBlueWindowBg;
+    [ObservableProperty] private string _themeToolbarBg = OceanBlueToolbarBg;
+    [ObservableProperty] private string _themeSidebarBg = OceanBlueSidebarBg;
+    [ObservableProperty] private string _themeCardBg = OceanBlueCardBg;
+    [ObservableProperty] private string _themeTableHeaderBg = OceanBlueTableHeaderBg;
+    [ObservableProperty] private string _themeDetailBg = OceanBlueDetailBg;
+    [ObservableProperty] private string _themeStatusBarBg = OceanBlueStatusBarBg;
+    [ObservableProperty] private string _themeBorderColor = OceanBlueBorderColor;
+    [ObservableProperty] private string _themeForeground = OceanBlueForeground;
+    [ObservableProperty] private string _themeTextSecondary = OceanBlueTextSecondary;
+    [ObservableProperty] private string _themeAccentBg = OceanBlueAccent;
+    [ObservableProperty] private string _themeAccentFg = OceanBlueAccentFg;
+    [ObservableProperty] private string _themeSpeedGraphPanelBg = OceanBlueSpeedGraphPanelBg;
+    [ObservableProperty] private string _themeSpeedGraphInnerBg = OceanBlueSpeedGraphInnerBg;
 
     // ─── Tema Modu (4 Farklı Renk Paleti) ──────────────────────────────────
-    private AppThemeMode _currentThemeMode = AppThemeMode.DarkGraphite;
-    private AppThemeMode _savedThemeMode = AppThemeMode.DarkGraphite;
-
-    public bool IsThemeDarkGraphite
-    {
-        get => _currentThemeMode == AppThemeMode.DarkGraphite;
-        set { if (value) SetThemeMode(AppThemeMode.DarkGraphite); }
-    }
+    private AppThemeMode _currentThemeMode = AppThemeMode.OceanBlue;
+    private AppThemeMode _savedThemeMode = AppThemeMode.OceanBlue;
 
     public bool IsThemeOceanBlue
     {
@@ -281,6 +275,12 @@ public partial class MainViewModel : ViewModelBase
     {
         get => _currentThemeMode == AppThemeMode.CyberPurple;
         set { if (value) SetThemeMode(AppThemeMode.CyberPurple); }
+    }
+
+    public bool IsThemePlatinumGray
+    {
+        get => _currentThemeMode == AppThemeMode.PlatinumGray;
+        set { if (value) SetThemeMode(AppThemeMode.PlatinumGray); }
     }
 
     public bool IsThemeLightClean
@@ -363,9 +363,9 @@ public partial class MainViewModel : ViewModelBase
     public void SetThemeMode(AppThemeMode mode)
     {
         _currentThemeMode = mode;
-        OnPropertyChanged(nameof(IsThemeDarkGraphite));
         OnPropertyChanged(nameof(IsThemeOceanBlue));
         OnPropertyChanged(nameof(IsThemeCyberPurple));
+        OnPropertyChanged(nameof(IsThemePlatinumGray));
         OnPropertyChanged(nameof(IsThemeLightClean));
         ApplyThemeMode(mode);
     }
@@ -436,6 +436,23 @@ public partial class MainViewModel : ViewModelBase
                 ThemeSpeedGraphInnerBg = CyberPurpleSpeedGraphInnerBg;
                 break;
 
+            case AppThemeMode.PlatinumGray:
+                ThemeWindowBg = PlatinumGrayWindowBg;
+                ThemeToolbarBg = PlatinumGrayToolbarBg;
+                ThemeSidebarBg = PlatinumGraySidebarBg;
+                ThemeCardBg = PlatinumGrayCardBg;
+                ThemeTableHeaderBg = PlatinumGrayTableHeaderBg;
+                ThemeDetailBg = PlatinumGrayDetailBg;
+                ThemeStatusBarBg = PlatinumGrayStatusBarBg;
+                ThemeBorderColor = PlatinumGrayBorderColor;
+                ThemeForeground = PlatinumGrayForeground;
+                ThemeTextSecondary = PlatinumGrayTextSecondary;
+                ThemeAccentBg = PlatinumGrayAccent;
+                ThemeAccentFg = PlatinumGrayAccentFg;
+                ThemeSpeedGraphPanelBg = PlatinumGraySpeedGraphPanelBg;
+                ThemeSpeedGraphInnerBg = PlatinumGraySpeedGraphInnerBg;
+                break;
+
             case AppThemeMode.LightClean:
                 ThemeWindowBg = LightCleanWindowBg;
                 ThemeToolbarBg = LightCleanToolbarBg;
@@ -453,22 +470,21 @@ public partial class MainViewModel : ViewModelBase
                 ThemeSpeedGraphInnerBg = LightCleanSpeedGraphInnerBg;
                 break;
 
-            case AppThemeMode.DarkGraphite:
             default:
-                ThemeWindowBg = DarkGraphiteWindowBg;
-                ThemeToolbarBg = DarkGraphiteToolbarBg;
-                ThemeSidebarBg = DarkGraphiteSidebarBg;
-                ThemeCardBg = DarkGraphiteCardBg;
-                ThemeTableHeaderBg = DarkGraphiteTableHeaderBg;
-                ThemeDetailBg = DarkGraphiteDetailBg;
-                ThemeStatusBarBg = DarkGraphiteStatusBarBg;
-                ThemeBorderColor = DarkGraphiteBorderColor;
-                ThemeForeground = DarkGraphiteForeground;
-                ThemeTextSecondary = DarkGraphiteTextSecondary;
-                ThemeAccentBg = DarkGraphiteAccent;
-                ThemeAccentFg = DarkGraphiteAccentFg;
-                ThemeSpeedGraphPanelBg = DarkGraphiteSpeedGraphPanelBg;
-                ThemeSpeedGraphInnerBg = DarkGraphiteSpeedGraphInnerBg;
+                ThemeWindowBg = OceanBlueWindowBg;
+                ThemeToolbarBg = OceanBlueToolbarBg;
+                ThemeSidebarBg = OceanBlueSidebarBg;
+                ThemeCardBg = OceanBlueCardBg;
+                ThemeTableHeaderBg = OceanBlueTableHeaderBg;
+                ThemeDetailBg = OceanBlueDetailBg;
+                ThemeStatusBarBg = OceanBlueStatusBarBg;
+                ThemeBorderColor = OceanBlueBorderColor;
+                ThemeForeground = OceanBlueForeground;
+                ThemeTextSecondary = OceanBlueTextSecondary;
+                ThemeAccentBg = OceanBlueAccent;
+                ThemeAccentFg = OceanBlueAccentFg;
+                ThemeSpeedGraphPanelBg = OceanBlueSpeedGraphPanelBg;
+                ThemeSpeedGraphInnerBg = OceanBlueSpeedGraphInnerBg;
                 break;
         }
 
@@ -476,7 +492,7 @@ public partial class MainViewModel : ViewModelBase
         {
             if (Avalonia.Application.Current is Avalonia.Application app)
             {
-                app.RequestedThemeVariant = mode == AppThemeMode.LightClean 
+                app.RequestedThemeVariant = (mode is AppThemeMode.LightClean or AppThemeMode.PlatinumGray) 
                     ? Avalonia.Styling.ThemeVariant.Light 
                     : Avalonia.Styling.ThemeVariant.Dark;
             }

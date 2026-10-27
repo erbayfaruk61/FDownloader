@@ -83,7 +83,7 @@ public class AppSettings
     // ─── Kullanıcı Arayüzü ────────────────────────────────────────────────
 
     public AppTheme Theme { get; set; } = AppTheme.Dark;
-    public AppThemeMode ThemeMode { get; set; } = AppThemeMode.DarkGraphite;
+    public AppThemeMode ThemeMode { get; set; } = AppThemeMode.OceanBlue;
     public CompletionSound SoundEffect { get; set; } = CompletionSound.Notify;
     public string Language { get; set; } = "tr-TR";
     public ProgressBarStyleKey ProgressBarStyle { get; set; } = ProgressBarStyleKey.Klasik;
@@ -116,9 +116,9 @@ public enum PostDownloadAction { Nothing, Shutdown, Sleep, Hibernate, RunCommand
 /// <summary>Uygulama renk temaları</summary>
 public enum AppThemeMode
 {
-    DarkGraphite = 0,
-    OceanBlue = 1,
-    CyberPurple = 2,
+    OceanBlue = 0,
+    CyberPurple = 1,
+    PlatinumGray = 2,
     LightClean = 3
 }
 
