@@ -6,10 +6,11 @@ const DEFAULT_EXTENSIONS = [
   // Arşivler & Sıkıştırma (7z, zip, rar vb.)
   "7z", "zip", "rar", "tar", "gz", "bz2", "xz", "zst", "zstd", "tgz", "tbz2", "txz",
   "cab", "wim", "swm", "esd", "lz", "lzma", "lzh", "arj", "ace", "cpio", "z",
-  // Bölünmüş / Çok Parçalı Arşivler
+  // Bölünmüş / Çok Parçalı Arşivler & Genel Veri Dosyaları
   "001", "002", "003", "004", "005", "006", "007", "008", "009", "r00", "r01", "r02",
+  "dat", "bin", "dump", "raw",
   // Disk İmajları & Sanallaştırma
-  "iso", "img", "dmg", "vhd", "vhdx", "vmdk", "vdi", "qcow2", "ova", "ovf", "bin", "cue", "nrg", "mdf", "toast",
+  "iso", "img", "dmg", "vhd", "vhdx", "vmdk", "vdi", "qcow2", "ova", "ovf", "cue", "nrg", "mdf", "toast",
   // Yürütülebilir & Kurulum Paketleri
   "exe", "msi", "msix", "appx", "appxbundle", "msixbundle", "apk", "xapk", "apkm", "ipa",
   "deb", "rpm", "pkg", "appimage", "flatpakref", "snap", "jar", "war",
@@ -49,7 +50,9 @@ const KNOWN_MIME_EXACT = [
   "application/x-redhat-package-manager",
   "application/pdf",
   "application/epub+zip",
-  "application/x-bittorrent"
+  "application/x-bittorrent",
+  "application/octet-stream",
+  "binary/octet-stream"
 ];
 
 const MIME_PREFIXES = [
@@ -134,6 +137,12 @@ function shouldCapture(downloadItem, allowedExtensions) {
     }
   }
 
+  // application/octet-stream veya binary/octet-stream genel ikili veri ise ve web sayfası değilse yakala
+  if (downloadItem.mime === "application/octet-stream" || downloadItem.mime === "binary/octet-stream") {
+    const isWebPage = candidateList.some(ext => ["html", "htm", "php", "asp", "aspx", "jsp", "js", "css"].includes(ext));
+    if (!isWebPage) return true;
+  }
+
   return false;
 }
 
@@ -197,15 +206,43 @@ async function sendToFDownloader(item) {
   }
 }
 
-// ─── Alt Tuşu Takibi (Alt basılı tutulursa veya son 5 sn içinde basıldıysa yakalama yapma) ───
+// ─── Alt Tuşu Takibi (Sadece anlık basılı tutuluyorsa devreye girer) ───
 let memIsAltDown = false;
 let memAltPressedUntil = 0;
+
+// Eski takılı kalmış storage bayraklarını sıfırla
+try {
+  chrome.storage.local.remove(["isAltDown", "altPressedUntil"]);
+} catch (e) { }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message && message.type === "ALT_EVENT") {
     memIsAltDown = Boolean(message.isDown);
-    memAltPressedUntil = message.altPressedUntil || (Date.now() + 5000);
+    memAltPressedUntil = memIsAltDown ? (Date.now() + 1500) : 0;
     sendResponse({ ok: true });
+    return false;
+  }
+
+  if (message && message.type === "INTERCEPT_LINK" && message.url) {
+    (async () => {
+      const alive = await isBridgeAlive();
+      if (!alive) {
+        sendResponse({ success: false, reason: "bridge_offline" });
+        return;
+      }
+
+      const cookies = await getCookiesForUrl(message.url, message.referrer || sender.url || "");
+      const captured = await sendToFDownloader({
+        url: message.url,
+        filename: message.filename || "",
+        referrer: message.referrer || sender.url || "",
+        cookies: cookies,
+        userAgent: navigator.userAgent
+      });
+
+      sendResponse({ success: captured });
+    })();
+    return true; // Asenkron sendResponse için zorunlu
   }
 });
 
@@ -216,14 +253,12 @@ chrome.downloads.onDeterminingFilename.addListener((downloadItem, suggest) => {
   const rawUrl = downloadItem.finalUrl || downloadItem.url || "";
   if (!rawUrl || rawUrl.startsWith("blob:") || rawUrl.startsWith("data:")) {
     suggest();
-    return;
+    return false;
   }
 
   chrome.storage.local.get({
     isEnabled: true,
     bypassOnAltKey: true,
-    isAltDown: false,
-    altPressedUntil: 0,
     extensions: []
   }, async (settings) => {
     if (!settings.isEnabled) {
@@ -231,16 +266,13 @@ chrome.downloads.onDeterminingFilename.addListener((downloadItem, suggest) => {
       return;
     }
 
-    // Alt tuşu basılıysa veya son 5 sn içinde basıldıysa tarayıcı kendisi indirsin
+    // Yalnızca Alt tuşuna aktif olarak basılıyorsa tarayıcı kendisi indirsin
     if (settings.bypassOnAltKey !== false) {
       const now = Date.now();
-      const isAltActive = memIsAltDown ||
-                          Boolean(settings.isAltDown) ||
-                          (now < memAltPressedUntil) ||
-                          (now < (settings.altPressedUntil || 0));
+      const isAltActive = memIsAltDown && (now < memAltPressedUntil);
 
       if (isAltActive) {
-        console.log("⚡ FDownloader: Alt tuşu basılı veya 5 sn koruma süresi aktif. İndirme doğrudan tarayıcıya bırakıldı.");
+        console.log("⚡ FDownloader: Alt tuşu basılı. İndirme doğrudan tarayıcıya bırakıldı.");
         suggest();
         return;
       }

@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // FDownloader bağlantı testi
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 1200);
+    const timer = setTimeout(() => controller.abort(), 2500);
     const res = await fetch(`${BRIDGE_URL}/health`, { signal: controller.signal });
     clearTimeout(timer);
 
