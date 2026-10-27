@@ -893,11 +893,12 @@
                                                 <Border Grid.Column="0" Margin="4" Padding="10" CornerRadius="8" BorderThickness="1.5"
                                                         Background="#181D28" BorderBrush="#334155">
                                                     <StackPanel Spacing="8">
-                                                        <RadioButton Content="Koyu Grafit"
-                                                                     IsChecked="{Binding IsThemeDarkGraphite, Mode=TwoWay}"
+                                                        <RadioButton IsChecked="{Binding IsThemeDarkGraphite, Mode=TwoWay}"
                                                                      Command="{Binding SelectThemeCommand}"
                                                                      CommandParameter="DarkGraphite"
-                                                                     GroupName="AppThemeGroup" FontWeight="SemiBold" FontSize="12" />
+                                                                     GroupName="AppThemeGroup" Foreground="#F8FAFC">
+                                                            <TextBlock Text="Koyu Grafit" FontWeight="SemiBold" FontSize="12" Foreground="#F8FAFC" />
+                                                        </RadioButton>
                                                         <Border Height="28" CornerRadius="4" Background="#0F172A" BorderBrush="#1E293B" BorderThickness="1">
                                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="4">
                                                                 <Border Width="12" Height="12" CornerRadius="6" Background="#38BDF8" />
@@ -913,11 +914,12 @@
                                                 <Border Grid.Column="1" Margin="4" Padding="10" CornerRadius="8" BorderThickness="1.5"
                                                         Background="#0F172A" BorderBrush="#0284C7">
                                                     <StackPanel Spacing="8">
-                                                        <RadioButton Content="Okyanus"
-                                                                     IsChecked="{Binding IsThemeOceanBlue, Mode=TwoWay}"
+                                                        <RadioButton IsChecked="{Binding IsThemeOceanBlue, Mode=TwoWay}"
                                                                      Command="{Binding SelectThemeCommand}"
                                                                      CommandParameter="OceanBlue"
-                                                                     GroupName="AppThemeGroup" FontWeight="SemiBold" FontSize="12" />
+                                                                     GroupName="AppThemeGroup" Foreground="#F8FAFC">
+                                                            <TextBlock Text="Okyanus" FontWeight="SemiBold" FontSize="12" Foreground="#F8FAFC" />
+                                                        </RadioButton>
                                                         <Border Height="28" CornerRadius="4" Background="#0C4A6E" BorderBrush="#0369A1" BorderThickness="1">
                                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="4">
                                                                 <Border Width="12" Height="12" CornerRadius="6" Background="#0EA5E9" />
@@ -933,11 +935,12 @@
                                                 <Border Grid.Column="2" Margin="4" Padding="10" CornerRadius="8" BorderThickness="1.5"
                                                         Background="#181126" BorderBrush="#7C3AED">
                                                     <StackPanel Spacing="8">
-                                                        <RadioButton Content="Siber Mor"
-                                                                     IsChecked="{Binding IsThemeCyberPurple, Mode=TwoWay}"
+                                                        <RadioButton IsChecked="{Binding IsThemeCyberPurple, Mode=TwoWay}"
                                                                      Command="{Binding SelectThemeCommand}"
                                                                      CommandParameter="CyberPurple"
-                                                                     GroupName="AppThemeGroup" FontWeight="SemiBold" FontSize="12" />
+                                                                     GroupName="AppThemeGroup" Foreground="#F8FAFC">
+                                                            <TextBlock Text="Siber Mor" FontWeight="SemiBold" FontSize="12" Foreground="#F8FAFC" />
+                                                        </RadioButton>
                                                         <Border Height="28" CornerRadius="4" Background="#3B0764" BorderBrush="#581C87" BorderThickness="1">
                                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="4">
                                                                 <Border Width="12" Height="12" CornerRadius="6" Background="#A855F7" />
@@ -953,11 +956,12 @@
                                                 <Border Grid.Column="3" Margin="4" Padding="10" CornerRadius="8" BorderThickness="1.5"
                                                         Background="#F1F5F9" BorderBrush="#CBD5E1">
                                                     <StackPanel Spacing="8">
-                                                        <RadioButton Content="Aydınlık" Foreground="#0F172A"
-                                                                     IsChecked="{Binding IsThemeLightClean, Mode=TwoWay}"
+                                                        <RadioButton IsChecked="{Binding IsThemeLightClean, Mode=TwoWay}"
                                                                      Command="{Binding SelectThemeCommand}"
                                                                      CommandParameter="LightClean"
-                                                                     GroupName="AppThemeGroup" FontWeight="SemiBold" FontSize="12" />
+                                                                     GroupName="AppThemeGroup" Foreground="#0F172A">
+                                                            <TextBlock Text="Aydınlık" FontWeight="SemiBold" FontSize="12" Foreground="#0F172A" />
+                                                        </RadioButton>
                                                         <Border Height="28" CornerRadius="4" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1">
                                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="4">
                                                                 <Border Width="12" Height="12" CornerRadius="6" Background="#0284C7" />
