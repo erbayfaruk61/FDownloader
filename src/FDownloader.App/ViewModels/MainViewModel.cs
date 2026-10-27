@@ -495,6 +495,13 @@ public partial class MainViewModel : ViewModelBase
 
     // ─── Tam Boy Canlı Hız Grafiği (Üst Menü Altında) ──────────────────────
     [ObservableProperty] private bool _isSpeedGraphVisible = true;
+    [ObservableProperty] private string _speedGraphToggleTooltip = "Hız Grafiğini Gizle";
+
+    partial void OnIsSpeedGraphVisibleChanged(bool value)
+    {
+        SpeedGraphToggleTooltip = value ? "Hız Grafiğini Gizle" : "Hız Grafiğini Göster";
+    }
+
     [ObservableProperty] private string _graphTitle = string.Empty;
     [ObservableProperty] private string _graphCurrentSpeedText = "0 B/s";
     [ObservableProperty] private string _graphMinSpeedText = "0 B/s";

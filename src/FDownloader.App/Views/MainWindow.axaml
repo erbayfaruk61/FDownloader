@@ -77,17 +77,12 @@
                         </Button>
                     </StackPanel>
 
-                    <!-- Sağ Taraf: Pano İzleyici ve Hız Grafiği Butonu -->
+                    <!-- Sağ Taraf: Pano İzleyici ve Toplam Hız Rozeti -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                         <!-- Pano İzleme Anahtarı -->
                         <Border Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="6" Padding="8,4">
                             <CheckBox IsChecked="{Binding IsClipboardMonitoringEnabled}" Content="📋 Pano İzleyici" VerticalAlignment="Center" />
                         </Border>
-
-                        <!-- Hız Grafiği Aç/Kapat Butonu -->
-                        <Button Command="{Binding ToggleSpeedGraphCommand}" ToolTip.Tip="Hız Grafiğini Göster / Gizle" Padding="8,5">
-                            <TextBlock Text="👁️" FontSize="13" VerticalAlignment="Center" />
-                        </Button>
 
                         <!-- Toplam Hız Göstergesi Rozeti -->
                         <Border Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="6" Padding="10,4" VerticalAlignment="Center">
@@ -147,9 +142,9 @@
                         </Border>
                     </StackPanel>
 
-                    <!-- En Sağ: Göster / Gizle Butonu -->
-                    <Button Grid.Column="3" Command="{Binding ToggleSpeedGraphCommand}" Background="Transparent" BorderThickness="0" Padding="8,4" ToolTip.Tip="Hız Grafiğini Gizle / Göster" VerticalAlignment="Center" Margin="4,0,0,0">
-                        <TextBlock Text="👁️" FontSize="13" Foreground="#64748B" />
+                    <!-- En Sağ: Kapat Butonu -->
+                    <Button Grid.Column="3" Command="{Binding ToggleSpeedGraphCommand}" Background="Transparent" BorderThickness="0" Padding="8,4" ToolTip.Tip="Hız Grafiğini Kapat" VerticalAlignment="Center" Margin="4,0,0,0">
+                        <TextBlock Text="✕" FontSize="12" Foreground="#64748B" />
                     </Button>
                 </Grid>
             </Border>
@@ -712,6 +707,21 @@
                                 <TextBlock Grid.Column="2" Text="{Binding UploadLimitDisplayText}" Foreground="{Binding RateLimitStatusColor}" FontWeight="Bold" FontSize="11" VerticalAlignment="Center" />
                             </Grid>
                         </Border>
+
+                        <TextBlock Text="|" Foreground="{DynamicResource SystemBaseLowColor}" VerticalAlignment="Center" />
+
+                        <!-- Hız Grafiği Sabit Göster / Gizle Butonu (Aşağıda En Sağda Sabit) -->
+                        <Button Command="{Binding ToggleSpeedGraphCommand}" 
+                                ToolTip.Tip="{Binding SpeedGraphToggleTooltip}" 
+                                Height="26" Padding="8,2" 
+                                Background="{Binding ThemeCardBg}" 
+                                BorderBrush="{Binding ThemeBorderColor}" 
+                                BorderThickness="1" CornerRadius="5">
+                            <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                                <TextBlock Text="👁️" FontSize="12" VerticalAlignment="Center" />
+                                <TextBlock Text="Hız Grafiği" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
                 </Grid>
             </Border>
