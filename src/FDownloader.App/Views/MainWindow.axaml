@@ -464,6 +464,7 @@
                                                     <ProgressBar Grid.Row="0"
                                                         Value="{Binding ProgressPercent}" Minimum="0" Maximum="100"
                                                         Height="8" CornerRadius="4" VerticalAlignment="Center"
+                                                        Foreground="#0284C7" Background="#1E293B"
                                                         IsIndeterminate="{Binding IsProgressIndeterminate}"
                                                         IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).IsProgressStyleKlasik}" />
 
@@ -471,6 +472,7 @@
                                                     <ProgressBar Grid.Row="0"
                                                         Value="{Binding ProgressPercent}" Minimum="0" Maximum="100"
                                                         Height="8" CornerRadius="4" VerticalAlignment="Center"
+                                                        Background="#1E293B"
                                                         IsIndeterminate="{Binding IsProgressIndeterminate}"
                                                         IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).IsProgressStyleGradyan}">
                                                         <ProgressBar.Foreground>
@@ -486,7 +488,7 @@
                                                     <ProgressBar Grid.Row="0"
                                                         Value="{Binding ProgressPercent}" Minimum="0" Maximum="100"
                                                         Height="8" CornerRadius="4" VerticalAlignment="Center"
-                                                        Foreground="#38BDF8"
+                                                        Foreground="#38BDF8" Background="#1E293B"
                                                         IsIndeterminate="{Binding IsProgressIndeterminate}"
                                                         IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).IsProgressStyleNeon}" />
 
@@ -494,7 +496,7 @@
                                                     <ProgressBar Grid.Row="0"
                                                         Value="{Binding ProgressPercent}" Minimum="0" Maximum="100"
                                                         Height="3" CornerRadius="1.5" VerticalAlignment="Center"
-                                                        Foreground="#10B981"
+                                                        Foreground="#10B981" Background="#1E293B"
                                                         IsIndeterminate="{Binding IsProgressIndeterminate}"
                                                         IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).IsProgressStyleInce}" />
 
@@ -654,11 +656,17 @@
                                 <Grid RowDefinitions="Auto, *">
                                     <Border Grid.Row="0" Background="{DynamicResource SystemControlBackgroundAltHighBrush}" Padding="6,2" BorderBrush="{DynamicResource SystemBaseLowColor}" BorderThickness="0,0,0,1">
                                         <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <Button Command="{Binding SelectAllTorrentFilesCommand}" Padding="6,2" Height="22" FontSize="10">
-                                                <TextBlock Text="✅ Tümünü İndir" FontSize="10" />
+                                            <Button Command="{Binding SelectAllTorrentFilesCommand}" 
+                                                    Background="{Binding TorrentDetailsSelectAllBackground}"
+                                                    BorderBrush="{Binding TorrentDetailsSelectAllBorderBrush}"
+                                                    BorderThickness="1" Padding="8,2" Height="24" FontSize="10">
+                                                <TextBlock Text="{Binding TorrentDetailsSelectAllText}" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center" />
                                             </Button>
-                                            <Button Command="{Binding DeselectAllTorrentFilesCommand}" Padding="6,2" Height="22" FontSize="10">
-                                                <TextBlock Text="⬜ Tümünü Bırak" FontSize="10" />
+                                            <Button Command="{Binding DeselectAllTorrentFilesCommand}" 
+                                                    Background="{Binding TorrentDetailsDeselectAllBackground}"
+                                                    BorderBrush="{Binding TorrentDetailsDeselectAllBorderBrush}"
+                                                    BorderThickness="1" Padding="8,2" Height="24" FontSize="10">
+                                                <TextBlock Text="{Binding TorrentDetailsDeselectAllText}" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center" />
                                             </Button>
                                             <TextBlock Text="{Binding CurrentTorrentDetails.Files.Count, StringFormat='Toplam {0} dosya'}" VerticalAlignment="Center" FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" Margin="4,0,0,0" />
                                         </StackPanel>
@@ -899,11 +907,17 @@
                                         <TextBlock Text="{Binding AddDialogTorrentFiles.Count, StringFormat='({0} dosya)'}" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" VerticalAlignment="Center" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                        <Button Command="{Binding SelectAllAddDialogTorrentFilesCommand}" Padding="6,2" Height="22" FontSize="10">
-                                            <TextBlock Text="✅ Tümünü Seç" FontSize="10" />
+                                        <Button Command="{Binding SelectAllAddDialogTorrentFilesCommand}" 
+                                                Background="{Binding AddDialogSelectAllBackground}"
+                                                BorderBrush="{Binding AddDialogSelectAllBorderBrush}"
+                                                BorderThickness="1" Padding="8,2" Height="24" FontSize="10">
+                                            <TextBlock Text="{Binding AddDialogSelectAllText}" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center" />
                                         </Button>
-                                        <Button Command="{Binding DeselectAllAddDialogTorrentFilesCommand}" Padding="6,2" Height="22" FontSize="10">
-                                            <TextBlock Text="⬜ Tümünü Bırak" FontSize="10" />
+                                        <Button Command="{Binding DeselectAllAddDialogTorrentFilesCommand}" 
+                                                Background="{Binding AddDialogDeselectAllBackground}"
+                                                BorderBrush="{Binding AddDialogDeselectAllBorderBrush}"
+                                                BorderThickness="1" Padding="8,2" Height="24" FontSize="10">
+                                            <TextBlock Text="{Binding AddDialogDeselectAllText}" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center" />
                                         </Button>
                                     </StackPanel>
                                 </Grid>
@@ -1122,19 +1136,21 @@
                                                 <!-- Klasik -->
                                                 <Border Grid.Column="0" Margin="4" Padding="10" CornerRadius="8" BorderThickness="1.5"
                                                         Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" Cursor="Hand"
-                                                        Tag="Klasik" PointerPressed="OnProgressCardPointerPressed">
+                                                        Tag="Klasik" PointerPressed="OnProgressCardPointerPressed"
+                                                        PointerEntered="OnProgressCardPointerEntered" PointerExited="OnProgressCardPointerExited">
                                                     <StackPanel Spacing="8">
-                                                        <RadioButton Content="Klasik"
-                                                                     IsChecked="{Binding IsProgressStyleKlasik, Mode=TwoWay}"
-                                                                     Command="{Binding SelectProgressStyleCommand}"
-                                                                     CommandParameter="Klasik"
-                                                                     GroupName="ProgressStyleGroup" FontWeight="SemiBold" FontSize="12" />
+                                                        <Grid ColumnDefinitions="*, Auto">
+                                                            <RadioButton Content="Klasik"
+                                                                         IsChecked="{Binding IsProgressStyleKlasik, Mode=TwoWay}"
+                                                                         Command="{Binding SelectProgressStyleCommand}"
+                                                                         CommandParameter="Klasik"
+                                                                         GroupName="ProgressStyleGroup" FontWeight="SemiBold" FontSize="12" />
+                                                            <TextBlock Grid.Column="1" Text="{Binding PreviewProgressKlasik, StringFormat='{}{0:F0}%'}" FontSize="11" Foreground="#0284C7" FontWeight="Bold" VerticalAlignment="Center" />
+                                                        </Grid>
                                                         <Border Height="28" CornerRadius="4" Background="{Binding ThemeSpeedGraphInnerBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" Padding="8,0" ClipToBounds="True">
-                                                            <Border Height="8" CornerRadius="4" Background="#1E293B" ClipToBounds="True" VerticalAlignment="Center">
-                                                                <Grid ColumnDefinitions="65*, 35*">
-                                                                    <Border Grid.Column="0" Background="#0284C7" CornerRadius="4" />
-                                                                </Grid>
-                                                            </Border>
+                                                            <ProgressBar Value="{Binding PreviewProgressKlasik}" Minimum="0" Maximum="100"
+                                                                         Height="8" CornerRadius="4" VerticalAlignment="Center"
+                                                                         Foreground="#0284C7" Background="#1E293B" />
                                                         </Border>
                                                         <TextBlock Text="Klasik mavi" FontSize="10" Foreground="{Binding ThemeTextSecondary}" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis" />
                                                     </StackPanel>
@@ -1143,27 +1159,29 @@
                                                 <!-- Gradyan -->
                                                 <Border Grid.Column="1" Margin="4" Padding="10" CornerRadius="8" BorderThickness="1.5"
                                                         Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" Cursor="Hand"
-                                                        Tag="Gradyan" PointerPressed="OnProgressCardPointerPressed">
+                                                        Tag="Gradyan" PointerPressed="OnProgressCardPointerPressed"
+                                                        PointerEntered="OnProgressCardPointerEntered" PointerExited="OnProgressCardPointerExited">
                                                     <StackPanel Spacing="8">
-                                                        <RadioButton Content="Gradyan"
-                                                                     IsChecked="{Binding IsProgressStyleGradyan, Mode=TwoWay}"
-                                                                     Command="{Binding SelectProgressStyleCommand}"
-                                                                     CommandParameter="Gradyan"
-                                                                     GroupName="ProgressStyleGroup" FontWeight="SemiBold" FontSize="12" />
+                                                        <Grid ColumnDefinitions="*, Auto">
+                                                            <RadioButton Content="Gradyan"
+                                                                         IsChecked="{Binding IsProgressStyleGradyan, Mode=TwoWay}"
+                                                                         Command="{Binding SelectProgressStyleCommand}"
+                                                                         CommandParameter="Gradyan"
+                                                                         GroupName="ProgressStyleGroup" FontWeight="SemiBold" FontSize="12" />
+                                                            <TextBlock Grid.Column="1" Text="{Binding PreviewProgressGradyan, StringFormat='{}{0:F0}%'}" FontSize="11" Foreground="#8B5CF6" FontWeight="Bold" VerticalAlignment="Center" />
+                                                        </Grid>
                                                         <Border Height="28" CornerRadius="4" Background="{Binding ThemeSpeedGraphInnerBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" Padding="8,0" ClipToBounds="True">
-                                                            <Border Height="8" CornerRadius="4" Background="#1E293B" ClipToBounds="True" VerticalAlignment="Center">
-                                                                <Grid ColumnDefinitions="65*, 35*">
-                                                                    <Border Grid.Column="0" CornerRadius="4">
-                                                                        <Border.Background>
-                                                                            <LinearGradientBrush StartPoint="0%,50%" EndPoint="100%,50%">
-                                                                                <GradientStop Color="#3B82F6" Offset="0"/>
-                                                                                <GradientStop Color="#8B5CF6" Offset="0.5"/>
-                                                                                <GradientStop Color="#10B981" Offset="1"/>
-                                                                            </LinearGradientBrush>
-                                                                        </Border.Background>
-                                                                    </Border>
-                                                                </Grid>
-                                                            </Border>
+                                                            <ProgressBar Value="{Binding PreviewProgressGradyan}" Minimum="0" Maximum="100"
+                                                                         Height="8" CornerRadius="4" VerticalAlignment="Center"
+                                                                         Background="#1E293B">
+                                                                <ProgressBar.Foreground>
+                                                                    <LinearGradientBrush StartPoint="0%,50%" EndPoint="100%,50%">
+                                                                        <GradientStop Color="#3B82F6" Offset="0"/>
+                                                                        <GradientStop Color="#8B5CF6" Offset="0.5"/>
+                                                                        <GradientStop Color="#10B981" Offset="1"/>
+                                                                    </LinearGradientBrush>
+                                                                </ProgressBar.Foreground>
+                                                            </ProgressBar>
                                                         </Border>
                                                         <TextBlock Text="Mavi-Mor-Yeşil geçiş" FontSize="10" Foreground="{Binding ThemeTextSecondary}" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis" />
                                                     </StackPanel>
@@ -1172,19 +1190,21 @@
                                                 <!-- Neon -->
                                                 <Border Grid.Column="2" Margin="4" Padding="10" CornerRadius="8" BorderThickness="1.5"
                                                         Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" Cursor="Hand"
-                                                        Tag="Neon" PointerPressed="OnProgressCardPointerPressed">
+                                                        Tag="Neon" PointerPressed="OnProgressCardPointerPressed"
+                                                        PointerEntered="OnProgressCardPointerEntered" PointerExited="OnProgressCardPointerExited">
                                                     <StackPanel Spacing="8">
-                                                        <RadioButton Content="Neon"
-                                                                     IsChecked="{Binding IsProgressStyleNeon, Mode=TwoWay}"
-                                                                     Command="{Binding SelectProgressStyleCommand}"
-                                                                     CommandParameter="Neon"
-                                                                     GroupName="ProgressStyleGroup" FontWeight="SemiBold" FontSize="12" />
+                                                        <Grid ColumnDefinitions="*, Auto">
+                                                            <RadioButton Content="Neon"
+                                                                         IsChecked="{Binding IsProgressStyleNeon, Mode=TwoWay}"
+                                                                         Command="{Binding SelectProgressStyleCommand}"
+                                                                         CommandParameter="Neon"
+                                                                         GroupName="ProgressStyleGroup" FontWeight="SemiBold" FontSize="12" />
+                                                            <TextBlock Grid.Column="1" Text="{Binding PreviewProgressNeon, StringFormat='{}{0:F0}%'}" FontSize="11" Foreground="#38BDF8" FontWeight="Bold" VerticalAlignment="Center" />
+                                                        </Grid>
                                                         <Border Height="28" CornerRadius="4" Background="{Binding ThemeSpeedGraphInnerBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" Padding="8,0" ClipToBounds="True">
-                                                            <Border Height="8" CornerRadius="4" Background="#1E293B" ClipToBounds="True" VerticalAlignment="Center">
-                                                                <Grid ColumnDefinitions="65*, 35*">
-                                                                    <Border Grid.Column="0" Background="#38BDF8" CornerRadius="4" BoxShadow="0 0 8 0 #8038BDF8" />
-                                                                </Grid>
-                                                            </Border>
+                                                            <ProgressBar Value="{Binding PreviewProgressNeon}" Minimum="0" Maximum="100"
+                                                                         Height="8" CornerRadius="4" VerticalAlignment="Center"
+                                                                         Foreground="#38BDF8" Background="#1E293B" />
                                                         </Border>
                                                         <TextBlock Text="Parlak cyan parlama" FontSize="10" Foreground="{Binding ThemeTextSecondary}" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis" />
                                                     </StackPanel>
@@ -1193,19 +1213,21 @@
                                                 <!-- İnce -->
                                                 <Border Grid.Column="3" Margin="4" Padding="10" CornerRadius="8" BorderThickness="1.5"
                                                         Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" Cursor="Hand"
-                                                        Tag="Ince" PointerPressed="OnProgressCardPointerPressed">
+                                                        Tag="Ince" PointerPressed="OnProgressCardPointerPressed"
+                                                        PointerEntered="OnProgressCardPointerEntered" PointerExited="OnProgressCardPointerExited">
                                                     <StackPanel Spacing="8">
-                                                        <RadioButton Content="İnce Çizgi"
-                                                                     IsChecked="{Binding IsProgressStyleInce, Mode=TwoWay}"
-                                                                     Command="{Binding SelectProgressStyleCommand}"
-                                                                     CommandParameter="Ince"
-                                                                     GroupName="ProgressStyleGroup" FontWeight="SemiBold" FontSize="12" />
+                                                        <Grid ColumnDefinitions="*, Auto">
+                                                            <RadioButton Content="İnce Çizgi"
+                                                                         IsChecked="{Binding IsProgressStyleInce, Mode=TwoWay}"
+                                                                         Command="{Binding SelectProgressStyleCommand}"
+                                                                         CommandParameter="Ince"
+                                                                         GroupName="ProgressStyleGroup" FontWeight="SemiBold" FontSize="12" />
+                                                            <TextBlock Grid.Column="1" Text="{Binding PreviewProgressInce, StringFormat='{}{0:F0}%'}" FontSize="11" Foreground="#10B981" FontWeight="Bold" VerticalAlignment="Center" />
+                                                        </Grid>
                                                         <Border Height="28" CornerRadius="4" Background="{Binding ThemeSpeedGraphInnerBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" Padding="8,0" ClipToBounds="True">
-                                                            <Border Height="3" CornerRadius="1.5" Background="#1E293B" ClipToBounds="True" VerticalAlignment="Center">
-                                                                <Grid ColumnDefinitions="65*, 35*">
-                                                                    <Border Grid.Column="0" Background="#10B981" CornerRadius="1.5" />
-                                                                </Grid>
-                                                            </Border>
+                                                            <ProgressBar Value="{Binding PreviewProgressInce}" Minimum="0" Maximum="100"
+                                                                         Height="3" CornerRadius="1.5" VerticalAlignment="Center"
+                                                                         Foreground="#10B981" Background="#1E293B" />
                                                         </Border>
                                                         <TextBlock Text="Minimalist zarif çizgi" FontSize="10" Foreground="{Binding ThemeTextSecondary}" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis" />
                                                     </StackPanel>

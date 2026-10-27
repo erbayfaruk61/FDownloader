@@ -334,6 +334,88 @@ public partial class MainWindow : Window
         }
     }
 
+    private DispatcherTimer? _progressPreviewTimer;
+    private string? _activeHoveredProgressStyle;
+    private double _hoverProgressValue = 0;
+    private int _pauseCounter = 0;
+
+    private void OnProgressCardPointerEntered(object? sender, PointerEventArgs e)
+    {
+        if (sender is Control c && c.Tag is string styleName && DataContext is MainViewModel vm)
+        {
+            _activeHoveredProgressStyle = styleName;
+            _hoverProgressValue = 0;
+            _pauseCounter = 0;
+
+            if (_progressPreviewTimer == null)
+            {
+                _progressPreviewTimer = new DispatcherTimer
+                {
+                    Interval = TimeSpan.FromMilliseconds(20)
+                };
+                _progressPreviewTimer.Tick += OnProgressPreviewTimerTick;
+            }
+            _progressPreviewTimer.Start();
+        }
+    }
+
+    private void OnProgressCardPointerExited(object? sender, PointerEventArgs e)
+    {
+        if (sender is Control c && c.Tag is string styleName && DataContext is MainViewModel vm)
+        {
+            if (_activeHoveredProgressStyle == styleName)
+            {
+                _activeHoveredProgressStyle = null;
+                _progressPreviewTimer?.Stop();
+
+                vm.PreviewProgressKlasik = 65;
+                vm.PreviewProgressGradyan = 65;
+                vm.PreviewProgressNeon = 65;
+                vm.PreviewProgressInce = 65;
+            }
+        }
+    }
+
+    private void OnProgressPreviewTimerTick(object? sender, EventArgs e)
+    {
+        if (DataContext is not MainViewModel vm || _activeHoveredProgressStyle == null)
+        {
+            _progressPreviewTimer?.Stop();
+            return;
+        }
+
+        if (_hoverProgressValue >= 100)
+        {
+            _pauseCounter++;
+            if (_pauseCounter > 20) // 100%'de 400ms bekle ve baştan başla
+            {
+                _hoverProgressValue = 0;
+                _pauseCounter = 0;
+            }
+        }
+        else
+        {
+            _hoverProgressValue += 2.0; // ~1 saniyede %0'dan %100'e dolum
+            if (_hoverProgressValue > 100) _hoverProgressValue = 100;
+        }
+
+        switch (_activeHoveredProgressStyle)
+        {
+            case "Klasik":
+                vm.PreviewProgressKlasik = _hoverProgressValue;
+                break;
+            case "Gradyan":
+                vm.PreviewProgressGradyan = _hoverProgressValue;
+                break;
+            case "Neon":
+                vm.PreviewProgressNeon = _hoverProgressValue;
+                break;
+            case "Ince":
+                vm.PreviewProgressInce = _hoverProgressValue;
+                break;
+        }
+    }
+
     [DllImport("user32.dll")]
     private static extern bool SetForegroundWindow(IntPtr hWnd);
 

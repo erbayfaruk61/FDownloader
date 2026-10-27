@@ -62,6 +62,26 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty] private int _selectedDetailTabIndex = 0; // 0: Genel, 1: Parçalar, 2: Torrent Eşleri
     [ObservableProperty] private TorrentDetails? _currentTorrentDetails;
 
+    [ObservableProperty] private string _torrentDetailsSelectAllText = "✅ Tümünü İndir";
+    [ObservableProperty] private string _torrentDetailsDeselectAllText = "⬜ Tümünü Bırak";
+    [ObservableProperty] private string _torrentDetailsSelectAllBackground = "Transparent";
+    [ObservableProperty] private string _torrentDetailsSelectAllBorderBrush = "#33FFFFFF";
+    [ObservableProperty] private string _torrentDetailsDeselectAllBackground = "Transparent";
+    [ObservableProperty] private string _torrentDetailsDeselectAllBorderBrush = "#33FFFFFF";
+
+    [ObservableProperty] private string _addDialogSelectAllText = "✅ Tümünü Seç";
+    [ObservableProperty] private string _addDialogDeselectAllText = "⬜ Tümünü Bırak";
+    [ObservableProperty] private string _addDialogSelectAllBackground = "Transparent";
+    [ObservableProperty] private string _addDialogSelectAllBorderBrush = "#33FFFFFF";
+    [ObservableProperty] private string _addDialogDeselectAllBackground = "Transparent";
+    [ObservableProperty] private string _addDialogDeselectAllBorderBrush = "#33FFFFFF";
+
+    // ─── Ayarlar İlerleme Çubuğu Hover Önizleme ────────────────────────────
+    [ObservableProperty] private double _previewProgressKlasik = 65;
+    [ObservableProperty] private double _previewProgressGradyan = 65;
+    [ObservableProperty] private double _previewProgressNeon = 65;
+    [ObservableProperty] private double _previewProgressInce = 65;
+
     // ─── Pano İzleyici ────────────────────────────────────────────────────
     [ObservableProperty] private bool _isClipboardMonitoringEnabled = true;
 
@@ -1066,6 +1086,56 @@ public partial class MainViewModel : ViewModelBase
         if (SelectedDownload == null || !SelectedDownload.IsTorrent) return;
         await _downloadManager.SetAllTorrentFilesPriorityAsync(SelectedDownload.Id, false);
         CurrentTorrentDetails = _downloadManager.GetTorrentDetails(SelectedDownload.Id);
+    }
+
+    partial void OnCurrentTorrentDetailsChanged(TorrentDetails? value)
+    {
+        UpdateTorrentDetailsSelectionState();
+    }
+
+    public void UpdateTorrentDetailsSelectionState()
+    {
+        if (CurrentTorrentDetails?.Files == null || CurrentTorrentDetails.Files.Count == 0)
+        {
+            TorrentDetailsSelectAllText = "✅ Tümünü İndir";
+            TorrentDetailsDeselectAllText = "⬜ Tümünü Bırak";
+            TorrentDetailsSelectAllBackground = "Transparent";
+            TorrentDetailsSelectAllBorderBrush = "#33FFFFFF";
+            TorrentDetailsDeselectAllBackground = "Transparent";
+            TorrentDetailsDeselectAllBorderBrush = "#33FFFFFF";
+            return;
+        }
+
+        bool allSelected = CurrentTorrentDetails.Files.All(f => f.IsSelected);
+        bool noneSelected = CurrentTorrentDetails.Files.All(f => !f.IsSelected);
+
+        if (allSelected)
+        {
+            TorrentDetailsSelectAllText = "✅ Tümünü İndir";
+            TorrentDetailsDeselectAllText = "⬜ Tümünü Bırak";
+            TorrentDetailsSelectAllBackground = "#2510B981";
+            TorrentDetailsSelectAllBorderBrush = "#10B981";
+            TorrentDetailsDeselectAllBackground = "Transparent";
+            TorrentDetailsDeselectAllBorderBrush = "#33FFFFFF";
+        }
+        else if (noneSelected)
+        {
+            TorrentDetailsSelectAllText = "⬜ Tümünü İndir";
+            TorrentDetailsDeselectAllText = "✅ Tümünü Bırak";
+            TorrentDetailsSelectAllBackground = "Transparent";
+            TorrentDetailsSelectAllBorderBrush = "#33FFFFFF";
+            TorrentDetailsDeselectAllBackground = "#25EF4444";
+            TorrentDetailsDeselectAllBorderBrush = "#EF4444";
+        }
+        else
+        {
+            TorrentDetailsSelectAllText = "⬜ Tümünü İndir";
+            TorrentDetailsDeselectAllText = "⬜ Tümünü Bırak";
+            TorrentDetailsSelectAllBackground = "Transparent";
+            TorrentDetailsSelectAllBorderBrush = "#33FFFFFF";
+            TorrentDetailsDeselectAllBackground = "Transparent";
+            TorrentDetailsDeselectAllBorderBrush = "#33FFFFFF";
+        }
     }
 
     /// <summary>
@@ -2457,12 +2527,49 @@ public partial class MainViewModel : ViewModelBase
                 AddDialogHasDiskWarning = false;
                 AddDialogDiskWarningText = string.Empty;
             }
+
+            bool allSelected = AddDialogTorrentFiles.All(f => f.IsSelected);
+            bool noneSelected = AddDialogTorrentFiles.All(f => !f.IsSelected);
+
+            if (allSelected)
+            {
+                AddDialogSelectAllText = "✅ Tümünü Seç";
+                AddDialogDeselectAllText = "⬜ Tümünü Bırak";
+                AddDialogSelectAllBackground = "#2510B981";
+                AddDialogSelectAllBorderBrush = "#10B981";
+                AddDialogDeselectAllBackground = "Transparent";
+                AddDialogDeselectAllBorderBrush = "#33FFFFFF";
+            }
+            else if (noneSelected)
+            {
+                AddDialogSelectAllText = "⬜ Tümünü Seç";
+                AddDialogDeselectAllText = "✅ Tümünü Bırak";
+                AddDialogSelectAllBackground = "Transparent";
+                AddDialogSelectAllBorderBrush = "#33FFFFFF";
+                AddDialogDeselectAllBackground = "#25EF4444";
+                AddDialogDeselectAllBorderBrush = "#EF4444";
+            }
+            else
+            {
+                AddDialogSelectAllText = "⬜ Tümünü Seç";
+                AddDialogDeselectAllText = "⬜ Tümünü Bırak";
+                AddDialogSelectAllBackground = "Transparent";
+                AddDialogSelectAllBorderBrush = "#33FFFFFF";
+                AddDialogDeselectAllBackground = "Transparent";
+                AddDialogDeselectAllBorderBrush = "#33FFFFFF";
+            }
         }
         else
         {
             AddDialogTorrentSelectedSizeText = string.Empty;
             AddDialogHasDiskWarning = false;
             AddDialogDiskWarningText = string.Empty;
+            AddDialogSelectAllText = "✅ Tümünü Seç";
+            AddDialogDeselectAllText = "⬜ Tümünü Bırak";
+            AddDialogSelectAllBackground = "Transparent";
+            AddDialogSelectAllBorderBrush = "#33FFFFFF";
+            AddDialogDeselectAllBackground = "Transparent";
+            AddDialogDeselectAllBorderBrush = "#33FFFFFF";
         }
     }
 
