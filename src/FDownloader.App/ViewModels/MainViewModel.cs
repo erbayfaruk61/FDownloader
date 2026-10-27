@@ -1639,20 +1639,15 @@ public partial class MainViewModel : ViewModelBase
                 }
             }
 
-            // 3. Torrent veya dosya henüz tamamlanmamışsa (SavePath boş veya dizinse),
-            // standart indirme klasörü altında FileName dosyasını/klasörünü kontrol et
-            var defaultDownloads = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
-            if (!string.IsNullOrWhiteSpace(target.FileName))
+            // 3. Dosya henüz tamamlanmamışsa standart indirme klasörü altında FileName dosyasını kontrol et (yalnızca tekil dosya!)
+            var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            if (!string.IsNullOrWhiteSpace(target.FileName) && !string.IsNullOrWhiteSpace(userProfile))
             {
-                var candidateFile = Path.Combine(defaultDownloads, target.FileName);
-                PathSafetyHelper.SafeDeleteFile(candidateFile);
+                var candidateFile1 = Path.Combine(userProfile, "Downloads", target.FileName);
+                PathSafetyHelper.SafeDeleteFile(candidateFile1);
 
-                var candidateDir = Path.Combine(defaultDownloads, target.FileName);
-                if (Directory.Exists(candidateDir))
-                {
-                    // Asla Downloads klasörünü silmez, sadece alt klasörü (Downloads\TorrentAdı) siler
-                    PathSafetyHelper.SafeDeleteDirectory(candidateDir, defaultDownloads);
-                }
+                var candidateFile2 = Path.Combine(userProfile, "İndirilenler", target.FileName);
+                PathSafetyHelper.SafeDeleteFile(candidateFile2);
             }
         }
         catch { }

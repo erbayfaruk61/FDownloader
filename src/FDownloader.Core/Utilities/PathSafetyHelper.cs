@@ -8,6 +8,17 @@ public static class PathSafetyHelper
 {
     private static readonly HashSet<string> ProtectedDirectories = new(StringComparer.OrdinalIgnoreCase);
 
+    private static readonly HashSet<string> BlacklistedFolderNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Downloads", "İndirilenler", "Indirilenler",
+        "Desktop", "Masaüstü", "Masaustu",
+        "Documents", "Belgeler", "Belgelerim", "My Documents",
+        "Music", "Müzik", "Muzik", "My Music",
+        "Pictures", "Resimler", "Fotoğraflar", "My Pictures",
+        "Videos", "Videolar", "Filmler", "My Videos",
+        "Windows", "Program Files", "Program Files (x86)", "ProgramData", "AppData"
+    };
+
     static PathSafetyHelper()
     {
         AddProtectedPath(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
@@ -28,6 +39,7 @@ public static class PathSafetyHelper
         {
             AddProtectedPath(Path.Combine(userProfile, "Downloads"));
             AddProtectedPath(Path.Combine(userProfile, "İndirilenler"));
+            AddProtectedPath(Path.Combine(userProfile, "Indirilenler"));
         }
 
         foreach (var drive in DriveInfo.GetDrives())
@@ -35,9 +47,21 @@ public static class PathSafetyHelper
             try
             {
                 AddProtectedPath(drive.RootDirectory.FullName);
+                // Her sürücüdeki potansiyel İndirilenler/Downloads klasörünü de baştan koru (D:\Downloads vb.)
+                AddProtectedPath(Path.Combine(drive.RootDirectory.FullName, "Downloads"));
+                AddProtectedPath(Path.Combine(drive.RootDirectory.FullName, "İndirilenler"));
+                AddProtectedPath(Path.Combine(drive.RootDirectory.FullName, "Indirilenler"));
             }
             catch { }
         }
+    }
+
+    /// <summary>
+    /// Kullanıcı ayarlarında tanımlı özel indirme klasörlerini de korunan listeye ekler.
+    /// </summary>
+    public static void RegisterProtectedDirectory(string? path)
+    {
+        AddProtectedPath(path);
     }
 
     private static void AddProtectedPath(string? path)
@@ -59,62 +83,63 @@ public static class PathSafetyHelper
 
     /// <summary>
     /// Bir dizinin silinmesinin güvenli olup olmadığını kontrol eder.
-    /// Kök dizinler, sistem dizinleri, kullanıcı profil ve İndirilenler ana klasörü ASLA silinemez.
-    /// Silinecek klasörün, temel klasörün (baseDirectory) ALTINDA gerçek bir alt klasör olması zorunludur.
+    /// Kök dizinler, sistem dizinleri, kullanıcı profili ve İndirilenler ana klasörü ASLA silinemez.
+    /// Silinecek klasörün, temel klasörün (baseDirectory) ALTINDA doğrudan 1 seviye alt klasör olması zorunludur.
+    /// Temel klasör verilmemişse güvenlik gereği HİÇBİR klasör silinemez.
     /// </summary>
     public static bool IsSafeToDeleteDirectory(string? candidateDir, string? baseDirectory)
     {
-        if (string.IsNullOrWhiteSpace(candidateDir)) return false;
+        if (string.IsNullOrWhiteSpace(candidateDir) || string.IsNullOrWhiteSpace(baseDirectory)) return false;
         if (!Directory.Exists(candidateDir)) return false;
 
         try
         {
             var normCandidate = NormalizePath(candidateDir);
+            var normBase = NormalizePath(baseDirectory);
 
-            // Korunan sistem ve kullanıcı dizinlerinden biri mi?
+            // 1. Temel klasör ile hedef aynı ise ASLA silinemez! (Örn: Downloads klasörünün kendisi)
+            if (string.Equals(normCandidate, normBase, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            // 2. Klasörün adı İndirilenler, Downloads veya Desktop gibi kritik bir ad ise ASLA silinemez!
+            var folderName = Path.GetFileName(normCandidate);
+            if (string.IsNullOrWhiteSpace(folderName) || BlacklistedFolderNames.Contains(folderName))
+            {
+                return false;
+            }
+
+            // 3. Korunan sistem ve kullanıcı dizinlerinden biri mi?
             if (ProtectedDirectories.Contains(normCandidate))
             {
                 return false;
             }
 
-            // Herhangi bir sürücünün kök dizini mi? (C:\, D:\ vb.)
+            // 4. Herhangi bir sürücünün kök dizini mi? (C:\, D:\ vb.)
             var root = Path.GetPathRoot(normCandidate);
             if (!string.IsNullOrEmpty(root) && string.Equals(NormalizePath(root), normCandidate, StringComparison.OrdinalIgnoreCase))
             {
                 return false;
             }
 
-            // Eğer temel klasör verilmişse, hedef klasör kesinlikle onun bir alt klasörü olmalıdır (kendisi olamaz)
-            if (!string.IsNullOrWhiteSpace(baseDirectory))
+            // 5. Hedef klasör, temel klasörün doğrudan 1 seviye alt klasörü olmak zorundadır
+            var parentDir = Path.GetDirectoryName(normCandidate);
+            if (string.IsNullOrWhiteSpace(parentDir) || !string.Equals(NormalizePath(parentDir), normBase, StringComparison.OrdinalIgnoreCase))
             {
-                var normBase = NormalizePath(baseDirectory);
-
-                // Temel klasör ile hedef aynı ise ASLA silinemez! (Örn: Downloads klasörünün kendisi)
-                if (string.Equals(normCandidate, normBase, StringComparison.OrdinalIgnoreCase))
-                {
-                    return false;
-                }
-
-                var relative = Path.GetRelativePath(normBase, normCandidate);
-                if (string.IsNullOrWhiteSpace(relative) ||
-                    relative == "." ||
-                    relative == ".." ||
-                    relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal) ||
-                    relative.StartsWith(".." + Path.AltDirectorySeparatorChar, StringComparison.Ordinal) ||
-                    Path.IsPathRooted(relative))
-                {
-                    // Temel klasörün dışına taşıyor veya temel klasörün kendisi
-                    return false;
-                }
+                return false;
             }
-            else
+
+            // 6. Path Traversal koruması (.. veya . ile dışarı taşma)
+            var relative = Path.GetRelativePath(normBase, normCandidate);
+            if (string.IsNullOrWhiteSpace(relative) ||
+                relative == "." ||
+                relative == ".." ||
+                relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal) ||
+                relative.StartsWith(".." + Path.AltDirectorySeparatorChar, StringComparison.Ordinal) ||
+                Path.IsPathRooted(relative))
             {
-                // Temel klasör yoksa, en az 3 derinlik seviyesinde olmalıdır (Örn: C:\Downloads\MyTorrent)
-                var segments = normCandidate.Split(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
-                if (segments.Length <= 2)
-                {
-                    return false;
-                }
+                return false;
             }
 
             return true;

@@ -315,7 +315,7 @@ public sealed class TorrentService : IAsyncDisposable
 
                 // 2. Çoklu dosyalı torrent ise ve SavePath altında özel bir klasör açılmışsa,
                 // sadece bu torrent'e ait alt klasörü sil (Downloads ana klasörüne asla dokunma!)
-                if (!string.IsNullOrWhiteSpace(torrentName) && !string.IsNullOrWhiteSpace(savePath))
+                if (!string.IsNullOrWhiteSpace(torrentName) && !string.IsNullOrWhiteSpace(savePath) && manager.Files != null && manager.Files.Count > 1)
                 {
                     var specificTorrentFolder = Path.Combine(savePath, torrentName);
                     if (Directory.Exists(specificTorrentFolder))

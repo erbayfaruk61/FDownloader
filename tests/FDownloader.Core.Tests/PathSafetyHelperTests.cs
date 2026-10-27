@@ -77,4 +77,55 @@ public class PathSafetyHelperTests
         Assert.False(PathSafetyHelper.IsSafeToDeleteDirectory(maliciousDir1, baseDir));
         Assert.False(PathSafetyHelper.IsSafeToDeleteDirectory(maliciousDir2, baseDir));
     }
+
+    [Fact]
+    public void KaraListedekiSistemVeIndirilenlerKlasorAdlariAslaSilinemez()
+    {
+        var tempRoot = Path.Combine(Path.GetTempPath(), "FDownloader_Blacklist_Test_" + Guid.NewGuid().ToString("N"));
+        var downloadsDir = Path.Combine(tempRoot, "İndirilenler");
+        var englishDownloadsDir = Path.Combine(tempRoot, "Downloads");
+        var desktopDir = Path.Combine(tempRoot, "Masaüstü");
+
+        try
+        {
+            Directory.CreateDirectory(downloadsDir);
+            Directory.CreateDirectory(englishDownloadsDir);
+            Directory.CreateDirectory(desktopDir);
+
+            // Alt klasör olarak bile olsa, adı "İndirilenler" veya "Downloads" ise ASLA silinemez
+            Assert.False(PathSafetyHelper.IsSafeToDeleteDirectory(downloadsDir, tempRoot));
+            Assert.False(PathSafetyHelper.IsSafeToDeleteDirectory(englishDownloadsDir, tempRoot));
+            Assert.False(PathSafetyHelper.IsSafeToDeleteDirectory(desktopDir, tempRoot));
+        }
+        finally
+        {
+            if (Directory.Exists(tempRoot))
+            {
+                Directory.Delete(tempRoot, true);
+            }
+        }
+    }
+
+    [Fact]
+    public void BaseDirectoryVerilmedigindeHicbirKlasorSilinemez()
+    {
+        var tempRoot = Path.Combine(Path.GetTempPath(), "FDownloader_NoBase_Test_" + Guid.NewGuid().ToString("N"));
+        var subDir = Path.Combine(tempRoot, "HerhangiBirKlasor");
+
+        try
+        {
+            Directory.CreateDirectory(subDir);
+            // baseDirectory olmadan kesinlikle silinmemeli
+            Assert.False(PathSafetyHelper.IsSafeToDeleteDirectory(subDir, null));
+            Assert.False(PathSafetyHelper.IsSafeToDeleteDirectory(subDir, ""));
+            Assert.False(PathSafetyHelper.IsSafeToDeleteDirectory(subDir, "   "));
+        }
+        finally
+        {
+            if (Directory.Exists(tempRoot))
+            {
+                Directory.Delete(tempRoot, true);
+            }
+        }
+    }
 }
