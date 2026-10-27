@@ -874,9 +874,17 @@
 
                     <!-- Ayarlar Sekmeleri (Görünüm, Ses, Hız & Ağ, Depolama, Araçlar) -->
                     <TabControl Grid.Row="1" SelectedIndex="{Binding SettingsTabIndex}">
+                        <TabControl.Styles>
+                            <Style Selector="TabItem">
+                                <Setter Property="FontSize" Value="11" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                                <Setter Property="Padding" Value="8,4" />
+                                <Setter Property="MinHeight" Value="26" />
+                            </Style>
+                        </TabControl.Styles>
                         
                         <!-- SEKME 1: 🎨 GÖRÜNÜM & TEMALAR -->
-                        <TabItem Header="🎨 Görünüm &amp; Tema">
+                        <TabItem Header="🎨 Görünüm">
                             <ScrollViewer Margin="0,10,0,0">
                                 <StackPanel Spacing="14">
                                     <!-- Renk Temaları -->
@@ -1081,7 +1089,7 @@
                         </TabItem>
 
                         <!-- SEKME 2: 🔔 SES & BİLDİRİM -->
-                        <TabItem Header="🔔 Ses &amp; Bildirim">
+                        <TabItem Header="🔔 Bildirim">
                             <ScrollViewer Margin="0,10,0,0">
                                 <StackPanel Spacing="14">
                                     <Border Background="{DynamicResource SystemChromeLowColor}" CornerRadius="8" Padding="14">
@@ -1169,7 +1177,7 @@
                         </TabItem>
 
                         <!-- SEKME 3: ⚡ HIZ VE BANT GENİŞLİĞİ -->
-                        <TabItem Header="⚡ Hız &amp; Limitler">
+                        <TabItem Header="⚡ Hız &amp; Ağ">
                             <ScrollViewer Margin="0,10,0,0">
                                 <StackPanel Spacing="14">
                                     <!-- GENEL HIZ LİMİTLERİ -->
@@ -1229,7 +1237,7 @@
                         </TabItem>
 
                         <!-- SEKME 4: 📁 DEPOLAMA & KUYRUK -->
-                        <TabItem Header="📁 Depolama &amp; Kuyruk">
+                        <TabItem Header="📁 Depolama">
                             <ScrollViewer Margin="0,10,0,0">
                                 <StackPanel Spacing="14">
                                     <Border Background="{DynamicResource SystemChromeLowColor}" CornerRadius="8" Padding="14">
@@ -1256,7 +1264,7 @@
                         </TabItem>
 
                         <!-- SEKME 5: 🌐 SİTE YAKALAYICI -->
-                        <TabItem Header="🌐 Site Yakalayıcı">
+                        <TabItem Header="🌐 Yakalayıcı">
                             <Grid RowDefinitions="Auto, Auto, *, Auto" Margin="0,10,0,0">
                                 <Grid Grid.Row="0" ColumnDefinitions="*, 120" Margin="0,0,0,8">
                                     <TextBox Grid.Column="0" Text="{Binding SiteGrabberUrl}" PlaceholderText="https://example.com/galeri" Height="34" VerticalContentAlignment="Center" Margin="0,0,8,0" />
@@ -1285,7 +1293,7 @@
                         </TabItem>
 
                         <!-- SEKME 6: 🧩 TARAYICI ENTEGRASYONU -->
-                        <TabItem Header="🧩 Tarayıcı Köprüsü">
+                        <TabItem Header="🧩 Tarayıcı">
                             <ScrollViewer VerticalScrollBarVisibility="Auto">
                                 <StackPanel Spacing="14" Margin="4,10,4,0">
                                     <Border Background="{DynamicResource SystemChromeLowColor}" CornerRadius="8" Padding="14" BorderBrush="#10B981" BorderThickness="1">
@@ -1325,7 +1333,7 @@
                         </TabItem>
 
                         <!-- SEKME 7: 🔄 GÜNCELLEME & HAKKINDA -->
-                        <TabItem Header="🔄 Güncelleme &amp; Hakkında">
+                        <TabItem Header="🔄 Hakkında">
                             <ScrollViewer VerticalScrollBarVisibility="Auto">
                                 <StackPanel Spacing="14" Margin="4,10,4,0">
                                     <Border Background="{DynamicResource SystemChromeLowColor}" CornerRadius="8" Padding="14">
