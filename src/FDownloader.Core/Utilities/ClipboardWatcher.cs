@@ -30,6 +30,22 @@ public sealed class ClipboardWatcher : IDisposable
         @"(https?://)?(www\.)?(youtube\.com|youtu\.be|tiktok\.com|twitter\.com|x\.com|instagram\.com|vimeo\.com|dailymotion\.com|facebook\.com|twitch\.tv)/[^\s]+",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+    private static readonly HashSet<string> DownloadableExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        // Arşiv & Disk İmajları
+        ".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz", ".iso", ".img", ".dmg", ".cab", ".bin", ".cue",
+        ".001", ".002", ".003", ".zst", ".tgz", ".vhd", ".vhdx", ".vmdk",
+        // Kurulum & Yürütülebilir Dosyalar
+        ".exe", ".msi", ".apk", ".xapk", ".deb", ".rpm", ".pkg", ".appimage", ".appx", ".msix", ".jar",
+        // Video & Ses
+        ".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".webm", ".m4v", ".ts",
+        ".mp3", ".wav", ".flac", ".aac", ".m4a", ".ogg", ".opus", ".wma",
+        // Belgeler
+        ".pdf", ".epub", ".mobi", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".csv",
+        // Torrent
+        ".torrent"
+    };
+
     public ClipboardWatcher(DownloadEventBus eventBus, ILogger<ClipboardWatcher> logger)
     {
         _eventBus = eventBus;
@@ -68,9 +84,51 @@ public sealed class ClipboardWatcher : IDisposable
         else if (Uri.TryCreate(text, UriKind.Absolute, out var uri) &&
                  (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
         {
-            _logger.LogInformation("Doğrudan indirme linki yakalandı: {Url}", text);
-            _eventBus.Publish(new ClipboardUrlDetectedEvent(text, ClipboardUrlType.DirectFile));
+            if (IsDownloadableFileUrl(uri))
+            {
+                _logger.LogInformation("Doğrudan indirme linki yakalandı: {Url}", text);
+                _eventBus.Publish(new ClipboardUrlDetectedEvent(text, ClipboardUrlType.DirectFile));
+            }
         }
+    }
+
+    private static bool IsDownloadableFileUrl(Uri uri)
+    {
+        var path = uri.AbsolutePath;
+        if (string.IsNullOrWhiteSpace(path) || path == "/" || path.EndsWith("/"))
+        {
+            return false;
+        }
+
+        var ext = Path.GetExtension(path);
+        if (!string.IsNullOrEmpty(ext))
+        {
+            if (DownloadableExtensions.Contains(ext))
+            {
+                return true;
+            }
+
+            // Web sayfası uzantıları kesinlikle indirme değildir
+            if (ext is ".html" or ".htm" or ".php" or ".asp" or ".aspx" or ".jsp" or ".css" or ".js")
+            {
+                return false;
+            }
+        }
+
+        // URL query parametrelerinde belirgin bir indirme uzantısı var mı? (?file=setup.exe vb.)
+        if (!string.IsNullOrWhiteSpace(uri.Query))
+        {
+            var query = uri.Query;
+            foreach (var validExt in DownloadableExtensions)
+            {
+                if (query.Contains(validExt, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private async Task MonitorLoopAsync(CancellationToken cancellationToken)
