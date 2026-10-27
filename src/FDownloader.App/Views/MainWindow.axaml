@@ -197,17 +197,17 @@
                     <!-- Sağ Taraf: Anlık ve Maks Hız Rozetleri -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="14,0,0,0">
                         <!-- Anlık Hız -->
-                        <Border Background="#1A10B981" BorderBrush="#10B981" BorderThickness="1" CornerRadius="4" Padding="8,4">
+                        <Border Background="{Binding ThemeSpeedCurrentBadgeBg}" BorderBrush="{Binding ThemeSpeedCurrentBadgeBorder}" BorderThickness="1" CornerRadius="4" Padding="8,4">
                             <StackPanel Orientation="Horizontal" Spacing="5">
-                                <TextBlock Text="⚡ Anlık:" FontSize="11" Foreground="#6EE7B7" VerticalAlignment="Center" />
-                                <TextBlock Text="{Binding GraphCurrentSpeedText}" FontWeight="Bold" FontSize="12" Foreground="#10B981" VerticalAlignment="Center" />
+                                <TextBlock Text="⚡ Anlık:" FontSize="11" Foreground="{Binding ThemeSpeedCurrentLabelFg}" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding GraphCurrentSpeedText}" FontWeight="Bold" FontSize="12" Foreground="{Binding ThemeSpeedCurrentValueFg}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Border>
                         <!-- Maks Hız -->
-                        <Border Background="#1A8B5CF6" BorderBrush="#8B5CF6" BorderThickness="1" CornerRadius="4" Padding="8,4">
+                        <Border Background="{Binding ThemeSpeedMaxBadgeBg}" BorderBrush="{Binding ThemeSpeedMaxBadgeBorder}" BorderThickness="1" CornerRadius="4" Padding="8,4">
                             <StackPanel Orientation="Horizontal" Spacing="5">
-                                <TextBlock Text="🚀 Maks:" FontSize="11" Foreground="#C4B5FD" VerticalAlignment="Center" />
-                                <TextBlock Text="{Binding GraphMaxSpeedText}" FontWeight="SemiBold" FontSize="11" Foreground="#A78BFA" VerticalAlignment="Center" />
+                                <TextBlock Text="🚀 Maks:" FontSize="11" Foreground="{Binding ThemeSpeedMaxLabelFg}" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding GraphMaxSpeedText}" FontWeight="SemiBold" FontSize="11" Foreground="{Binding ThemeSpeedMaxValueFg}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -517,7 +517,7 @@
 
                                             <!-- 6: Maksimum Hız -->
                                             <Border Grid.Column="6" Width="{Binding $parent[Window].((vm:MainViewModel)DataContext).ColMaxSpeedWidth}" IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).ShowColMaxSpeed}" VerticalAlignment="Center" ClipToBounds="True" Padding="6,0,10,0">
-                                                <TextBlock Text="{Binding MaxSpeedDisplay}" Foreground="#6EE7B7" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding MaxSpeedDisplay}" Foreground="{Binding $parent[Window].((vm:MainViewModel)DataContext).ThemeSpeedMaxColFg}" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                                             </Border>
 
                                             <!-- 7: Kalan Süre -->

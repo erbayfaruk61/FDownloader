@@ -260,6 +260,15 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty] private string _themeAccentFg = OceanBlueAccentFg;
     [ObservableProperty] private string _themeSpeedGraphPanelBg = OceanBlueSpeedGraphPanelBg;
     [ObservableProperty] private string _themeSpeedGraphInnerBg = OceanBlueSpeedGraphInnerBg;
+    [ObservableProperty] private string _themeSpeedCurrentBadgeBg = "#1A10B981";
+    [ObservableProperty] private string _themeSpeedCurrentBadgeBorder = "#10B981";
+    [ObservableProperty] private string _themeSpeedCurrentLabelFg = "#6EE7B7";
+    [ObservableProperty] private string _themeSpeedCurrentValueFg = "#10B981";
+    [ObservableProperty] private string _themeSpeedMaxBadgeBg = "#1A8B5CF6";
+    [ObservableProperty] private string _themeSpeedMaxBadgeBorder = "#8B5CF6";
+    [ObservableProperty] private string _themeSpeedMaxLabelFg = "#C4B5FD";
+    [ObservableProperty] private string _themeSpeedMaxValueFg = "#A78BFA";
+    [ObservableProperty] private string _themeSpeedMaxColFg = "#6EE7B7";
 
     // ─── Tema Modu (4 Farklı Renk Paleti) ──────────────────────────────────
     private AppThemeMode _currentThemeMode = AppThemeMode.OceanBlue;
@@ -417,6 +426,15 @@ public partial class MainViewModel : ViewModelBase
                 ThemeAccentFg = OceanBlueAccentFg;
                 ThemeSpeedGraphPanelBg = OceanBlueSpeedGraphPanelBg;
                 ThemeSpeedGraphInnerBg = OceanBlueSpeedGraphInnerBg;
+                ThemeSpeedCurrentBadgeBg = "#1A10B981";
+                ThemeSpeedCurrentBadgeBorder = "#10B981";
+                ThemeSpeedCurrentLabelFg = "#6EE7B7";
+                ThemeSpeedCurrentValueFg = "#10B981";
+                ThemeSpeedMaxBadgeBg = "#1A8B5CF6";
+                ThemeSpeedMaxBadgeBorder = "#8B5CF6";
+                ThemeSpeedMaxLabelFg = "#C4B5FD";
+                ThemeSpeedMaxValueFg = "#A78BFA";
+                ThemeSpeedMaxColFg = "#6EE7B7";
                 break;
 
             case AppThemeMode.CyberPurple:
@@ -434,6 +452,15 @@ public partial class MainViewModel : ViewModelBase
                 ThemeAccentFg = CyberPurpleAccentFg;
                 ThemeSpeedGraphPanelBg = CyberPurpleSpeedGraphPanelBg;
                 ThemeSpeedGraphInnerBg = CyberPurpleSpeedGraphInnerBg;
+                ThemeSpeedCurrentBadgeBg = "#1A10B981";
+                ThemeSpeedCurrentBadgeBorder = "#10B981";
+                ThemeSpeedCurrentLabelFg = "#6EE7B7";
+                ThemeSpeedCurrentValueFg = "#10B981";
+                ThemeSpeedMaxBadgeBg = "#1A8B5CF6";
+                ThemeSpeedMaxBadgeBorder = "#8B5CF6";
+                ThemeSpeedMaxLabelFg = "#C4B5FD";
+                ThemeSpeedMaxValueFg = "#A78BFA";
+                ThemeSpeedMaxColFg = "#6EE7B7";
                 break;
 
             case AppThemeMode.PlatinumGray:
@@ -451,6 +478,15 @@ public partial class MainViewModel : ViewModelBase
                 ThemeAccentFg = PlatinumGrayAccentFg;
                 ThemeSpeedGraphPanelBg = PlatinumGraySpeedGraphPanelBg;
                 ThemeSpeedGraphInnerBg = PlatinumGraySpeedGraphInnerBg;
+                ThemeSpeedCurrentBadgeBg = "#D1FAE5";
+                ThemeSpeedCurrentBadgeBorder = "#059669";
+                ThemeSpeedCurrentLabelFg = "#065F46";
+                ThemeSpeedCurrentValueFg = "#047857";
+                ThemeSpeedMaxBadgeBg = "#EDE9FE";
+                ThemeSpeedMaxBadgeBorder = "#7C3AED";
+                ThemeSpeedMaxLabelFg = "#5B21B6";
+                ThemeSpeedMaxValueFg = "#6D28D9";
+                ThemeSpeedMaxColFg = "#047857";
                 break;
 
             case AppThemeMode.LightClean:
@@ -468,6 +504,15 @@ public partial class MainViewModel : ViewModelBase
                 ThemeAccentFg = LightCleanAccentFg;
                 ThemeSpeedGraphPanelBg = LightCleanSpeedGraphPanelBg;
                 ThemeSpeedGraphInnerBg = LightCleanSpeedGraphInnerBg;
+                ThemeSpeedCurrentBadgeBg = "#ECFDF5";
+                ThemeSpeedCurrentBadgeBorder = "#10B981";
+                ThemeSpeedCurrentLabelFg = "#065F46";
+                ThemeSpeedCurrentValueFg = "#047857";
+                ThemeSpeedMaxBadgeBg = "#F5F3FF";
+                ThemeSpeedMaxBadgeBorder = "#8B5CF6";
+                ThemeSpeedMaxLabelFg = "#5B21B6";
+                ThemeSpeedMaxValueFg = "#6D28D9";
+                ThemeSpeedMaxColFg = "#059669";
                 break;
 
             default:
@@ -485,6 +530,15 @@ public partial class MainViewModel : ViewModelBase
                 ThemeAccentFg = OceanBlueAccentFg;
                 ThemeSpeedGraphPanelBg = OceanBlueSpeedGraphPanelBg;
                 ThemeSpeedGraphInnerBg = OceanBlueSpeedGraphInnerBg;
+                ThemeSpeedCurrentBadgeBg = "#1A10B981";
+                ThemeSpeedCurrentBadgeBorder = "#10B981";
+                ThemeSpeedCurrentLabelFg = "#6EE7B7";
+                ThemeSpeedCurrentValueFg = "#10B981";
+                ThemeSpeedMaxBadgeBg = "#1A8B5CF6";
+                ThemeSpeedMaxBadgeBorder = "#8B5CF6";
+                ThemeSpeedMaxLabelFg = "#C4B5FD";
+                ThemeSpeedMaxValueFg = "#A78BFA";
+                ThemeSpeedMaxColFg = "#6EE7B7";
                 break;
         }
 
