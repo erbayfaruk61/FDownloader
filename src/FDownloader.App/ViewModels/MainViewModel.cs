@@ -34,6 +34,29 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty] private int _updateDownloadProgress = 0;
     [ObservableProperty] private string _updateStatusText = string.Empty;
 
+    public bool IsUpdateAvailableAndNotUpdating => IsUpdateAvailable && !IsUpdating;
+
+    public string AppVersionText
+    {
+        get
+        {
+            var v = typeof(MainViewModel).Assembly.GetName().Version;
+            return v != null ? $"v{v.Major}.{v.Minor}.{v.Build}" : "v1.5.0";
+        }
+    }
+
+    public string WindowTitle => $"FDownloader {AppVersionText} - İndirme Yöneticisi";
+
+    partial void OnIsUpdateAvailableChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsUpdateAvailableAndNotUpdating));
+    }
+
+    partial void OnIsUpdatingChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsUpdateAvailableAndNotUpdating));
+    }
+
     // ─── İndirme Listesi ve Filtreleme ─────────────────────────────────────
     [ObservableProperty] private ObservableCollection<DownloadItemViewModel> _downloads = new();
     [ObservableProperty] private ObservableCollection<DownloadItemViewModel> _filteredDownloads = new();
