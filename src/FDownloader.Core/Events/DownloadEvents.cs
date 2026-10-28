@@ -107,3 +107,8 @@ public record TorrentMetadataLoadedEvent(
     string? TorrentFilePath
 );
 
+/// <summary>
+/// Sistem tepsisindeki veya arka plandaki ana pencereyi öne getirme isteği olayı.
+/// </summary>
+public record ShowMainWindowEvent();
+

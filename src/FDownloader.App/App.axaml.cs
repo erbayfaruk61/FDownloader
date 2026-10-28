@@ -36,15 +36,16 @@ public partial class App : Application
             var bridge = _serviceProvider.GetRequiredService<FDownloader.Core.Network.BrowserBridgeService>();
             bridge.Start();
 
-            var startMinimized = desktop.Args?.Any(a =>
+            var hasTrayArg = desktop.Args?.Any(a =>
                 a.Equals("--tray", StringComparison.OrdinalIgnoreCase) ||
                 a.Equals("-tray", StringComparison.OrdinalIgnoreCase) ||
-                a.Equals("--minimized", StringComparison.OrdinalIgnoreCase)) == true;
+                a.Equals("--minimized", StringComparison.OrdinalIgnoreCase) ||
+                a.Equals("-minimized", StringComparison.OrdinalIgnoreCase) ||
+                a.Equals("--autostart", StringComparison.OrdinalIgnoreCase)) == true;
 
-            if (!startMinimized && mainVm.StartMinimizedToTray)
-            {
-                startMinimized = true;
-            }
+            // SADECE Windows açılış argümanı (--tray) varsa ve ayarlarda "Açılışta sistem tepsisinde başlat" seçiliyse küçült.
+            // Kullanıcı masaüstünden/başlat menüsünden çift tıkladığında hiçbir argüman gelmez; pencere doğrudan ekranda açılır!
+            var startMinimized = hasTrayArg && mainVm.StartMinimizedToTray;
 
             var mainWindow = new MainWindow
             {
@@ -58,6 +59,12 @@ public partial class App : Application
             }
 
             mainVm.RequestBringToFront += () => mainWindow.BringToFront();
+
+            var eventBus = _serviceProvider.GetRequiredService<FDownloader.Core.Events.DownloadEventBus>();
+            eventBus.Subscribe<FDownloader.Core.Events.ShowMainWindowEvent>(_ =>
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => mainWindow.BringToFront());
+            });
 
             desktop.MainWindow = mainWindow;
             desktop.Exit += (_, _) =>

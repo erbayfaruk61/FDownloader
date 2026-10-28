@@ -119,6 +119,14 @@ public sealed class BrowserBridgeService : IDisposable
 
             var path = request.Url?.AbsolutePath?.ToLowerInvariant() ?? "";
 
+            if (path == "/show" || path == "/bring-to-front")
+            {
+                _eventBus.Publish(new ShowMainWindowEvent());
+                var showJson = JsonSerializer.Serialize(new { status = "ok", message = "window brought to front" });
+                await WriteJsonResponseAsync(response, 200, showJson);
+                return;
+            }
+
             if (path == "/ping")
             {
                 var version = "1.0.0";

@@ -7,10 +7,37 @@ namespace FDownloader.App;
 
 sealed class Program
 {
+    private const string AppMutexName = "FDownloader_SingleInstance_Mutex_9666";
+
     [STAThread]
     public static void Main(string[] args)
     {
         VelopackApp.Build().Run();
+
+        // Tekil Oturum (Single Instance) Yönetimi
+        using var mutex = new System.Threading.Mutex(true, AppMutexName, out bool isFirstInstance);
+        if (!isFirstInstance)
+        {
+            var isAutoStart = args.Any(a =>
+                a.Equals("--tray", StringComparison.OrdinalIgnoreCase) ||
+                a.Equals("-tray", StringComparison.OrdinalIgnoreCase) ||
+                a.Equals("--minimized", StringComparison.OrdinalIgnoreCase) ||
+                a.Equals("-minimized", StringComparison.OrdinalIgnoreCase) ||
+                a.Equals("--autostart", StringComparison.OrdinalIgnoreCase));
+
+            if (!isAutoStart)
+            {
+                // Kullanıcı masaüstünden/başlat menüsünden elle tıkladı: Çalışan kopyayı tepsiden ekrana öne getir
+                try
+                {
+                    using var client = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(2) };
+                    _ = client.PostAsync("http://127.0.0.1:9666/show", null).GetAwaiter().GetResult();
+                }
+                catch { }
+            }
+
+            return; // İkinci kopyayı sonlandır
+        }
 
         AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
         {
