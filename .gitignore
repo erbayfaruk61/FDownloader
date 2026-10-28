@@ -33,7 +33,10 @@ $RECYCLE.BIN/
 *.bak
 *~
 
-## Excluded Folders & Documents
+## Excluded Folders & Working Notes
 .agents/
 tests/
-*.md
+ekle.md
+guncelleme.md
+ultimate_downloader_*.md
+KURULUM_REHBERI.md
