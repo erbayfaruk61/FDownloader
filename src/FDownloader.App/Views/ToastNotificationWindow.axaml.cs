@@ -40,14 +40,48 @@ public partial class ToastNotificationWindow : Window
         TxtFileName.Text = message;
         TxtIcon.Text = icon;
 
-        if (isArchive || (filePath != null && Directory.Exists(filePath)))
+        // İkon rengi ve arkaplanı
+        if (icon == "💡")
         {
-            BtnOpenFile.IsVisible = false;
+            BorderIconBg.Background = Avalonia.Media.Brush.Parse("#25F59E0B");
+            TxtIcon.Foreground = Avalonia.Media.Brush.Parse("#F59E0B");
+        }
+        else if (icon == "ℹ️" || icon == "⚡")
+        {
+            BorderIconBg.Background = Avalonia.Media.Brush.Parse("#2538BDF8");
+            TxtIcon.Foreground = Avalonia.Media.Brush.Parse("#38BDF8");
+        }
+        else if (icon == "⚠" || icon == "❌")
+        {
+            BorderIconBg.Background = Avalonia.Media.Brush.Parse("#25EF4444");
+            TxtIcon.Foreground = Avalonia.Media.Brush.Parse("#EF4444");
+        }
+        else
+        {
+            BorderIconBg.Background = Avalonia.Media.Brush.Parse("#2510B981");
+            TxtIcon.Foreground = Avalonia.Media.Brush.Parse("#10B981");
+        }
+
+        // Sadece geçerli bir indirme dosyası yolu varsa butonları göster
+        bool hasValidPath = !string.IsNullOrWhiteSpace(filePath);
+        PanelActions.IsVisible = hasValidPath;
+
+        if (hasValidPath)
+        {
+            if (isArchive || Directory.Exists(filePath))
+            {
+                BtnOpenFile.IsVisible = false;
+            }
+            else
+            {
+                BtnOpenFile.IsVisible = true;
+            }
         }
 
         Opened += (_, _) =>
         {
             PositionAtBottomRight();
+            Dispatcher.UIThread.Post(PositionAtBottomRight, DispatcherPriority.Loaded);
             if (sound != CompletionSound.Sessiz)
             {
                 PlayCompletionSound();
@@ -70,9 +104,13 @@ public partial class ToastNotificationWindow : Window
             {
                 var wa = screen.WorkingArea;
                 double scale = screen.Scaling;
-                int winWidth = (int)(390 * scale);
-                int winHeight = (int)(110 * scale);
-                int margin = (int)(24 * scale);
+                UpdateLayout();
+
+                double actualWidth = Bounds.Width > 0 ? Bounds.Width : Width;
+                double actualHeight = Bounds.Height > 0 ? Bounds.Height : 95;
+                int winWidth = (int)(actualWidth * scale);
+                int winHeight = (int)(actualHeight * scale);
+                int margin = (int)(20 * scale);
 
                 Position = new PixelPoint(wa.Right - winWidth - margin, wa.Bottom - winHeight - margin);
             }
