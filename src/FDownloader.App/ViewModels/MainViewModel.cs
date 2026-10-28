@@ -45,7 +45,7 @@ public partial class MainViewModel : ViewModelBase
         }
     }
 
-    public string WindowTitle => $"FDownloader {AppVersionText} - İndirme Yöneticisi";
+    public string WindowTitle => "FDownloader - İndirme Yöneticisi";
 
     partial void OnIsUpdateAvailableChanged(bool value)
     {
@@ -623,19 +623,21 @@ public partial class MainViewModel : ViewModelBase
     public const int SettingsTabAbout = 8;
 
     // ─── Tarayıcı Eklentisi Durumu ve Sürüm Yönetimi ──────────────────────
-    public const string TargetExtensionVersion = "1.0.0";
+    public const string TargetExtensionVersion = "1.5.0";
     public const double ExtensionHeartbeatTimeoutSeconds = 35.0;
 
-    public const string ExtensionStatusColorDisconnected = "#EF4444"; // Kırmızı
-    public const string ExtensionStatusColorOutdated = "#F59E0B";     // Turuncu
-    public const string ExtensionStatusColorActive = "#10B981";       // Yeşil
+    public const string ExtensionStatusColorWaiting = "#334155";      // Slate koyu mavi/gri (Tarayıcı bekleniyor)
+    public const string ExtensionStatusColorOutdated = "#F59E0B";     // Turuncu (Güncelleme gerekli)
+    public const string ExtensionStatusColorActive = "#10B981";       // Yeşil (Aktif & Güncel)
 
-    [ObservableProperty] private string _extensionStatusBadgeText = "● Devrede Değil";
-    [ObservableProperty] private string _extensionStatusBadgeBackground = ExtensionStatusColorDisconnected;
-    [ObservableProperty] private string _extensionStatusBadgeForeground = "#FFFFFF";
-    [ObservableProperty] private string _extensionStatusBadgeToolTip = "Tarayıcı eklentisi devrede değil veya tarayıcı kapalı.";
+    [ObservableProperty] private string _extensionStatusBadgeText = "💤 Tarayıcı Bekleniyor";
+    [ObservableProperty] private string _extensionStatusBadgeBackground = ExtensionStatusColorWaiting;
+    [ObservableProperty] private string _extensionStatusBadgeForeground = "#CBD5E1";
+    [ObservableProperty] private string _extensionStatusBadgeToolTip = "FDownloader yerel köprüsü (127.0.0.1:9666) hazır ve dinliyor. Tarayıcınızı açtığınızda eklenti otomatik bağlanacaktır.";
     [ObservableProperty] private bool _isExtensionConnected = false;
+    [ObservableProperty] private bool _isExtensionUpdateAvailable = false;
     [ObservableProperty] private string _connectedExtensionVersion = string.Empty;
+    [ObservableProperty] private string _expectedExtensionVersion = TargetExtensionVersion;
 
     private DateTime? _lastExtensionHeartbeat;
 
@@ -2783,34 +2785,52 @@ public partial class MainViewModel : ViewModelBase
         var isAlive = _lastExtensionHeartbeat.HasValue &&
                       (now - _lastExtensionHeartbeat.Value).TotalSeconds <= ExtensionHeartbeatTimeoutSeconds;
 
+        var targetVersion = GetExpectedExtensionVersion();
+        ExpectedExtensionVersion = targetVersion;
+
         if (!isAlive)
         {
             IsExtensionConnected = false;
-            ExtensionStatusBadgeText = "● Devrede Değil";
-            ExtensionStatusBadgeBackground = ExtensionStatusColorDisconnected;
-            ExtensionStatusBadgeForeground = "#FFFFFF";
-            ExtensionStatusBadgeToolTip = "Tarayıcı eklentisi devrede değil veya tarayıcı kapalı. Kurulum için 'Nasıl Kurulur?' butonuna tıklayabilirsiniz.";
+            IsExtensionUpdateAvailable = false;
+            ExtensionStatusBadgeText = "💤 Tarayıcı Bekleniyor";
+            ExtensionStatusBadgeBackground = ExtensionStatusColorWaiting;
+            ExtensionStatusBadgeForeground = "#CBD5E1";
+            ExtensionStatusBadgeToolTip = "FDownloader yerel köprüsü (127.0.0.1:9666) hazır ve dinliyor. Chrome, Edge vb. tarayıcınızı açtığınızda eklenti otomatik bağlanacaktır.";
             return;
         }
 
         IsExtensionConnected = true;
         var version = string.IsNullOrWhiteSpace(ConnectedExtensionVersion) ? TargetExtensionVersion : ConnectedExtensionVersion.Trim();
-        var targetVersion = GetExpectedExtensionVersion();
 
         if (IsVersionOlder(version, targetVersion))
         {
-            ExtensionStatusBadgeText = $"⚠️ Güncelleme Gerekli (v{version})";
+            IsExtensionUpdateAvailable = true;
+            ExtensionStatusBadgeText = $"⚠️ Güncelleme Gerekli (v{version} → v{targetVersion})";
             ExtensionStatusBadgeBackground = ExtensionStatusColorOutdated;
             ExtensionStatusBadgeForeground = "#FFFFFF";
-            ExtensionStatusBadgeToolTip = $"Tarayıcıdaki eklenti sürümü (v{version}) eski. Yeni sürüm: v{targetVersion}. Eklentiler sayfasından yenileyebilirsiniz.";
+            ExtensionStatusBadgeToolTip = $"Tarayıcınızdaki eklenti sürümü (v{version}) eski. FDownloader ile gelen güncel sürüm: v{targetVersion}. Eklentiyi güncellemek için tıklayabilirsiniz.";
         }
         else
         {
-            ExtensionStatusBadgeText = $"✓ Devrede (v{version})";
+            IsExtensionUpdateAvailable = false;
+            ExtensionStatusBadgeText = $"✓ Eklenti Bağlı (v{version})";
             ExtensionStatusBadgeBackground = ExtensionStatusColorActive;
             ExtensionStatusBadgeForeground = "#FFFFFF";
-            ExtensionStatusBadgeToolTip = $"Tarayıcı eklentisi devrede ve güncel (v{version}).";
+            ExtensionStatusBadgeToolTip = $"Tarayıcı eklentisi devrede ve güncel (v{version}). Çift yönlü köprü aktif.";
         }
+    }
+
+    [RelayCommand]
+    public void UpdateExtensionGuide()
+    {
+        OpenBrowserExtensionFolder();
+        CopyBrowserExtensionPath();
+        ShowNotification(
+            "🧩 Eklenti Güncelleme Kılavuzu",
+            "Güncel eklenti klasörü açıldı ve yolu panoya kopyalandı. Tarayıcınızda 'chrome://extensions' (veya 'edge://extensions') sayfasına gidip FDownloader kartındaki Döngü (Yenile) simgesine basmanız yeterlidir.",
+            null,
+            "💡"
+        );
     }
 
     private static bool IsVersionOlder(string currentVersion, string targetVersion)

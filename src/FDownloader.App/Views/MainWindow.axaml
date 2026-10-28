@@ -1667,9 +1667,36 @@
                                                 <TextBlock Text="FDownloader Tarayıcı Köprüsü (127.0.0.1:9666)" FontWeight="Bold" FontSize="13" Foreground="{Binding ThemeForeground}" />
                                                 <TextBlock Text="Chrome, Microsoft Edge, Brave, Opera ve Firefox ile doğrudan çift yönlü haberleşir." FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
                                             </StackPanel>
-                                            <Border Grid.Column="2" Background="{Binding ExtensionStatusBadgeBackground}" CornerRadius="4" Padding="8,4" ToolTip.Tip="{Binding ExtensionStatusBadgeToolTip}" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding ExtensionStatusBadgeText}" FontSize="11" FontWeight="Bold" Foreground="{Binding ExtensionStatusBadgeForeground}" VerticalAlignment="Center" />
-                                            </Border>
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                <!-- Köprü Durumu (Her Zaman Aktif) -->
+                                                <Border Background="#2010B981" BorderBrush="#10B981" BorderThickness="1" CornerRadius="4" Padding="7,3" VerticalAlignment="Center" ToolTip.Tip="FDownloader yerel HTTP köprüsü açık ve 9666 portunu dinliyor.">
+                                                    <TextBlock Text="✓ Köprü Aktif" FontSize="10" FontWeight="Bold" Foreground="#10B981" VerticalAlignment="Center" />
+                                                </Border>
+
+                                                <!-- Eklenti Durumu -->
+                                                <Border Background="{Binding ExtensionStatusBadgeBackground}" CornerRadius="4" Padding="8,4" ToolTip.Tip="{Binding ExtensionStatusBadgeToolTip}" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding ExtensionStatusBadgeText}" FontSize="11" FontWeight="Bold" Foreground="{Binding ExtensionStatusBadgeForeground}" VerticalAlignment="Center" />
+                                                </Border>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Eklenti Güncelleme Uyarısı ve Hızlı Güncelle Butonu -->
+                                    <Border Background="#15F59E0B" BorderBrush="#F59E0B" BorderThickness="1" CornerRadius="8" Padding="12" IsVisible="{Binding IsExtensionUpdateAvailable}">
+                                        <Grid ColumnDefinitions="*, Auto">
+                                            <StackPanel Spacing="3" VerticalAlignment="Center">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <TextBlock Text="⚠️" FontSize="14" VerticalAlignment="Center" />
+                                                    <TextBlock Text="Tarayıcı Eklentiniz İçin Yeni Bir Sürüm Mevcut!" FontWeight="Bold" FontSize="12" Foreground="#F59E0B" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding ExpectedExtensionVersion, StringFormat='Tarayıcınızdaki eklenti sürümü eski. FDownloader içindeki en son sürüm (v{0}) ile güncelleyebilirsiniz.'}" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                            </StackPanel>
+                                            <Button Grid.Column="1" Command="{Binding UpdateExtensionGuideCommand}" Background="#F59E0B" Foreground="Black" FontWeight="Bold" Padding="12,6" VerticalAlignment="Center">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <TextBlock Text="🔄" VerticalAlignment="Center" />
+                                                    <TextBlock Text="Eklentiyi Güncelle &amp; Klasörü Aç" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Button>
                                         </Grid>
                                     </Border>
 
