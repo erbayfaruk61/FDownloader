@@ -30,7 +30,7 @@
 
 ---
 
-## 🚀 Öne Çıkan Özellikler (v1.5)
+## 🚀 Öne Çıkan Özellikler (v1.5.0)
 
 * ⚡ **Çok Kanallı & Parçalı Hızlı İndirme:** HTTP/HTTPS bağlantılarını dinamik parçalara bölerek bant genişliğinizi tam kapasite kullanır; kopan veya duraklatılan indirmeleri sıfır kayıpla sürdürür.
 * 🧩 **IDM Tarzı Video Köşe Yakalayıcısı (Floating Grabber):** Web sayfalarındaki videolarda fareyi hareket ettirdiğinizde sağ üstte otomatik beliren şık indirme butonu (YouTube, Vimeo ve popüler video platformları tam uyumlu).
