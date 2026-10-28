@@ -52,11 +52,14 @@ jobs:
             Copy-Item -Recurse -Force tools/browser-extension ./publish/tools/browser-extension
           }
 
-      - name: Sürüm Numarasını Ayıkla
+      - name: Sürüm Numarasını Ayıkla ve SemVer2 Formatına Getir
         id: get_version
         shell: pwsh
         run: |
           $tag = "${{ github.ref_name }}".TrimStart('v')
+          $parts = $tag.Split('.')
+          if ($parts.Count -eq 1) { $tag = "$tag.0.0" }
+          elseif ($parts.Count -eq 2) { $tag = "$tag.0" }
           echo "VERSION=$tag" >> $env:GITHUB_OUTPUT
 
       - name: Velopack ile Kurulum ve Güncelleme Paketlerini Üret
