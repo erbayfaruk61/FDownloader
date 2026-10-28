@@ -1,0 +1,87 @@
+name: Release & Dağıtım
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Sürüm Derleme ve Velopack Paketleme
+    runs-on: windows-latest
+
+    steps:
+      - name: Kodu Çek
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: .NET 9 Kurulumu
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Velopack CLI (vpk) Kurulumu
+        run: dotnet tool install -g vpk
+
+      - name: Bağımlılıkları Geri Yükle
+        run: dotnet restore FDownloader.sln
+
+      - name: Uygulamayı Derle ve Yayınla (win-x64)
+        run: |
+          dotnet publish src/FDownloader.App/FDownloader.App.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -o ./publish
+
+      - name: Harici Araçları ve Eklentiyi Kopyala
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path ./publish/tools/yt-dlp | Out-Null
+          New-Item -ItemType Directory -Force -Path ./publish/tools/ffmpeg | Out-Null
+          Invoke-WebRequest -Uri "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe" -OutFile "./publish/tools/yt-dlp/yt-dlp.exe"
+          $ffmpegCmd = Get-Command ffmpeg.exe -ErrorAction SilentlyContinue
+          if ($ffmpegCmd) { Copy-Item $ffmpegCmd.Source ./publish/tools/ffmpeg/ffmpeg.exe }
+          $ffprobeCmd = Get-Command ffprobe.exe -ErrorAction SilentlyContinue
+          if ($ffprobeCmd) { Copy-Item $ffprobeCmd.Source ./publish/tools/ffmpeg/ffprobe.exe }
+          if (Test-Path tools/browser-extension) {
+            Copy-Item -Recurse -Force tools/browser-extension ./publish/tools/browser-extension
+          }
+
+      - name: Sürüm Numarasını Ayıkla
+        id: get_version
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}".TrimStart('v')
+          echo "VERSION=$tag" >> $env:GITHUB_OUTPUT
+
+      - name: Velopack ile Kurulum ve Güncelleme Paketlerini Üret
+        shell: pwsh
+        run: |
+          vpk pack `
+            --packId FDownloader `
+            --packVersion ${{ steps.get_version.outputs.VERSION }} `
+            --packDir ./publish `
+            --mainExe FDownloader.App.exe `
+            --icon src/FDownloader.App/Assets/logo.ico `
+            --runtime win-x64 `
+            --outputDir ./Releases
+
+          if (Test-Path tools/browser-extension) {
+            Compress-Archive -Path tools/browser-extension/* -DestinationPath ./Releases/FDownloader-Browser-Extension.zip -Force
+          }
+
+      - name: GitHub Release Oluştur ve Paketleri Yükle
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./Releases/*
+          generate_release_notes: true
+          name: FDownloader ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
