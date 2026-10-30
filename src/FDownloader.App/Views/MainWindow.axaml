@@ -430,12 +430,28 @@
                                 </ListBox.KeyBindings>
                                 <ListBox.ContextMenu>
                                     <ContextMenu>
-                                        <MenuItem Header="✔ Tümünü Seç" Command="{Binding SelectAllCommand}" InputGesture="Ctrl+A" />
-                                        <MenuItem Header="⚡ Tümünü Başlat" Command="{Binding StartAllCommand}" />
-                                        <MenuItem Header="⏸ Tümünü Duraklat" Command="{Binding PauseAllCommand}" />
+                                        <MenuItem Header="Tümünü Seç" Command="{Binding SelectAllCommand}" InputGesture="Ctrl+A">
+                                            <MenuItem.Icon>
+                                                <TextBlock Text="✔" Foreground="#38BDF8" FontWeight="Bold" VerticalAlignment="Center" />
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Header="Tümünü Başlat" Command="{Binding StartAllCommand}">
+                                            <MenuItem.Icon>
+                                                <TextBlock Text="⚡" Foreground="#10B981" FontWeight="Bold" VerticalAlignment="Center" />
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Header="Tümünü Duraklat" Command="{Binding PauseAllCommand}">
+                                            <MenuItem.Icon>
+                                                <TextBlock Text="⏸" Foreground="#F59E0B" FontWeight="Bold" VerticalAlignment="Center" />
+                                            </MenuItem.Icon>
+                                        </MenuItem>
                                         <Separator />
-                                        <MenuItem Header="🧹 Tamamlananları Listeden Temizle" Command="{Binding ClearCompletedCommand}" />
-                                        <MenuItem Header="❌ Tümünü Listeden Kaldır..." Command="{Binding RequestDeleteAllCommand}">
+                                        <MenuItem Header="Tamamlananları Listeden Temizle" Command="{Binding ClearCompletedCommand}">
+                                            <MenuItem.Icon>
+                                                <TextBlock Text="🧹" VerticalAlignment="Center" />
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Header="Tümünü Listeden Kaldır..." Command="{Binding RequestDeleteAllCommand}">
                                             <MenuItem.Icon>
                                                 <TextBlock Text="❌" Foreground="#EF4444" VerticalAlignment="Center" />
                                             </MenuItem.Icon>
@@ -463,49 +479,77 @@
                                     <Style Selector="ListBoxItem" x:DataType="vm:DownloadItemViewModel">
                                         <Setter Property="ContextMenu">
                                             <ContextMenu>
-                                                <MenuItem Header="📂 Dosya Konumunu Aç" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).OpenFolderCommand}" CommandParameter="{Binding}" />
-                                                <MenuItem Header="🚀 Dosyayı Aç" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).OpenFileCommand}" CommandParameter="{Binding}" />
-                                                <MenuItem Header="📦 Arşivi Klasöre Çıkart" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).ExtractArchiveCommand}" CommandParameter="{Binding}" IsVisible="{Binding IsArchiveFile}">
+                                                <MenuItem Header="Dosya Konumunu Aç" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).OpenFolderCommand}" CommandParameter="{Binding}">
+                                                    <MenuItem.Icon>
+                                                        <TextBlock Text="📁" VerticalAlignment="Center" />
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Header="Dosyayı Aç" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).OpenFileCommand}" CommandParameter="{Binding}">
+                                                    <MenuItem.Icon>
+                                                        <TextBlock Text="🚀" VerticalAlignment="Center" />
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Header="Arşivi Klasöre Çıkart" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).ExtractArchiveCommand}" CommandParameter="{Binding}" IsVisible="{Binding IsArchiveFile}">
                                                     <MenuItem.Icon>
                                                         <TextBlock Text="📦" VerticalAlignment="Center" />
                                                     </MenuItem.Icon>
                                                 </MenuItem>
                                                 <Separator />
-                                                <MenuItem Header="▶ Başlat / Devam Et" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).StartSelectedCommand}">
+                                                <MenuItem Header="Başlat / Devam Et" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).StartSelectedCommand}">
                                                     <MenuItem.Icon>
                                                         <TextBlock Text="▶" Foreground="#10B981" FontWeight="Bold" VerticalAlignment="Center" />
                                                     </MenuItem.Icon>
                                                 </MenuItem>
-                                                <MenuItem Header="⏸ Duraklat" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).PauseSelectedCommand}">
+                                                <MenuItem Header="Duraklat" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).PauseSelectedCommand}">
                                                     <MenuItem.Icon>
                                                         <TextBlock Text="⏸" Foreground="#F59E0B" FontWeight="Bold" VerticalAlignment="Center" />
                                                     </MenuItem.Icon>
                                                 </MenuItem>
                                                 <Separator />
-                                                <MenuItem Header="▶️ Sıralı İndir (Ardışık / Akış)" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).ToggleSequentialDownloadCommand}" CommandParameter="{Binding}" IsVisible="{Binding IsTorrent}">
+                                                <MenuItem Header="Sıralı İndir (Ardışık / Akış)" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).ToggleSequentialDownloadCommand}" CommandParameter="{Binding}" IsVisible="{Binding IsTorrent}">
                                                     <MenuItem.Icon>
                                                         <CheckBox IsChecked="{Binding IsSequentialDownload}" IsHitTestVisible="False" VerticalAlignment="Center" />
                                                     </MenuItem.Icon>
                                                 </MenuItem>
-                                                <MenuItem Header="🔍 Zorla Yeniden Kontrol Et" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).ForceRecheckTorrentCommand}" CommandParameter="{Binding}" IsVisible="{Binding IsTorrent}">
+                                                <MenuItem Header="Zorla Yeniden Kontrol Et" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).ForceRecheckTorrentCommand}" CommandParameter="{Binding}" IsVisible="{Binding IsTorrent}">
                                                     <MenuItem.Icon>
                                                         <TextBlock Text="🔍" VerticalAlignment="Center" />
                                                     </MenuItem.Icon>
                                                 </MenuItem>
                                                 <Separator IsVisible="{Binding IsTorrent}" />
-                                                <MenuItem Header="📋 Bağlantıyı Kopyala" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).CopyUrlCommand}" CommandParameter="{Binding}" />
-                                                <MenuItem Header="🗑 Kaldır / Sil..." Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).RequestDeleteItemCommand}" CommandParameter="{Binding}">
+                                                <MenuItem Header="Bağlantıyı Kopyala" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).CopyUrlCommand}" CommandParameter="{Binding}">
+                                                    <MenuItem.Icon>
+                                                        <TextBlock Text="📋" VerticalAlignment="Center" />
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Header="Kaldır / Sil..." Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).RequestDeleteItemCommand}" CommandParameter="{Binding}">
                                                     <MenuItem.Icon>
                                                         <TextBlock Text="🗑" Foreground="#EF4444" VerticalAlignment="Center" />
                                                     </MenuItem.Icon>
                                                 </MenuItem>
                                                 <Separator />
-                                                <MenuItem Header="✔ Tümünü Seç" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).SelectAllCommand}" InputGesture="Ctrl+A" />
-                                                <MenuItem Header="⚡ Tümünü Başlat" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).StartAllCommand}" />
-                                                <MenuItem Header="⏸ Tümünü Duraklat" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).PauseAllCommand}" />
+                                                <MenuItem Header="Tümünü Seç" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).SelectAllCommand}" InputGesture="Ctrl+A">
+                                                    <MenuItem.Icon>
+                                                        <TextBlock Text="✔" Foreground="#38BDF8" FontWeight="Bold" VerticalAlignment="Center" />
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Header="Tümünü Başlat" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).StartAllCommand}">
+                                                    <MenuItem.Icon>
+                                                        <TextBlock Text="⚡" Foreground="#10B981" FontWeight="Bold" VerticalAlignment="Center" />
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Header="Tümünü Duraklat" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).PauseAllCommand}">
+                                                    <MenuItem.Icon>
+                                                        <TextBlock Text="⏸" Foreground="#F59E0B" FontWeight="Bold" VerticalAlignment="Center" />
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
                                                 <Separator />
-                                                <MenuItem Header="🧹 Tamamlananları Listeden Temizle" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).ClearCompletedCommand}" />
-                                                <MenuItem Header="❌ Tümünü Listeden Kaldır..." Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).RequestDeleteAllCommand}">
+                                                <MenuItem Header="Tamamlananları Listeden Temizle" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).ClearCompletedCommand}">
+                                                    <MenuItem.Icon>
+                                                        <TextBlock Text="🧹" VerticalAlignment="Center" />
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Header="Tümünü Listeden Kaldır..." Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).RequestDeleteAllCommand}">
                                                     <MenuItem.Icon>
                                                         <TextBlock Text="❌" Foreground="#EF4444" VerticalAlignment="Center" />
                                                     </MenuItem.Icon>
