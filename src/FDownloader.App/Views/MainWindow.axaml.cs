@@ -305,10 +305,13 @@ public partial class MainWindow : Window
             var listBoxItem = source?.FindAncestorOfType<ListBoxItem>();
             if (listBoxItem?.DataContext is DownloadItemViewModel clickedItem && DownloadsListBox != null)
             {
-                if (DownloadsListBox.SelectedItems != null && !DownloadsListBox.SelectedItems.Contains(clickedItem))
+                DownloadsListBox.Selection.Clear();
+                DownloadsListBox.SelectedItems?.Add(clickedItem);
+                DownloadsListBox.SelectedItem = clickedItem;
+                if (DataContext is MainViewModel vm)
                 {
-                    DownloadsListBox.Selection.Clear();
-                    DownloadsListBox.SelectedItems.Add(clickedItem);
+                    vm.SelectedDownload = clickedItem;
+                    vm.SyncSelectedItems(new List<DownloadItemViewModel> { clickedItem });
                 }
             }
         }

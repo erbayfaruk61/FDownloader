@@ -2,7 +2,7 @@ namespace FDownloader.Core.Torrent;
 
 /// <summary>
 /// BitTorrent motoru, protokol kuralları ve ağ davranışları için konfigürasyon modeli.
-/// qBittorrent eşdeğeri ayarları merkezi olarak barındırır.
+/// BitTorrent ayarlarını merkezi olarak barındırır.
 /// </summary>
 public sealed class TorrentSettings
 {

@@ -45,6 +45,11 @@ public partial class DownloadItemViewModel : ViewModelBase
     public bool IsArchiveFile => Status == DownloadStatus.Completed &&
         (ArchiveExtractorService.IsArchive(FileName) || ArchiveExtractorService.IsArchive(SavePath));
 
+    public bool IsDownloadedTorrentFile => Status == DownloadStatus.Completed &&
+        Category != DownloadCategory.Torrent &&
+        (FileName.EndsWith(".torrent", StringComparison.OrdinalIgnoreCase) ||
+         SavePath.EndsWith(".torrent", StringComparison.OrdinalIgnoreCase));
+
     /// <summary>
     /// TotalBytes bilinmiyorken (streaming indirme) progress bar'ı belirsiz modda göster.
     /// </summary>
@@ -120,21 +125,39 @@ public partial class DownloadItemViewModel : ViewModelBase
     public string HybridActionTooltip => (IsActive && !IsStalled) ? "İndirmeyi Duraklat" : (IsCompleted ? "İndirmeyi Yeniden Başlat" : "İndirmeye Devam Et / Başlat");
     public string HybridActionColor => (IsActive && !IsStalled) ? "#F59E0B" : ((IsStalled || Status == DownloadStatus.Failed) ? "#F59E0B" : "#10B981");
 
-    public string StatusDisplay => (Status, IsStalled) switch
+    public bool IsTorrentMetaSearching => IsTorrent && (TotalBytes == 0 || FileName.StartsWith("magnet:", StringComparison.OrdinalIgnoreCase));
+
+    public string StatusDisplay
     {
-        (_, true) => "⚠️ Bağlantı Koptu (Devam Et)",
-        (DownloadStatus.Failed, _) => "⚠️ Bağlantı Kesildi (Devam Et)",
-        (DownloadStatus.Queued, _) => "Kuyrukta",
-        (DownloadStatus.Connecting, _) => "Bağlanıyor...",
-        (DownloadStatus.Downloading, _) => "İndiriliyor",
-        (DownloadStatus.Paused, _) => "Duraklatıldı",
-        (DownloadStatus.Merging, _) => "Birleştiriliyor",
-        (DownloadStatus.Verifying, _) => "Doğrulanıyor",
-        (DownloadStatus.Completed, _) => "Tamamlandı",
-        (DownloadStatus.Retrying, _) => "Yeniden deneniyor...",
-        (DownloadStatus.Cancelled, _) => "İptal edildi",
-        _ => Status.ToString()
-    };
+        get
+        {
+            if (IsStalled)
+            {
+                return "⚠️ Bağlantı Koptu";
+            }
+            if (Status == DownloadStatus.Failed)
+            {
+                return "⚠️ Bağlantı Kesildi";
+            }
+            if (IsTorrentMetaSearching && Status == DownloadStatus.Downloading)
+            {
+                return "🔍 Meta Verisi Aranıyor...";
+            }
+            return Status switch
+            {
+                DownloadStatus.Queued => "Kuyrukta",
+                DownloadStatus.Connecting => "Bağlanıyor...",
+                DownloadStatus.Downloading => "İndiriliyor",
+                DownloadStatus.Paused => "Duraklatıldı",
+                DownloadStatus.Merging => "Birleştiriliyor",
+                DownloadStatus.Verifying => "Doğrulanıyor",
+                DownloadStatus.Completed => "Tamamlandı",
+                DownloadStatus.Retrying => "Yeniden deneniyor...",
+                DownloadStatus.Cancelled => "İptal edildi",
+                _ => Status.ToString()
+            };
+        }
+    }
 
     partial void OnIsStalledChanged(bool value)
     {
@@ -148,6 +171,13 @@ public partial class DownloadItemViewModel : ViewModelBase
         OnPropertyChanged(nameof(HybridActionMenuHeader));
         OnPropertyChanged(nameof(HybridActionTooltip));
         OnPropertyChanged(nameof(HybridActionColor));
+        OnPropertyChanged(nameof(CanPause));
+        OnPropertyChanged(nameof(CanResume));
+        OnPropertyChanged(nameof(CanRestart));
+        OnPropertyChanged(nameof(CanRefreshLink));
+        OnPropertyChanged(nameof(CanVerifyChecksum));
+        OnPropertyChanged(nameof(ResumeActionText));
+        OnPropertyChanged(nameof(ResumeActionIcon));
     }
 
     partial void OnStatusChanged(DownloadStatus value)
@@ -162,6 +192,11 @@ public partial class DownloadItemViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsFailed));
         OnPropertyChanged(nameof(CanPause));
         OnPropertyChanged(nameof(CanResume));
+        OnPropertyChanged(nameof(CanRestart));
+        OnPropertyChanged(nameof(CanRefreshLink));
+        OnPropertyChanged(nameof(CanVerifyChecksum));
+        OnPropertyChanged(nameof(ResumeActionText));
+        OnPropertyChanged(nameof(ResumeActionIcon));
         OnPropertyChanged(nameof(HybridActionIcon));
         OnPropertyChanged(nameof(HybridActionText));
         OnPropertyChanged(nameof(HybridActionMenuHeader));
@@ -169,6 +204,7 @@ public partial class DownloadItemViewModel : ViewModelBase
         OnPropertyChanged(nameof(HybridActionColor));
         OnPropertyChanged(nameof(IsProgressIndeterminate));
         OnPropertyChanged(nameof(IsArchiveFile));
+        OnPropertyChanged(nameof(IsDownloadedTorrentFile));
     }
 
     partial void OnSpeedBytesPerSecondChanged(double value)
@@ -215,6 +251,8 @@ public partial class DownloadItemViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(TotalBytesDisplay));
         OnPropertyChanged(nameof(IsProgressIndeterminate));
+        OnPropertyChanged(nameof(IsTorrentMetaSearching));
+        OnPropertyChanged(nameof(StatusDisplay));
     }
     partial void OnDownloadedBytesChanged(long value)
     {
@@ -227,8 +265,23 @@ public partial class DownloadItemViewModel : ViewModelBase
 
     public bool IsCompleted => Status == DownloadStatus.Completed;
     public bool IsFailed => Status is DownloadStatus.Failed or DownloadStatus.Cancelled;
+
+    // ─── Sağ Tık Dinamik Menü Durum Kontrolleri ─────────────────────────────
     public bool CanPause => IsActive && !IsStalled;
-    public bool CanResume => Status is DownloadStatus.Paused or DownloadStatus.Failed || IsStalled;
+    public bool CanResume => Status is DownloadStatus.Paused or DownloadStatus.Failed or DownloadStatus.Queued || IsStalled;
+    public bool CanRestart => Status is DownloadStatus.Completed or DownloadStatus.Failed or DownloadStatus.Cancelled || IsStalled;
+    public bool CanRefreshLink => !IsTorrent && (Status == DownloadStatus.Failed || Status == DownloadStatus.Paused || IsStalled);
+    public bool CanVerifyChecksum => IsCompleted;
+
+    public string ResumeActionText => (IsStalled || Status == DownloadStatus.Failed) 
+        ? "Yeniden Dene / Devam Et" 
+        : (Status == DownloadStatus.Queued ? "Başlat" : "Devam Et");
+
+    public string ResumeActionIcon => (IsStalled || Status == DownloadStatus.Failed) ? "⚡" : "▶";
+    public string ResumeActionTooltip => (IsStalled || Status == DownloadStatus.Failed) 
+        ? "Kopan bağlantıyı tekrar kur ve indirmeye devam et" 
+        : (Status == DownloadStatus.Queued ? "İndirmeyi başlat" : "Duraklatılan indirmeye devam et");
+
     public bool CanCancel => !IsCompleted && Status != DownloadStatus.Cancelled;
 
     partial void OnFileNameChanged(string value)

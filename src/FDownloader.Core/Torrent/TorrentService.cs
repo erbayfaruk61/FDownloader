@@ -27,10 +27,31 @@ public sealed class TorrentService : IAsyncDisposable
     private readonly Dictionary<long, TorrentDetails> _lastKnownDetails = new();
     private readonly HashSet<long> _metadataNotifiedTasks = new();
     private readonly ConcurrentDictionary<long, bool> _sequentialTasks = new();
+    private readonly Dictionary<long, List<(int Index, Priority Priority)>> _pendingFilePriorities = new();
     private readonly string _downloadDirectory;
     private readonly string _cacheDirectory;
     private readonly CancellationTokenSource _cts = new();
     private TorrentSettings _settings;
+
+    /// <summary>
+    /// Tracker içermeyen saf magnet linkleri veya az tracker'lı torrentler için global açık tracker havuzu.
+    /// Ubuntu, Linux dağıtımları ve genel torrentler için yüksek hızlı eş bulma sağlar.
+    /// </summary>
+    public static readonly string[] DefaultFallbackTrackers = new[]
+    {
+        "udp://tracker.opentrackr.org:1337/announce",
+        "udp://open.demonii.com:1337/announce",
+        "udp://open.stealth.si:80/announce",
+        "udp://tracker.torrent.eu.org:451/announce",
+        "udp://explodie.org:6969/announce",
+        "udp://tracker.openbittorrent.com:6969/announce",
+        "http://tracker.openbittorrent.com:80/announce",
+        "udp://opentracker.i2p.rocks:6969/announce",
+        "udp://tracker.internetwarriors.net:1337/announce",
+        "udp://p4p.arenabg.com:1337/announce",
+        "http://torrent.ubuntu.com:6969/announce",
+        "https://torrent.ubuntu.com/announce"
+    };
 
     public TorrentSettings Settings => _settings;
 
@@ -135,9 +156,12 @@ public sealed class TorrentService : IAsyncDisposable
         long taskId,
         string sourceUrlOrPath,
         string? saveDirectory = null,
+        string? cookies = null,
+        string? referrer = null,
+        string? userAgent = null,
         CancellationToken cancellationToken = default)
     {
-        return await SetupTorrentInternalAsync(taskId, sourceUrlOrPath, saveDirectory, startImmediately: true, cancellationToken);
+        return await SetupTorrentInternalAsync(taskId, sourceUrlOrPath, saveDirectory, startImmediately: true, cookies, referrer, userAgent, cancellationToken);
     }
 
     /// <summary>
@@ -151,7 +175,7 @@ public sealed class TorrentService : IAsyncDisposable
     {
         try
         {
-            return await SetupTorrentInternalAsync(taskId, sourceUrlOrPath, saveDirectory, startImmediately, CancellationToken.None);
+            return await SetupTorrentInternalAsync(taskId, sourceUrlOrPath, saveDirectory, startImmediately, null, null, null, CancellationToken.None);
         }
         catch (Exception ex)
         {
@@ -165,7 +189,10 @@ public sealed class TorrentService : IAsyncDisposable
         string sourceUrlOrPath,
         string? saveDirectory,
         bool startImmediately,
-        CancellationToken cancellationToken)
+        string? cookies = null,
+        string? referrer = null,
+        string? userAgent = null,
+        CancellationToken cancellationToken = default)
     {
         saveDirectory ??= _downloadDirectory;
         Directory.CreateDirectory(saveDirectory);
@@ -193,6 +220,8 @@ public sealed class TorrentService : IAsyncDisposable
         }
 
         var localCachePath = Path.Combine(_cacheDirectory, $"{taskId}.torrent");
+        var urlHash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(cleanSource)));
+        var urlCachedFile = Path.Combine(_cacheDirectory, $"url_{urlHash}.torrent");
         TorrentManager manager;
 
         if (File.Exists(localCachePath))
@@ -200,10 +229,48 @@ public sealed class TorrentService : IAsyncDisposable
             var torrent = await MonoTorrent.Torrent.LoadAsync(localCachePath);
             manager = await _engine.AddAsync(torrent, saveDirectory);
         }
+        else if (File.Exists(urlCachedFile))
+        {
+            var torrent = await MonoTorrent.Torrent.LoadAsync(urlCachedFile);
+            try { File.Copy(urlCachedFile, localCachePath, overwrite: true); } catch { }
+            manager = await _engine.AddAsync(torrent, saveDirectory);
+        }
         else if (cleanSource.StartsWith("magnet:", StringComparison.OrdinalIgnoreCase))
         {
-            var magnetLink = MagnetLink.Parse(cleanSource);
+            string enrichedMagnet = cleanSource;
+            // Eğer magnet linkinde tracker bilgisi yoksa veya eksikse, global fallback tracker'ları ekle
+            if (!enrichedMagnet.Contains("tr=", StringComparison.OrdinalIgnoreCase))
+            {
+                var sb = new System.Text.StringBuilder(enrichedMagnet);
+                foreach (var tracker in DefaultFallbackTrackers)
+                {
+                    sb.Append("&tr=").Append(Uri.EscapeDataString(tracker));
+                }
+                enrichedMagnet = sb.ToString();
+                _logger.LogInformation("Magnet linkine varsayılan açık izleyiciler (trackers) eklendi: Task #{TaskId}", taskId);
+            }
+
+            var magnetLink = MagnetLink.Parse(enrichedMagnet);
+
+            // Önceki geçici metadata sorgusu kalıntılarını motor üzerinden temizle
+            var existing = _engine.Torrents.FirstOrDefault(m => m.InfoHashes == magnetLink.InfoHashes);
+            if (existing != null)
+            {
+                try
+                {
+                    if (existing.State != TorrentState.Stopped)
+                    {
+                        await existing.StopAsync();
+                    }
+                    await _engine.RemoveAsync(existing);
+                }
+                catch { }
+            }
+
             manager = await _engine.AddAsync(magnetLink, saveDirectory);
+
+            // Motor tracker yöneticisine de doğrudan yedek izleyicileri ekle
+            _ = AddTrackersAsync(taskId, DefaultFallbackTrackers);
         }
         else if (File.Exists(cleanSource))
         {
@@ -215,15 +282,36 @@ public sealed class TorrentService : IAsyncDisposable
                  cleanSource.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
         {
             _logger.LogInformation("Uzak .torrent dosyası indiriliyor: {Url}", cleanSource);
-            using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
-            httpClient.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", Network.NetworkConstants.DefaultUserAgent);
+            var handler = new HttpClientHandler
+            {
+                AllowAutoRedirect = true,
+                AutomaticDecompression = System.Net.DecompressionMethods.All
+            };
+            using var httpClient = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
+            var ua = !string.IsNullOrWhiteSpace(userAgent) ? userAgent : Network.NetworkConstants.DefaultUserAgent;
+            httpClient.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", ua);
+            httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/x-bittorrent, */*");
+            if (!string.IsNullOrWhiteSpace(referrer))
+            {
+                httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Referer", referrer);
+            }
+            if (!string.IsNullOrWhiteSpace(cookies))
+            {
+                httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Cookie", cookies);
+            }
 
             var torrentBytes = await httpClient.GetByteArrayAsync(cleanSource, cancellationToken);
+            if (torrentBytes == null || torrentBytes.Length == 0 || torrentBytes[0] != (byte)'d')
+            {
+                throw new InvalidOperationException("Sunucudan indirilen yanıt geçerli bir .torrent dosyası değil (HTML oturum/hata sayfası döndü).");
+            }
+
             var torrent = await MonoTorrent.Torrent.LoadAsync(torrentBytes);
 
             try
             {
                 await File.WriteAllBytesAsync(localCachePath, torrentBytes, cancellationToken);
+                await File.WriteAllBytesAsync(urlCachedFile, torrentBytes, cancellationToken);
             }
             catch { }
 
@@ -258,6 +346,10 @@ public sealed class TorrentService : IAsyncDisposable
         if (startImmediately)
         {
             await manager.StartAsync();
+            if (manager.TrackerManager != null)
+            {
+                try { _ = manager.TrackerManager.AnnounceAsync(CancellationToken.None); } catch { }
+            }
             _eventBus.Publish(new TaskStartedEvent(taskId));
             _logger.LogInformation("Torrent başlatıldı: Task #{TaskId}, İsim: {Name}", taskId, manager.Torrent?.Name ?? "Magnet");
         }
@@ -274,6 +366,39 @@ public sealed class TorrentService : IAsyncDisposable
         _metadataNotifiedTasks.Add(taskId);
         _logger.LogInformation("Torrent meta verisi hazır: Task #{TaskId}, {Name}, {Size} Byte", taskId, torrent.Name, torrent.Size);
         _eventBus.Publish(new TorrentMetadataLoadedEvent(taskId, torrent.Name, torrent.Size, localCachePath));
+
+        TorrentManager? manager;
+        lock (_activeManagers)
+        {
+            _activeManagers.TryGetValue(taskId, out manager);
+        }
+
+        List<(int Index, Priority Priority)>? pending = null;
+        lock (_pendingFilePriorities)
+        {
+            if (_pendingFilePriorities.Remove(taskId, out var list))
+            {
+                pending = list;
+            }
+        }
+
+        if (pending != null && manager != null && manager.Files != null)
+        {
+            _ = Task.Run(async () =>
+            {
+                foreach (var (index, prio) in pending)
+                {
+                    if (index >= 0 && index < manager.Files.Count)
+                    {
+                        try
+                        {
+                            await manager.SetFilePriorityAsync(manager.Files[index], prio);
+                        }
+                        catch { }
+                    }
+                }
+            });
+        }
     }
 
     /// <summary>
@@ -319,7 +444,7 @@ public sealed class TorrentService : IAsyncDisposable
     /// <summary>
     /// Torrent indirmesini devam ettirir.
     /// </summary>
-    public async Task ResumeTorrentAsync(long taskId)
+    public async Task<bool> ResumeTorrentAsync(long taskId)
     {
         TorrentManager? manager;
         lock (_activeManagers)
@@ -333,12 +458,15 @@ public sealed class TorrentService : IAsyncDisposable
             {
                 await manager.StartAsync();
                 _eventBus.Publish(new TaskResumedEvent(taskId));
+                return true;
             }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Torrent devam ettirilirken hata alındı: Görev #{TaskId}", taskId);
+                return false;
             }
         }
+        return false;
     }
 
     /// <summary>
@@ -583,6 +711,19 @@ public sealed class TorrentService : IAsyncDisposable
             await manager.SetFilePriorityAsync(file, priority);
             _logger.LogDebug("Torrent dosya önceliği güncellendi: Task #{TaskId}, Dosya #{Index} -> {Priority}", taskId, fileIndex, priority);
         }
+        else
+        {
+            lock (_pendingFilePriorities)
+            {
+                if (!_pendingFilePriorities.TryGetValue(taskId, out var list))
+                {
+                    list = new List<(int Index, Priority Priority)>();
+                    _pendingFilePriorities[taskId] = list;
+                }
+                list.RemoveAll(x => x.Index == fileIndex);
+                list.Add((fileIndex, priority));
+            }
+        }
     }
 
     /// <summary>
@@ -616,26 +757,148 @@ public sealed class TorrentService : IAsyncDisposable
 
     /// <summary>
     /// İndirme başlatılmadan önce bir .torrent dosyasının veya URL'sinin içindeki dosyaları listeler.
-    /// qBittorrent stili dosya seçimi için kullanılır.
+    /// Torrent dosya seçimi için kullanılır.
     /// </summary>
-    public async Task<List<TorrentFileInfo>> InspectTorrentFilesAsync(string sourceUrlOrPath)
+    public async Task<List<TorrentFileInfo>> InspectTorrentFilesAsync(
+        string sourceUrlOrPath,
+        string? cookies = null,
+        string? referrer = null,
+        string? userAgent = null)
     {
         var result = new List<TorrentFileInfo>();
         try
         {
             var clean = sourceUrlOrPath.Trim().Trim('\"', '\'');
+            if (clean.StartsWith("file:///", StringComparison.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    clean = new Uri(clean).LocalPath;
+                }
+                catch { }
+            }
+
             MonoTorrent.Torrent? torrent = null;
+            var urlHash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(clean)));
+            var cachedFile = Path.Combine(_cacheDirectory, $"url_{urlHash}.torrent");
 
             if (File.Exists(clean))
             {
                 torrent = await MonoTorrent.Torrent.LoadAsync(clean);
             }
+            else if (File.Exists(cachedFile))
+            {
+                torrent = await MonoTorrent.Torrent.LoadAsync(cachedFile);
+            }
+            else if (clean.StartsWith("magnet:", StringComparison.OrdinalIgnoreCase))
+            {
+                string enrichedMagnet = clean;
+                if (!enrichedMagnet.Contains("tr=", StringComparison.OrdinalIgnoreCase))
+                {
+                    var sb = new System.Text.StringBuilder(enrichedMagnet);
+                    foreach (var tracker in DefaultFallbackTrackers)
+                    {
+                        sb.Append("&tr=").Append(Uri.EscapeDataString(tracker));
+                    }
+                    enrichedMagnet = sb.ToString();
+                }
+
+                try
+                {
+                    var magnet = MagnetLink.Parse(enrichedMagnet);
+                    TorrentManager? mgr = null;
+                    lock (_activeManagers)
+                    {
+                        mgr = _activeManagers.Values.FirstOrDefault(m => m.InfoHashes == magnet.InfoHashes);
+                    }
+                    if (mgr == null)
+                    {
+                        mgr = _engine.Torrents.FirstOrDefault(m => m.InfoHashes == magnet.InfoHashes);
+                    }
+
+                    if (mgr != null && mgr.Torrent != null)
+                    {
+                        torrent = mgr.Torrent;
+                    }
+                    else
+                    {
+                        bool isTemp = false;
+                        try
+                        {
+                            if (mgr == null)
+                            {
+                                var tempDir = Path.Combine(Path.GetTempPath(), "FDownloader_Meta");
+                                Directory.CreateDirectory(tempDir);
+                                mgr = await _engine.AddAsync(magnet, tempDir);
+                                isTemp = true;
+                            }
+
+                            if (mgr.State != TorrentState.Starting && mgr.State != TorrentState.Downloading && mgr.State != TorrentState.Metadata)
+                            {
+                                await mgr.StartAsync();
+                            }
+
+                            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                            await mgr.WaitForMetadataAsync(cts.Token);
+                            if (mgr.Torrent != null)
+                            {
+                                torrent = mgr.Torrent;
+                            }
+                        }
+                        catch (OperationCanceledException)
+                        {
+                        }
+                        finally
+                        {
+                            if (isTemp && mgr != null && mgr.Torrent == null)
+                            {
+                                try
+                                {
+                                    await mgr.StopAsync();
+                                    await _engine.RemoveAsync(mgr);
+                                }
+                                catch { }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug(ex, "Magnet linki incelenirken hata: {Clean}", clean);
+                }
+            }
             else if (clean.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
                      clean.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
             {
-                using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+                var handler = new HttpClientHandler
+                {
+                    AllowAutoRedirect = true,
+                    AutomaticDecompression = System.Net.DecompressionMethods.All
+                };
+                using var httpClient = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(25) };
+                var ua = !string.IsNullOrWhiteSpace(userAgent) ? userAgent : Network.NetworkConstants.DefaultUserAgent;
+                httpClient.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", ua);
+                httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/x-bittorrent, */*");
+                if (!string.IsNullOrWhiteSpace(referrer))
+                {
+                    httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Referer", referrer);
+                }
+                if (!string.IsNullOrWhiteSpace(cookies))
+                {
+                    httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Cookie", cookies);
+                }
+
                 var bytes = await httpClient.GetByteArrayAsync(clean);
-                torrent = await MonoTorrent.Torrent.LoadAsync(bytes);
+                if (bytes != null && bytes.Length > 0 && bytes[0] == (byte)'d')
+                {
+                    torrent = await MonoTorrent.Torrent.LoadAsync(bytes);
+                    try
+                    {
+                        Directory.CreateDirectory(_cacheDirectory);
+                        await File.WriteAllBytesAsync(cachedFile, bytes);
+                    }
+                    catch { }
+                }
             }
 
             if (torrent != null && torrent.Files != null)

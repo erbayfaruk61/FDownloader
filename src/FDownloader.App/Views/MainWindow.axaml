@@ -200,8 +200,8 @@
                 <Grid ColumnDefinitions="Auto, *, Auto">
                     <!-- Sol Taraf: Hedef Başlığı ve Detay Bilgisi -->
                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center" Margin="0,0,12,0">
-                        <TextBlock Text="{Binding GraphTitle}" FontWeight="Bold" FontSize="12" Foreground="{Binding ThemeForeground}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="280" IsVisible="{Binding !!GraphTitle.Length}" />
-                        <TextBlock Text="{Binding GraphDetailsText}" FontSize="11" Foreground="{Binding ThemeTextSecondary}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="280" />
+                        <TextBlock Text="{Binding GraphTitle}" FontWeight="Bold" FontSize="12" Foreground="{Binding ThemeForeground}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="650" ToolTip.Tip="{Binding GraphTitle}" IsVisible="{Binding !!GraphTitle.Length}" />
+                        <TextBlock Text="{Binding GraphDetailsText}" FontSize="11" Foreground="{Binding ThemeTextSecondary}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="650" ToolTip.Tip="{Binding GraphDetailsText}" />
                     </StackPanel>
 
                     <!-- Orta Alan: TAM BOY CANLI HIZ GRAFİK ÇUBUKLARI -->
@@ -446,9 +446,14 @@
                                             </MenuItem.Icon>
                                         </MenuItem>
                                         <Separator />
-                                        <MenuItem Header="Tamamlananları Listeden Temizle" Command="{Binding ClearCompletedCommand}">
+                                        <MenuItem Header="Artık Dosyaları Temizle..." Command="{Binding OpenCleanTempFilesDialogCommand}">
                                             <MenuItem.Icon>
                                                 <TextBlock Text="🧹" VerticalAlignment="Center" />
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Header="Tamamlananları Listeden Temizle" Command="{Binding ClearCompletedCommand}">
+                                            <MenuItem.Icon>
+                                                <TextBlock Text="✨" VerticalAlignment="Center" />
                                             </MenuItem.Icon>
                                         </MenuItem>
                                         <MenuItem Header="Tümünü Listeden Kaldır..." Command="{Binding RequestDeleteAllCommand}">
@@ -494,15 +499,35 @@
                                                         <TextBlock Text="📦" VerticalAlignment="Center" />
                                                     </MenuItem.Icon>
                                                 </MenuItem>
-                                                <Separator />
-                                                <MenuItem Header="Başlat / Devam Et" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).StartSelectedCommand}">
+                                                <MenuItem Header="Torrent İçeriğini İndir..." Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).StartTorrentPayloadCommand}" CommandParameter="{Binding}" IsVisible="{Binding IsDownloadedTorrentFile}">
                                                     <MenuItem.Icon>
-                                                        <TextBlock Text="▶" Foreground="#10B981" FontWeight="Bold" VerticalAlignment="Center" />
+                                                        <TextBlock Text="🌊" Foreground="#38BDF8" FontWeight="Bold" VerticalAlignment="Center" />
                                                     </MenuItem.Icon>
                                                 </MenuItem>
-                                                <MenuItem Header="Duraklat" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).PauseSelectedCommand}">
+                                                <Separator />
+                                                <MenuItem Header="{Binding ResumeActionText}" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).StartSelectedCommand}" IsVisible="{Binding CanResume}" ToolTip.Tip="{Binding ResumeActionTooltip}">
+                                                    <MenuItem.Icon>
+                                                        <TextBlock Text="{Binding ResumeActionIcon}" Foreground="#10B981" FontWeight="Bold" VerticalAlignment="Center" />
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Header="Duraklat" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).PauseSelectedCommand}" IsVisible="{Binding CanPause}">
                                                     <MenuItem.Icon>
                                                         <TextBlock Text="⏸" Foreground="#F59E0B" FontWeight="Bold" VerticalAlignment="Center" />
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Header="Yeniden Başlat (Baştan İndir)" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).RestartSelectedCommand}" IsVisible="{Binding CanRestart}">
+                                                    <MenuItem.Icon>
+                                                        <TextBlock Text="🔄" Foreground="#38BDF8" FontWeight="Bold" VerticalAlignment="Center" />
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Header="İndirme Adresini Yenile (Link Refresh)..." Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).OpenRefreshLinkDialogCommand}" CommandParameter="{Binding}" IsVisible="{Binding CanRefreshLink}">
+                                                    <MenuItem.Icon>
+                                                        <TextBlock Text="🔗" Foreground="#38BDF8" FontWeight="Bold" VerticalAlignment="Center" />
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Header="Dosya Bütünlüğü (MD5 / SHA-256)..." Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).OpenChecksumDialogCommand}" CommandParameter="{Binding}" IsVisible="{Binding CanVerifyChecksum}">
+                                                    <MenuItem.Icon>
+                                                        <TextBlock Text="🔐" Foreground="#10B981" FontWeight="Bold" VerticalAlignment="Center" />
                                                     </MenuItem.Icon>
                                                 </MenuItem>
                                                 <Separator />
@@ -544,6 +569,11 @@
                                                     </MenuItem.Icon>
                                                 </MenuItem>
                                                 <Separator />
+                                                <MenuItem Header="Artık Dosyaları Temizle..." Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).OpenCleanTempFilesDialogCommand}">
+                                                    <MenuItem.Icon>
+                                                        <TextBlock Text="🧹" VerticalAlignment="Center" />
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
                                                 <MenuItem Header="Tamamlananları Listeden Temizle" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).ClearCompletedCommand}">
                                                     <MenuItem.Icon>
                                                         <TextBlock Text="🧹" VerticalAlignment="Center" />
@@ -664,7 +694,7 @@
 
                                             <!-- 9: Durum Metni -->
                                             <Border Grid.Column="9" Width="{Binding $parent[Window].((vm:MainViewModel)DataContext).ColStatusWidth}" IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).ShowColStatus}" VerticalAlignment="Center" ClipToBounds="True" Padding="6,0,10,0">
-                                                <TextBlock Text="{Binding StatusDisplay}" FontWeight="Medium" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding StatusDisplay}" ToolTip.Tip="{Binding StatusDisplay}" FontWeight="Medium" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                                             </Border>
                                         </Grid>
                                         </Border>
@@ -787,7 +817,7 @@
                                 </ScrollViewer>
                             </TabItem>
 
-                            <!-- qBittorrent Stili Dosya & İçerik Seçimi -->
+                            <!-- Torrent Stili Dosya & İçerik Seçimi -->
                             <TabItem Header="📁 Dosyalar" IsVisible="{Binding SelectedDownload.IsTorrent, FallbackValue=False}">
                                 <Grid RowDefinitions="Auto, *">
                                     <Border Grid.Row="0" Background="{DynamicResource SystemControlBackgroundAltHighBrush}" Padding="6,2" BorderBrush="{DynamicResource SystemBaseLowColor}" BorderThickness="0,0,0,1">
@@ -833,7 +863,7 @@
                                 </Grid>
                             </TabItem>
 
-                            <!-- qBittorrent Stili Eşler (Peers) -->
+                            <!-- Torrent Eşleri (Peers) -->
                             <TabItem Header="👥 Eşler" IsVisible="{Binding SelectedDownload.IsTorrent, FallbackValue=False}">
                                 <ListBox ItemsSource="{Binding CurrentTorrentDetails.Peers}" MaxHeight="160">
                                     <ListBox.ItemTemplate>
@@ -849,7 +879,7 @@
                                 </ListBox>
                             </TabItem>
 
-                            <!-- qBittorrent Stili İzleyiciler (Trackers) -->
+                            <!-- Torrent İzleyicileri (Trackers) -->
                             <TabItem Header="📡 İzleyiciler" IsVisible="{Binding SelectedDownload.IsTorrent, FallbackValue=False}">
                                 <Grid RowDefinitions="Auto, *">
                                     <Border Grid.Row="0" Background="{DynamicResource SystemChromeLowColor}" Padding="8,4" Margin="0,0,0,4" CornerRadius="4">
@@ -887,7 +917,7 @@
                 </Grid>
             </Grid>
 
-            <!-- ─── 3. ALT DURUM ÇUBUĞU (STATUSBAR - hDM + qBittorrent İBRESİ) ─── -->
+            <!-- ─── 3. ALT DURUM ÇUBUĞU (STATUSBAR - Hız İbresi) ─── -->
             <Border Grid.Row="4" Background="{Binding ThemeStatusBarBg}" Padding="10,5" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="0,1,0,0">
                 <Grid ColumnDefinitions="*, Auto">
                     <!-- Sol Taraf: hDM Stili Sayaçlar ve Disk Boş Alanı -->
@@ -905,7 +935,7 @@
                         <TextBlock Text="{Binding DiskFreeSpaceText}" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
                     </StackPanel>
 
-                    <!-- Sağ Taraf: qBittorrent Stili İbre ve Anlık/Sınır Hızlar (Sabit Konum, Tıklanınca Asla Kaymaz) -->
+                    <!-- Sağ Taraf: Hız İbresi ve Anlık/Sınır Hızlar (Sabit Konum, Tıklanınca Asla Kaymaz) -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                         <!-- Belirgin Hız Modu Butonu (Sol tık: Sınırsız/Limitli geçişi, Sağ tık: Hız ve Limitler Ayarları) -->
                         <Button Command="{Binding ToggleAltRateLimitCommand}" 
@@ -1018,7 +1048,7 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Torrent Dosya Listesi ve Seçim Kutuları (qBittorrent Stili) -->
+                    <!-- Torrent Dosya Listesi ve Seçim Kutuları -->
                     <Border Background="{Binding ThemeWindowBg}" BorderBrush="{Binding ThemeBorderColor}" CornerRadius="8" Padding="12" IsVisible="{Binding AddDialogHasTorrentFiles}" BorderThickness="1">
                         <StackPanel Spacing="8">
                             <Grid RowDefinitions="Auto, Auto" RowSpacing="6">
@@ -1509,19 +1539,66 @@
                                             </Grid>
 
                                             <CheckBox IsChecked="{Binding IsAltRateLimitActive}" Content="⏱️ Yavaş Hız (Limitli) Modunu Etkinleştir (Limitleri Devreye Al)" FontWeight="Bold" Foreground="#F59E0B" Margin="6,4,0,0" FontSize="12" />
-                                            <CheckBox IsChecked="{Binding IsScheduleEnabled}" Content="Alternatif oran sınırlarını zamanlayıcı ile otomatik yönet" Margin="6,4,0,0" FontSize="12" />
+                                        </StackPanel>
+                                    </Border>
 
-                                            <Border Background="{DynamicResource SystemChromeMediumColor}" CornerRadius="6" Padding="10" Margin="6,0,0,0" IsVisible="{Binding IsScheduleEnabled}">
-                                                <StackPanel Orientation="Horizontal" Spacing="16">
-                                                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                                        <TextBlock Text="Başlangıç:" VerticalAlignment="Center" FontSize="12" />
-                                                        <TextBox Text="{Binding ScheduleStartTime}" Width="65" Height="28" VerticalContentAlignment="Center" />
+                                    <!-- GELİŞMİŞ İNDİRME ZAMANLAYICISI -->
+                                    <Border Background="{DynamicResource SystemChromeLowColor}" CornerRadius="8" Padding="14">
+                                        <StackPanel Spacing="12">
+                                            <Grid ColumnDefinitions="*, Auto">
+                                                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                                    <Border Width="34" Height="34" CornerRadius="17" Background="#22F59E0B" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                        <TextBlock Text="⏰" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center" Spacing="2">
+                                                        <TextBlock Text="Gelişmiş İndirme Zamanlayıcısı" FontSize="13" FontWeight="Bold" Foreground="{Binding ThemeForeground}" />
+                                                        <TextBlock Text="Belirlenen saat aralığında otomatik indirme başlatma, durdurma veya kapatma." FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
                                                     </StackPanel>
-                                                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                                        <TextBlock Text="Bitiş:" VerticalAlignment="Center" FontSize="12" />
-                                                        <TextBox Text="{Binding ScheduleEndTime}" Width="65" Height="28" VerticalContentAlignment="Center" />
-                                                    </StackPanel>
-                                                    <TextBlock Text="Her gün tekrarlanır" Foreground="{DynamicResource SystemBaseMediumColor}" VerticalAlignment="Center" FontSize="11" />
+                                                </StackPanel>
+                                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding IsSchedulerEnabled, Mode=TwoWay}" OnContent="" OffContent="" VerticalAlignment="Center" />
+                                            </Grid>
+
+                                            <!-- Saat Aralıkları ve Aksiyonlar -->
+                                            <Border Background="{DynamicResource SystemChromeMediumColor}" CornerRadius="6" Padding="12" IsEnabled="{Binding IsSchedulerEnabled}">
+                                                <Grid RowDefinitions="Auto, Auto" RowSpacing="10">
+                                                    <!-- Başlangıç -->
+                                                    <Grid Grid.Row="0" ColumnDefinitions="110, 80, 16, 120, *">
+                                                        <TextBlock Grid.Column="0" Text="Başlangıç Saati:" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" />
+                                                        <TextBox Grid.Column="1" Text="{Binding SchedulerStartTime, Mode=TwoWay}" Height="30" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontSize="12" FontWeight="Bold" />
+                                                        <TextBlock Grid.Column="3" Text="Başlangıç Aksiyonu:" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" />
+                                                        <ComboBox Grid.Column="4" SelectedIndex="{Binding SchedulerStartActionIndex, Mode=TwoWay}" HorizontalAlignment="Stretch" Height="30">
+                                                            <ComboBoxItem Content="▶ Bekleyenleri Başlat" />
+                                                            <ComboBoxItem Content="⚡ Tam Hıza Geç (Sınırsız)" />
+                                                        </ComboBox>
+                                                    </Grid>
+
+                                                    <!-- Bitiş -->
+                                                    <Grid Grid.Row="1" ColumnDefinitions="110, 80, 16, 120, *">
+                                                        <TextBlock Grid.Column="0" Text="Bitiş Saati:" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" />
+                                                        <TextBox Grid.Column="1" Text="{Binding SchedulerEndTime, Mode=TwoWay}" Height="30" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontSize="12" FontWeight="Bold" />
+                                                        <TextBlock Grid.Column="3" Text="Bitiş Aksiyonu:" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" />
+                                                        <ComboBox Grid.Column="4" SelectedIndex="{Binding SchedulerEndActionIndex, Mode=TwoWay}" HorizontalAlignment="Stretch" Height="30">
+                                                            <ComboBoxItem Content="⏸ Tümünü Duraklat" />
+                                                            <ComboBoxItem Content="🐢 Yavaş Hız Moduna Geç" />
+                                                            <ComboBoxItem Content="🛑 Duraklat ve Bilgisayarı Kapat" />
+                                                        </ComboBox>
+                                                    </Grid>
+                                                </Grid>
+                                            </Border>
+
+                                            <!-- Aktif Günler Seçimi -->
+                                            <Border Background="{DynamicResource SystemChromeMediumColor}" CornerRadius="6" Padding="10" IsEnabled="{Binding IsSchedulerEnabled}">
+                                                <StackPanel Spacing="6">
+                                                    <TextBlock Text="Zamanlayıcının Çalışacağı Günler:" FontWeight="SemiBold" FontSize="11" Foreground="{Binding ThemeForeground}" />
+                                                    <WrapPanel Orientation="Horizontal">
+                                                        <CheckBox IsChecked="{Binding SchedulerMonday, Mode=TwoWay}" Content="Pazartesi" Margin="0,0,12,0" FontSize="11" />
+                                                        <CheckBox IsChecked="{Binding SchedulerTuesday, Mode=TwoWay}" Content="Salı" Margin="0,0,12,0" FontSize="11" />
+                                                        <CheckBox IsChecked="{Binding SchedulerWednesday, Mode=TwoWay}" Content="Çarşamba" Margin="0,0,12,0" FontSize="11" />
+                                                        <CheckBox IsChecked="{Binding SchedulerThursday, Mode=TwoWay}" Content="Perşembe" Margin="0,0,12,0" FontSize="11" />
+                                                        <CheckBox IsChecked="{Binding SchedulerFriday, Mode=TwoWay}" Content="Cuma" Margin="0,0,12,0" FontSize="11" />
+                                                        <CheckBox IsChecked="{Binding SchedulerSaturday, Mode=TwoWay}" Content="Cumartesi" Margin="0,0,12,0" FontSize="11" />
+                                                        <CheckBox IsChecked="{Binding SchedulerSunday, Mode=TwoWay}" Content="Pazar" Margin="0,0,12,0" FontSize="11" />
+                                                    </WrapPanel>
                                                 </StackPanel>
                                             </Border>
                                         </StackPanel>
@@ -1574,7 +1651,7 @@
                             </ScrollViewer>
                         </TabItem>
 
-                        <!-- SEKME 4.5: 🧲 BITTORRENT AYARLARI (qBittorrent Eşdeğeri) -->
+                        <!-- SEKME 4.5: 🧲 BITTORRENT AYARLARI -->
                         <TabItem Header="🧲 BitTorrent">
                             <ScrollViewer Margin="0,10,0,0" VerticalScrollBarVisibility="Auto">
                                 <StackPanel Spacing="14">
@@ -2095,5 +2172,304 @@
             </Border>
         </Border>
 
+        <!-- ─── 7. MODAL: ⚠️ DOSYA ZATEN MEVCUT (ÇAKIŞMA VE TEKNİK ÖZELLİKLER) ─── -->
+        <Border Background="#80000000" IsVisible="{Binding IsFileConflictDialogOpen}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ZIndex="110">
+            <Border Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="12" Width="600" Padding="22" HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 10 32 #50000000">
+                <StackPanel Spacing="14">
+                    <!-- Başlık ve Kapatma Butonu -->
+                    <Grid ColumnDefinitions="*, Auto">
+                        <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                            <Border Width="38" Height="38" CornerRadius="19" Background="#22F59E0B" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock Text="⚠️" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel VerticalAlignment="Center" Spacing="2">
+                                <TextBlock Text="Dosya Zaten Mevcut" FontSize="17" FontWeight="Bold" Foreground="{Binding ThemeForeground}" />
+                                <TextBlock Text="Hedef klasörde aynı isimde bir dosya zaten bulunuyor." FontSize="11" Foreground="{Binding ThemeTextSecondary}" />
+                            </StackPanel>
+                        </StackPanel>
+                        <Button Grid.Column="1" Command="{Binding ConflictCancelCommand}" Content="✕" Background="Transparent" BorderThickness="0" FontSize="16" Foreground="{Binding ThemeTextSecondary}" ToolTip.Tip="İptal Et" />
+                    </Grid>
+
+                    <!-- Teknik Özellikler Karşılaştırma Kutuları -->
+                    <Grid ColumnDefinitions="*, *">
+                        <!-- 1: Diskteki Mevcut Dosya -->
+                        <Border Grid.Column="0" Background="{DynamicResource SystemChromeLowColor}" BorderBrush="#33F59E0B" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,6,0">
+                            <StackPanel Spacing="6">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="{Binding ConflictExistingFileCategoryIcon}" FontSize="14" VerticalAlignment="Center" />
+                                    <TextBlock Text="Diskteki Mevcut Dosya" FontWeight="Bold" FontSize="12" Foreground="#F59E0B" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <Separator Height="1" Background="{Binding ThemeBorderColor}" Margin="0,2" />
+                                
+                                <TextBlock Text="Dosya Adı:" FontSize="10" Foreground="{Binding ThemeTextSecondary}" />
+                                <TextBlock Text="{Binding ConflictExistingFileName}" FontWeight="SemiBold" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding ConflictExistingFileName}" />
+
+                                <TextBlock Text="Dosya Boyutu:" FontSize="10" Foreground="{Binding ThemeTextSecondary}" Margin="0,2,0,0" />
+                                <TextBlock Text="{Binding ConflictExistingFileSizeDisplay}" FontWeight="Medium" FontSize="11" Foreground="#10B981" />
+
+                                <TextBlock Text="Değiştirilme Tarihi:" FontSize="10" Foreground="{Binding ThemeTextSecondary}" Margin="0,2,0,0" />
+                                <TextBlock Text="{Binding ConflictExistingFileDateDisplay}" FontSize="11" />
+
+                                <TextBlock Text="Dosya Türü:" FontSize="10" Foreground="{Binding ThemeTextSecondary}" Margin="0,2,0,0" />
+                                <TextBlock Text="{Binding ConflictExistingFileTypeDisplay}" FontSize="11" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 2: Yeni İndirilecek Dosya -->
+                        <Border Grid.Column="1" Background="{DynamicResource SystemChromeLowColor}" BorderBrush="#3338BDF8" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6,0,0,0">
+                            <StackPanel Spacing="6">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="{Binding ConflictNewFileCategoryIcon}" FontSize="14" VerticalAlignment="Center" />
+                                    <TextBlock Text="Yeni İndirilecek Dosya" FontWeight="Bold" FontSize="12" Foreground="#38BDF8" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <Separator Height="1" Background="{Binding ThemeBorderColor}" Margin="0,2" />
+
+                                <TextBlock Text="Kaynak Bağlantı:" FontSize="10" Foreground="{Binding ThemeTextSecondary}" />
+                                <TextBlock Text="{Binding ConflictNewUrl}" FontSize="11" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding ConflictNewUrl}" />
+
+                                <TextBlock Text="İndirme Boyutu:" FontSize="10" Foreground="{Binding ThemeTextSecondary}" Margin="0,2,0,0" />
+                                <TextBlock Text="{Binding ConflictNewFileSizeDisplay}" FontWeight="Medium" FontSize="11" Foreground="#38BDF8" />
+
+                                <TextBlock Text="Hedef Klasör:" FontSize="10" Foreground="{Binding ThemeTextSecondary}" Margin="0,2,0,0" />
+                                <TextBlock Text="{Binding ConflictSaveDirectory}" FontSize="11" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding ConflictSaveDirectory}" />
+
+                                <TextBlock Text="Dosya Türü:" FontSize="10" Foreground="{Binding ThemeTextSecondary}" Margin="0,2,0,0" />
+                                <TextBlock Text="{Binding ConflictNewFileTypeDisplay}" FontSize="11" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Yeniden Adlandırma Düzenleme Kutusu -->
+                    <Border Background="{DynamicResource SystemChromeLowColor}" CornerRadius="8" Padding="12,10" Margin="0,2">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="🔄 Yeniden Adlandırılacak Dosya Adı:" FontSize="11" FontWeight="SemiBold" Foreground="{Binding ThemeForeground}" />
+                            <TextBox Text="{Binding ConflictNewFileName, Mode=TwoWay}" Height="34" VerticalContentAlignment="Center" FontSize="12" />
+                            <TextBlock Text="İpucu: Farklı bir ad yazabilir veya otomatik numaralandırılan ismi kullanabilirsiniz." FontSize="10" Foreground="{Binding ThemeTextSecondary}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Aksiyon Butonları (İptal, Üzerine Yaz, Yeniden Adlandır) -->
+                    <Grid ColumnDefinitions="Auto, *, Auto, Auto" Margin="0,6,0,0">
+                        <!-- İptal Et -->
+                        <Button Grid.Column="0" Command="{Binding ConflictCancelCommand}" Content="❌ İptal Et" Height="36" Padding="14,0" Background="Transparent" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" />
+
+                        <!-- Üzerine Yaz -->
+                        <Button Grid.Column="2" Command="{Binding ConflictOverwriteCommand}" Background="#EF4444" Foreground="White" FontWeight="Bold" Height="36" Padding="14,0" Margin="0,0,8,0">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="⚠️" VerticalAlignment="Center" />
+                                <TextBlock Text="Üzerine Yaz" FontWeight="Bold" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Yeniden Adlandır -->
+                        <Button Grid.Column="3" Command="{Binding ConflictRenameCommand}" Background="{DynamicResource AccentButtonBackground}" Foreground="{DynamicResource AccentButtonForeground}" FontWeight="Bold" Height="36" Padding="16,0">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="🔄" VerticalAlignment="Center" />
+                                <TextBlock Text="Yeniden Adlandır" FontWeight="Bold" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- ─── 8. MODAL: 🔄 İNDİRME ADRESİNİ YENİLE (LINK REFRESH) ─────────── -->
+        <Border Background="#80000000" IsVisible="{Binding IsRefreshLinkDialogOpen}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ZIndex="110">
+            <Border Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="12" Width="580" Padding="22" HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 10 32 #50000000">
+                <StackPanel Spacing="14">
+                    <Grid ColumnDefinitions="*, Auto">
+                        <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                            <Border Width="38" Height="38" CornerRadius="19" Background="#2238BDF8" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock Text="🔗" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel VerticalAlignment="Center" Spacing="2">
+                                <TextBlock Text="İndirme Adresini Yenile (Link Refresh)" FontSize="16" FontWeight="Bold" Foreground="{Binding ThemeForeground}" />
+                                <TextBlock Text="Süresi dolan veya 403 hatası veren indirmeler için yeni URL girin." FontSize="11" Foreground="{Binding ThemeTextSecondary}" />
+                            </StackPanel>
+                        </StackPanel>
+                        <Button Grid.Column="1" Command="{Binding CancelRefreshLinkDialogCommand}" Content="✕" Background="Transparent" BorderThickness="0" FontSize="16" Foreground="{Binding ThemeTextSecondary}" ToolTip.Tip="Kapat" />
+                    </Grid>
+
+                    <!-- Eski URL Bilgisi -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Mevcut (Eski) Bağlantı:" FontSize="11" FontWeight="SemiBold" Foreground="{Binding ThemeTextSecondary}" />
+                        <TextBox Text="{Binding RefreshLinkOldUrl}" IsReadOnly="True" FontSize="11" Height="32" VerticalContentAlignment="Center" Background="{DynamicResource SystemChromeLowColor}" />
+                    </StackPanel>
+
+                    <!-- Yeni URL Girişi -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Yeni / Güncel İndirme Bağlantısı:" FontSize="11" FontWeight="SemiBold" Foreground="{Binding ThemeForeground}" />
+                        <TextBox Text="{Binding RefreshLinkNewUrl, Mode=TwoWay}" PlaceholderText="Tarayıcınızdan aldığınız taze indirme linkini (https://...) buraya yapıştırın" FontSize="12" Height="36" VerticalContentAlignment="Center" />
+                    </StackPanel>
+
+                    <!-- Durum ve Yükleme Bildirimi -->
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="{Binding RefreshLinkStatusText}" FontSize="11" Foreground="{Binding ThemeTextSecondary}" TextWrapping="Wrap" />
+                        <ProgressBar IsIndeterminate="True" Height="4" CornerRadius="2" IsVisible="{Binding RefreshLinkIsLoading}" />
+                    </StackPanel>
+
+                    <!-- Aksiyon Butonları -->
+                    <Grid ColumnDefinitions="*, Auto, Auto" Margin="0,6,0,0">
+                        <Button Grid.Column="1" Command="{Binding CancelRefreshLinkDialogCommand}" Content="İptal" Width="90" Height="36" Margin="0,0,8,0" />
+                        <Button Grid.Column="2" Command="{Binding ConfirmRefreshLinkCommand}" Background="{Binding ThemeAccentBg}" Foreground="{Binding ThemeAccentFg}" FontWeight="Bold" Height="36" Padding="16,0" IsEnabled="{Binding !RefreshLinkIsLoading}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="🔄" VerticalAlignment="Center" />
+                                <TextBlock Text="Bağlantıyı Yenile ve Devam Et" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- ─── 9. MODAL: 🧹 ARTIK VE GEÇİCİ DOSYA TEMİZLEYİCİ ─────────────── -->
+        <Border Background="#80000000" IsVisible="{Binding IsCleanTempFilesDialogOpen}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ZIndex="110">
+            <Border Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="12" Width="680" MaxHeight="560" Padding="22" HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 10 32 #50000000">
+                <Grid RowDefinitions="Auto, Auto, *, Auto">
+                    <!-- Başlık -->
+                    <Grid Grid.Row="0" ColumnDefinitions="*, Auto" Margin="0,0,0,12">
+                        <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                            <Border Width="38" Height="38" CornerRadius="19" Background="#2210B981" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock Text="🧹" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel VerticalAlignment="Center" Spacing="2">
+                                <TextBlock Text="Artık ve Geçici Dosya Temizleyici" FontSize="16" FontWeight="Bold" Foreground="{Binding ThemeForeground}" />
+                                <TextBlock Text="İndirme klasörünüzdeki sahipsiz (.fdown, .tmp, .part) dosyaları temizleyin." FontSize="11" Foreground="{Binding ThemeTextSecondary}" />
+                            </StackPanel>
+                        </StackPanel>
+                        <Button Grid.Column="1" Command="{Binding CancelCleanTempFilesDialogCommand}" Content="✕" Background="Transparent" BorderThickness="0" FontSize="16" Foreground="{Binding ThemeTextSecondary}" ToolTip.Tip="Kapat" />
+                    </Grid>
+
+                    <!-- Özet Kartı ve Seçim Butonları -->
+                    <Border Grid.Row="1" Background="{DynamicResource SystemChromeLowColor}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="8" Padding="12,8" Margin="0,0,0,10">
+                        <Grid ColumnDefinitions="*, Auto">
+                            <StackPanel Spacing="2" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding CleanTempFilesStatusText}" FontWeight="SemiBold" FontSize="11" Foreground="{Binding ThemeForeground}" />
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="Kazanılacak Disk Alanı:" FontSize="10" Foreground="{Binding ThemeTextSecondary}" />
+                                    <TextBlock Text="{Binding TotalOrphanSizeText}" FontWeight="Bold" FontSize="11" Foreground="#10B981" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <Button Command="{Binding SelectAllOrphanTempFilesCommand}" Content="Tümünü Seç" FontSize="10" Padding="8,3" Height="26" />
+                                <Button Command="{Binding DeselectAllOrphanTempFilesCommand}" Content="Seçimi Kaldır" FontSize="10" Padding="8,3" Height="26" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Artık Dosyalar Listesi -->
+                    <Border Grid.Row="2" Background="{DynamicResource SystemControlBackgroundAltHighBrush}" CornerRadius="6" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" MaxHeight="260">
+                        <ScrollViewer>
+                            <ItemsControl ItemsSource="{Binding OrphanTempFiles}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border BorderBrush="{DynamicResource SystemBaseLowColor}" BorderThickness="0,0,0,1" Padding="8,6">
+                                            <Grid ColumnDefinitions="Auto, *, Auto, Auto">
+                                                <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                                                    <TextBlock Text="{Binding FileName}" FontSize="11" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding FullPath}" />
+                                                    <TextBlock Text="{Binding FullPath}" FontSize="9" Foreground="{DynamicResource SystemBaseMediumColor}" TextTrimming="CharacterEllipsis" />
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="2" Text="{Binding LastModifiedDisplay}" FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" VerticalAlignment="Center" Margin="12,0,8,0" />
+                                                <TextBlock Grid.Column="3" Text="{Binding FileSizeDisplay}" FontSize="11" FontWeight="Bold" Foreground="#10B981" VerticalAlignment="Center" Margin="6,0,4,0" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Border>
+
+                    <!-- Aksiyon Butonları -->
+                    <Grid Grid.Row="3" ColumnDefinitions="*, Auto, Auto" Margin="0,12,0,0">
+                        <Button Grid.Column="1" Command="{Binding CancelCleanTempFilesDialogCommand}" Content="Kapat" Width="90" Height="36" Margin="0,0,8,0" />
+                        <Button Grid.Column="2" Command="{Binding ConfirmCleanTempFilesCommand}" Background="#EF4444" Foreground="White" FontWeight="Bold" Height="36" Padding="16,0">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="🗑" VerticalAlignment="Center" />
+                                <TextBlock Text="Seçilen Artıkları Temizle" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Border>
+
+        <!-- ─── 10. MODAL: 🔐 DOSYA BÜTÜNLÜĞÜ (HASH / CHECKSUM) ─────────────── -->
+        <Border Background="#80000000" IsVisible="{Binding IsChecksumDialogOpen}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ZIndex="110">
+            <Border Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="12" Width="660" Padding="22" HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 10 32 #50000000">
+                <StackPanel Spacing="12">
+                    <!-- Başlık -->
+                    <Grid ColumnDefinitions="*, Auto">
+                        <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                            <Border Width="38" Height="38" CornerRadius="19" Background="#2210B981" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock Text="🔐" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel VerticalAlignment="Center" Spacing="2">
+                                <TextBlock Text="Dosya Bütünlüğü ve Hash Doğrulama" FontSize="16" FontWeight="Bold" Foreground="{Binding ThemeForeground}" />
+                                <TextBlock Text="{Binding ChecksumFileName}" FontSize="11" Foreground="{Binding ThemeTextSecondary}" TextTrimming="CharacterEllipsis" MaxWidth="500" />
+                            </StackPanel>
+                        </StackPanel>
+                        <Button Grid.Column="1" Command="{Binding CancelChecksumDialogCommand}" Content="✕" Background="Transparent" BorderThickness="0" FontSize="16" Foreground="{Binding ThemeTextSecondary}" ToolTip.Tip="Kapat" />
+                    </Grid>
+
+                    <!-- İlerleme Çubuğu (Hesaplanırken) -->
+                    <StackPanel Spacing="4" IsVisible="{Binding IsCalculatingChecksum}">
+                        <Grid ColumnDefinitions="*, Auto">
+                            <TextBlock Text="Hash değerleri hesaplanıyor..." FontSize="11" Foreground="#38BDF8" FontWeight="SemiBold" />
+                            <TextBlock Grid.Column="1" Text="{Binding ChecksumProgressPercent, StringFormat='{}{0:F0}%'}" FontSize="11" Foreground="#38BDF8" FontWeight="Bold" />
+                        </Grid>
+                        <ProgressBar Value="{Binding ChecksumProgressPercent}" Minimum="0" Maximum="100" Height="6" CornerRadius="3" Foreground="#38BDF8" />
+                    </StackPanel>
+
+                    <!-- Hesaplanan Hash Değerleri (MD5, SHA-1, SHA-256) -->
+                    <Border Background="{DynamicResource SystemChromeLowColor}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,2">
+                        <StackPanel Spacing="8">
+                            <!-- MD5 -->
+                            <Grid ColumnDefinitions="70, *, Auto">
+                                <TextBlock Text="MD5:" FontWeight="Bold" FontSize="11" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1" Text="{Binding ChecksumMd5}" IsReadOnly="True" FontSize="11" Height="28" VerticalContentAlignment="Center" FontFamily="Consolas,Cascadia Code,Monospace" />
+                                <Button Grid.Column="2" Command="{Binding CopyChecksumToClipboardCommand}" CommandParameter="{Binding ChecksumMd5}" Content="📋" ToolTip.Tip="MD5 Kopyala" Margin="4,0,0,0" Height="28" Width="32" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
+                            </Grid>
+
+                            <!-- SHA-1 -->
+                            <Grid ColumnDefinitions="70, *, Auto">
+                                <TextBlock Text="SHA-1:" FontWeight="Bold" FontSize="11" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1" Text="{Binding ChecksumSha1}" IsReadOnly="True" FontSize="11" Height="28" VerticalContentAlignment="Center" FontFamily="Consolas,Cascadia Code,Monospace" />
+                                <Button Grid.Column="2" Command="{Binding CopyChecksumToClipboardCommand}" CommandParameter="{Binding ChecksumSha1}" Content="📋" ToolTip.Tip="SHA-1 Kopyala" Margin="4,0,0,0" Height="28" Width="32" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
+                            </Grid>
+
+                            <!-- SHA-256 -->
+                            <Grid ColumnDefinitions="70, *, Auto">
+                                <TextBlock Text="SHA-256:" FontWeight="Bold" FontSize="11" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1" Text="{Binding ChecksumSha256}" IsReadOnly="True" FontSize="11" Height="28" VerticalContentAlignment="Center" FontFamily="Consolas,Cascadia Code,Monospace" />
+                                <Button Grid.Column="2" Command="{Binding CopyChecksumToClipboardCommand}" CommandParameter="{Binding ChecksumSha256}" Content="📋" ToolTip.Tip="SHA-256 Kopyala" Margin="4,0,0,0" Height="28" Width="32" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Beklenen Hash Karşılaştırma Kutusu -->
+                    <Border Background="{DynamicResource SystemChromeLowColor}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,2">
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Doğrulama (Beklenen Hash Değerini Yapıştırın):" FontSize="11" FontWeight="SemiBold" Foreground="{Binding ThemeForeground}" />
+                            <Grid ColumnDefinitions="*, Auto">
+                                <TextBox Grid.Column="0" Text="{Binding ChecksumExpectedHash, Mode=TwoWay}" PlaceholderText="İndirme sitesindeki MD5, SHA-1 veya SHA-256 kodunu yapıştırın..." Height="34" VerticalContentAlignment="Center" FontFamily="Consolas,Cascadia Code,Monospace" FontSize="11" />
+                                <Button Grid.Column="1" Command="{Binding VerifyExpectedHashCommand}" Content="🔍 Doğrula" Margin="6,0,0,0" Height="34" Padding="12,0" FontWeight="SemiBold" />
+                            </Grid>
+                            <!-- Doğrulama Sonucu -->
+                            <Border Background="#1510B981" CornerRadius="4" Padding="8,6" Margin="0,4,0,0" IsVisible="{Binding !!ChecksumMatchStatusText.Length}">
+                                <TextBlock Text="{Binding ChecksumMatchStatusText}" Foreground="{Binding ChecksumMatchStatusColor}" FontWeight="Bold" FontSize="12" />
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Kapat Butonu -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,4,0,0">
+                        <Button Command="{Binding CancelChecksumDialogCommand}" Content="Kapat" Width="100" Height="36" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- ─── 11. MODAL: ⏰ GELİŞMİŞ İNDİRME ZAMANLAYICISI (SCHEDULER) ───── -->
     </Grid>
 </Window>

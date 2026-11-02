@@ -288,7 +288,10 @@ public sealed class DownloadManager : IAsyncDisposable
     public async Task<DownloadTask> AddTorrentDownloadAsync(
         string magnetOrTorrentPath,
         string? saveDirectory = null,
-        bool startImmediately = true)
+        bool startImmediately = true,
+        string? cookies = null,
+        string? referrer = null,
+        string? userAgent = null)
     {
         saveDirectory ??= Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
 
@@ -319,7 +322,20 @@ public sealed class DownloadManager : IAsyncDisposable
 
         if (startImmediately)
         {
-            await _torrentService.AddAndStartTorrentAsync(task.Id, magnetOrTorrentPath, saveDirectory);
+            var manager = await _torrentService.AddAndStartTorrentAsync(
+                task.Id, magnetOrTorrentPath, saveDirectory, cookies, referrer, userAgent);
+            if (manager.Torrent != null)
+            {
+                if (!string.IsNullOrWhiteSpace(manager.Torrent.Name))
+                {
+                    task.Name = manager.Torrent.Name;
+                    task.FileName = manager.Torrent.Name;
+                }
+                if (manager.Torrent.Size > 0)
+                {
+                    task.TotalBytes = manager.Torrent.Size;
+                }
+            }
             task.Status = DownloadStatus.Downloading;
             _repository.UpdateTaskStatus(task);
         }
@@ -405,7 +421,18 @@ public sealed class DownloadManager : IAsyncDisposable
 
         if (task.Category == DownloadCategory.Torrent)
         {
-            await _torrentService.ResumeTorrentAsync(taskId);
+            var resumed = await _torrentService.ResumeTorrentAsync(taskId);
+            if (!resumed)
+            {
+                var restored = await _torrentService.RestoreTorrentTaskAsync(taskId, task.OriginalUrl, task.SaveDirectory, startImmediately: true);
+                if (restored == null)
+                {
+                    task.Status = DownloadStatus.Failed;
+                    task.LastErrorMessage = "Torrent motoru başlatılamadı.";
+                    _repository.UpdateTaskStatus(task);
+                    return;
+                }
+            }
             task.Status = DownloadStatus.Downloading;
             _repository.UpdateTaskStatus(task);
             return;
@@ -475,6 +502,165 @@ public sealed class DownloadManager : IAsyncDisposable
         {
             await PauseTaskAsync(id);
         }
+    }
+
+    /// <summary>
+    /// Süresi dolmuş bir görevin indirme bağlantısını (URL) yeniler ve gerekirse devam ettirir (Link Refresh).
+    /// </summary>
+    public async Task UpdateTaskUrlAsync(long taskId, string newUrl, bool resumeImmediately = true)
+    {
+        DownloadTask? task;
+        lock (_lock)
+        {
+            task = _tasks.FirstOrDefault(t => t.Id == taskId);
+        }
+        if (task == null) return;
+
+        await PauseTaskAsync(taskId);
+
+        lock (_lock)
+        {
+            task.OriginalUrl = newUrl;
+            task.FinalUrl = newUrl;
+            task.LastErrorMessage = null;
+            _repository.UpdateTaskUrl(taskId, newUrl);
+            _httpDownloaders.Remove(taskId);
+        }
+
+        if (resumeImmediately)
+        {
+            await StartOrResumeTaskAsync(taskId);
+        }
+    }
+
+    /// <summary>
+    /// Downloads klasöründeki veritabanında aktif olmayan yetim geçici dosyaları (.fdown, .part, .tmp) tarar.
+    /// </summary>
+    public List<FileInfo> ScanOrphanTempFiles(string? directory = null)
+    {
+        directory ??= Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+        if (!Directory.Exists(directory)) return new List<FileInfo>();
+
+        var activeTempFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        lock (_lock)
+        {
+            foreach (var t in _tasks)
+            {
+                if (!string.IsNullOrEmpty(t.TempFilePath))
+                    activeTempFiles.Add(Path.GetFullPath(t.TempFilePath));
+                if (!string.IsNullOrEmpty(t.SaveDirectory) && !string.IsNullOrEmpty(t.FileName))
+                {
+                    activeTempFiles.Add(Path.GetFullPath(Path.Combine(t.SaveDirectory, t.FileName)));
+                    activeTempFiles.Add(Path.GetFullPath(Path.Combine(t.SaveDirectory, t.FileName + ".fdown")));
+                    activeTempFiles.Add(Path.GetFullPath(Path.Combine(t.SaveDirectory, t.FileName + ".part")));
+                }
+            }
+        }
+
+        var results = new List<FileInfo>();
+        try
+        {
+            var di = new DirectoryInfo(directory);
+            foreach (var fi in di.EnumerateFiles("*", SearchOption.TopDirectoryOnly))
+            {
+                var ext = fi.Extension.ToLowerInvariant();
+                if (ext is ".fdown" or ".part" or ".tmp")
+                {
+                    if (!activeTempFiles.Contains(fi.FullName))
+                    {
+                        results.Add(fi);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Yetim geçici dosyalar taranırken hata oluştu.");
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Seçilen yetim dosyaları siler ve serbest bırakılan bayt miktarını döner.
+    /// </summary>
+    public long CleanOrphanTempFiles(IEnumerable<string> filePaths)
+    {
+        long freedBytes = 0;
+        foreach (var path in filePaths)
+        {
+            try
+            {
+                if (File.Exists(path))
+                {
+                    var len = new FileInfo(path).Length;
+                    File.Delete(path);
+                    freedBytes += len;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Yetim dosya silinemedi: {Path}", path);
+            }
+        }
+        return freedBytes;
+    }
+
+    /// <summary>
+    /// Bir görevi sıfırdan en baştan indirmek üzere sıfırlar ve başlatır.
+    /// </summary>
+    public async Task RestartTaskAsync(long taskId)
+    {
+        DownloadTask? task;
+        lock (_lock)
+        {
+            task = _tasks.FirstOrDefault(t => t.Id == taskId);
+        }
+        if (task == null) return;
+
+        // Önce çalışan görevi duraklat / durdur
+        await PauseTaskAsync(taskId);
+
+        if (task.Category == DownloadCategory.Torrent)
+        {
+            var resumed = await _torrentService.ResumeTorrentAsync(taskId);
+            if (!resumed)
+            {
+                var restored = await _torrentService.RestoreTorrentTaskAsync(taskId, task.OriginalUrl, task.SaveDirectory, startImmediately: true);
+                if (restored == null)
+                {
+                    task.Status = DownloadStatus.Failed;
+                    task.LastErrorMessage = "Torrent motoru başlatılamadı.";
+                    _repository.UpdateTaskStatus(task);
+                    return;
+                }
+            }
+            task.Status = DownloadStatus.Downloading;
+            _repository.UpdateTaskStatus(task);
+            return;
+        }
+
+        // HTTP veya Medya: indirilen boyut ve durum sıfırlanır
+        lock (_lock)
+        {
+            task.DownloadedBytes = 0;
+            task.Status = DownloadStatus.Connecting;
+            task.LastErrorMessage = null;
+            _repository.UpdateTaskStatus(task);
+        }
+
+        // Varsa kısmi dosya (.part) veya hedef dosya silinerek temiz başlangıç sağlanır
+        try
+        {
+            var partFile = Path.Combine(task.SaveDirectory, task.FileName + ".part");
+            if (File.Exists(partFile))
+            {
+                File.Delete(partFile);
+            }
+        }
+        catch { }
+
+        await StartOrResumeTaskAsync(taskId);
     }
 
     /// <summary>
@@ -684,8 +870,12 @@ public sealed class DownloadManager : IAsyncDisposable
     public Task SetAllTorrentFilesPriorityAsync(long taskId, bool downloadAll)
         => _torrentService.SetAllFilesPriorityAsync(taskId, downloadAll);
 
-    public Task<List<TorrentFileInfo>> InspectTorrentFilesAsync(string sourceUrlOrPath)
-        => _torrentService.InspectTorrentFilesAsync(sourceUrlOrPath);
+    public Task<List<TorrentFileInfo>> InspectTorrentFilesAsync(
+        string sourceUrlOrPath,
+        string? cookies = null,
+        string? referrer = null,
+        string? userAgent = null)
+        => _torrentService.InspectTorrentFilesAsync(sourceUrlOrPath, cookies, referrer, userAgent);
 
     public Task<bool> ToggleTorrentSequentialDownloadAsync(long taskId)
         => _torrentService.ToggleSequentialDownloadAsync(taskId);

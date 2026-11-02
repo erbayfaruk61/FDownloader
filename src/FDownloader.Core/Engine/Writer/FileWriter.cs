@@ -95,8 +95,15 @@ public sealed class FileWriter : IAsyncDisposable
     /// Başarılı indirme sonunda çağrılır.
     /// </summary>
     /// <param name="finalPath">Kalıcı dosya yolu.</param>
-    /// <param name="conflictPath">Eğer finalPath zaten varsa bu yola taşınır (null ise üzerine yaz).</param>
-    public async Task CommitAsync(string finalPath, CancellationToken ct = default)
+    public Task CommitAsync(string finalPath, CancellationToken ct = default)
+        => CommitAsync(finalPath, overwrite: true, ct);
+
+    /// <summary>
+    /// Geçici dosyayı hedef konuma atomik şekilde taşır (yeniden adlandır).
+    /// </summary>
+    /// <param name="finalPath">Kalıcı dosya yolu.</param>
+    /// <param name="overwrite">Hedef dosya varsa üzerine yazılsın mı.</param>
+    public async Task CommitAsync(string finalPath, bool overwrite, CancellationToken ct = default)
     {
         // Stream'i kapat
         if (_stream is not null)
@@ -106,15 +113,16 @@ public sealed class FileWriter : IAsyncDisposable
             _stream = null;
         }
 
-        // Atomik taşıma (aynı disk üzerindeyse rename, farklı diskse copy+delete)
+        // Atomik taşıma
         try
         {
-            File.Move(_tempFilePath, finalPath, overwrite: false);
+            File.Move(_tempFilePath, finalPath, overwrite: overwrite);
             _logger.LogInformation("Dosya tamamlandı: {Path}", finalPath);
         }
-        catch (IOException) when (File.Exists(finalPath))
+        catch (Exception ex)
         {
-            throw new IOException($"Hedef dosya zaten mevcut: {finalPath}");
+            _logger.LogError(ex, "Dosya taşınırken hata: {Path}", finalPath);
+            throw;
         }
     }
 

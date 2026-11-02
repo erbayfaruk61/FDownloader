@@ -89,6 +89,16 @@ public sealed class DownloadRepository
         cmd.ExecuteNonQuery();
     }
 
+    /// <summary>Bir görevin indirme adresini (URL) günceller (Link Refresh).</summary>
+    public void UpdateTaskUrl(long taskId, string newUrl)
+    {
+        using var cmd = _db.CreateCommand();
+        cmd.CommandText = "UPDATE DownloadTasks SET OriginalUrl = @Url, FinalUrl = @Url WHERE Id = @Id;";
+        cmd.Parameters.AddWithValue("@Url", newUrl);
+        cmd.Parameters.AddWithValue("@Id", taskId);
+        cmd.ExecuteNonQuery();
+    }
+
     /// <summary>Belirli bir görevi Id'ye göre getirir.</summary>
     public DownloadTask? GetTask(long taskId)
     {

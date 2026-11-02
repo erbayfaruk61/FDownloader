@@ -112,4 +112,28 @@ public static class DownloadCategoryExtensions
         if (string.IsNullOrWhiteSpace(fileName)) return DownloadCategory.Other;
         return FromExtension(Path.GetExtension(fileName));
     }
+
+    public static string ToCategoryIcon(this DownloadCategory category) => category switch
+    {
+        DownloadCategory.Video => "🎬",
+        DownloadCategory.Music => "🎵",
+        DownloadCategory.Document => "📄",
+        DownloadCategory.Archive => "📦",
+        DownloadCategory.Program => "⚙️",
+        DownloadCategory.Image => "🖼️",
+        DownloadCategory.Torrent => "🧲",
+        _ => "📄"
+    };
+
+    public static string ToCategoryDisplayName(this DownloadCategory category) => category switch
+    {
+        DownloadCategory.Video => "Video Dosyası",
+        DownloadCategory.Music => "Müzik / Ses Dosyası",
+        DownloadCategory.Document => "Belge",
+        DownloadCategory.Archive => "Sıkıştırılmış Arşiv",
+        DownloadCategory.Program => "Uygulama / Kurulum",
+        DownloadCategory.Image => "Resim / Görsel",
+        DownloadCategory.Torrent => "BitTorrent Dosyası",
+        _ => "Genel Dosya"
+    };
 }

@@ -1,6 +1,7 @@
 using Avalonia;
 using System;
 using System.IO;
+using Sentry;
 using Velopack;
 
 namespace FDownloader.App;
@@ -42,16 +43,29 @@ sealed class Program
         AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
         {
             var ex = e.ExceptionObject as Exception;
+            if (ex != null) SentrySdk.CaptureException(ex);
             var logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "crash.log");
             File.AppendAllText(logPath, $"[{DateTime.Now}] UNHANDLED EXCEPTION: {ex?.Message}\n{ex?.StackTrace}\n\n");
         };
 
         TaskScheduler.UnobservedTaskException += (sender, e) =>
         {
+            if (e.Exception != null) SentrySdk.CaptureException(e.Exception);
             var logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "crash.log");
             File.AppendAllText(logPath, $"[{DateTime.Now}] UNOBSERVED TASK EXCEPTION: {e.Exception.Message}\n{e.Exception.StackTrace}\n\n");
             e.SetObserved();
         };
+
+        // Sentry Canlı Hata Takibi (DSN tanımlıysa aktifleşir, tanımlı değilse sessiz kalır)
+        var sentryDsn = Environment.GetEnvironmentVariable("FDOWNLOADER_SENTRY_DSN");
+        using var sentry = !string.IsNullOrWhiteSpace(sentryDsn) 
+            ? SentrySdk.Init(o =>
+            {
+                o.Dsn = sentryDsn;
+                o.TracesSampleRate = 1.0;
+                o.Release = "fdownloader@1.5.6";
+            }) 
+            : null;
 
         try
         {
@@ -59,6 +73,7 @@ sealed class Program
         }
         catch (Exception ex)
         {
+            SentrySdk.CaptureException(ex);
             var logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "crash.log");
             File.AppendAllText(logPath, $"[{DateTime.Now}] APP CRASH: {ex.Message}\n{ex.StackTrace}\n\n");
             throw;

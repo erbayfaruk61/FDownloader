@@ -36,6 +36,11 @@ $RECYCLE.BIN/
 ## Excluded Folders & Working Notes
 .agents/
 tests/
+.stryker-output/
+StrykerOutput/
+TestResults/
+*.received.*
+*.verified.*
 ekle.md
 guncelleme.md
 ultimate_downloader_*.md
