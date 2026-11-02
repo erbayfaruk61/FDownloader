@@ -292,6 +292,15 @@ public partial class MainWindow : Window
             if (DataContext is MainViewModel vm)
             {
                 vm.SelectAll();
+                DownloadsListBox?.Selection.SelectAll();
+                e.Handled = true;
+            }
+        }
+        else if (e.Key == Key.Delete)
+        {
+            if (DataContext is MainViewModel vm)
+            {
+                vm.RequestDeleteItem(null);
                 e.Handled = true;
             }
         }
@@ -305,10 +314,27 @@ public partial class MainWindow : Window
             var listBoxItem = source?.FindAncestorOfType<ListBoxItem>();
             if (listBoxItem?.DataContext is DownloadItemViewModel clickedItem && DownloadsListBox != null)
             {
+                var vm = DataContext as MainViewModel;
+                var currentSelection = DownloadsListBox.SelectedItems?.OfType<DownloadItemViewModel>().ToList() 
+                    ?? vm?.SelectedDownloads?.ToList() 
+                    ?? new List<DownloadItemViewModel>();
+
+                if (vm != null && currentSelection.Count <= 1 && vm.SelectedDownloads.Count > 1)
+                {
+                    currentSelection = vm.SelectedDownloads.ToList();
+                }
+
+                // Eğer sağ tıklanan öğe ZATEN çoklu seçimin bir parçasıysa, çoklu seçimi koru!
+                if (currentSelection.Contains(clickedItem) && currentSelection.Count > 1)
+                {
+                    return;
+                }
+
+                // Aksi halde (sağ tıklanan öğe seçili grupta değil veya tek seçim varsa), seçimi bu tek öğeye odakla
                 DownloadsListBox.Selection.Clear();
                 DownloadsListBox.SelectedItems?.Add(clickedItem);
                 DownloadsListBox.SelectedItem = clickedItem;
-                if (DataContext is MainViewModel vm)
+                if (vm != null)
                 {
                     vm.SelectedDownload = clickedItem;
                     vm.SyncSelectedItems(new List<DownloadItemViewModel> { clickedItem });

@@ -3335,8 +3335,18 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
     public void RequestDeleteItem(DownloadItemViewModel? item)
     {
-        // Sağ tıklanan veya seçili olan YALNIZCA TEK BİR öğeyi sil (asla çoklu seçimle tüm listeyi silme)
-        var target = item ?? SelectedDownload ?? GetEffectiveSelectedList().FirstOrDefault();
+        var effectiveList = GetEffectiveSelectedList();
+
+        // 1. Çoklu seçim durumu: Eğer sağ tıklanan öğe çoklu seçimin içindeyse VEYA item parametresi yoksa
+        if ((item != null && effectiveList.Contains(item) && effectiveList.Count > 1) ||
+            (item == null && effectiveList.Count > 1))
+        {
+            RequestDeleteSelected();
+            return;
+        }
+
+        // 2. Tekil seçim durumu: Yalnızca tek bir öğe silinecek
+        var target = item ?? SelectedDownload ?? effectiveList.FirstOrDefault();
         if (target == null) return;
 
         _pendingDeleteItems = new List<DownloadItemViewModel> { target };
