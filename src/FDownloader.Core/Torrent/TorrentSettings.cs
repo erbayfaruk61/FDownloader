@@ -32,7 +32,7 @@ public sealed class TorrentSettings
     /// 1: Zorunlu Kıl (Sadece şifreli bağlantılara izin ver),
     /// 2: Devre Dışı (Şifreleme kullanma)
     /// </summary>
-    public int EncryptionMode { get; set; } = 0;
+    public int EncryptionMode { get; set; }
 
     /// <summary>Tüm torrentler için maksimum eş bağlantı sayısı.</summary>
     public int MaxConnectionsTotal { get; set; } = DefaultMaxConnections;
@@ -41,13 +41,13 @@ public sealed class TorrentSettings
     public int MaxConnectionsPerTorrent { get; set; } = DefaultMaxConnectionsPerTorrent;
 
     /// <summary>Yeni eklenen video torrentleri için sıralı indirmeyi (önizleme) varsayılan yap.</summary>
-    public bool EnableAutoSequentialForVideo { get; set; } = false;
+    public bool EnableAutoSequentialForVideo { get; set; }
 
     /// <summary>Hedef paylaşım oranı (Ratio). 0 ise sınır yok.</summary>
     public double SeedRatioLimit { get; set; } = DefaultSeedRatio;
 
     /// <summary>Hedef paylaşım oranına ulaşıldığında göndermeyi (seed) otomatik durdur.</summary>
-    public bool StopSeedingWhenRatioReached { get; set; } = false;
+    public bool StopSeedingWhenRatioReached { get; set; }
 
     /// <summary>
     /// BitTorrent trafiğinin kilitleneceği ağ adaptörü Id'si veya adı (VPN Kill-Switch).

@@ -34,7 +34,7 @@ using FDownloader.App.Services;
 
 namespace FDownloader.App.ViewModels;
 
-public partial class MainViewModel : ViewModelBase
+public partial class MainViewModel : ViewModelBase, IDisposable
 
 {
 
@@ -1398,9 +1398,9 @@ public partial class MainViewModel : ViewModelBase
 
     private ObservableCollection<double> _globalSpeedHistory = new();
 
-    private double _globalMinSpeedRecorded = 0;
+    private double _globalMinSpeedRecorded;
 
-    private double _globalMaxSpeedRecorded = 0;
+    private double _globalMaxSpeedRecorded;
 
     private readonly DispatcherTimer _uiUpdateTimer;
 
@@ -6077,6 +6077,14 @@ public partial class MainViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    public void Dispose()
+    {
+        _schedulerTimer?.Stop();
+        _schedulerTimer?.Dispose();
+        _schedulerTimer = null;
+        GC.SuppressFinalize(this);
+    }
+
     public void OpenSchedulerDialog()
     {
         IsSchedulerDialogOpen = true;

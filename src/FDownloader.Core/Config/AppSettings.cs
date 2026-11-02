@@ -31,7 +31,7 @@ public class AppSettings
     // ─── Hız Limiti ───────────────────────────────────────────────────────
 
     /// <summary>Genel indirme hız limiti (byte/sn). 0 = sınırsız.</summary>
-    public long GlobalSpeedLimitBytesPerSecond { get; set; } = 0;
+    public long GlobalSpeedLimitBytesPerSecond { get; set; }
 
     // ─── Yeniden Deneme ───────────────────────────────────────────────────
 
@@ -93,7 +93,7 @@ public class AppSettings
 
     // ─── Sistem ───────────────────────────────────────────────────────────
 
-    public bool StartWithWindows { get; set; } = false;
+    public bool StartWithWindows { get; set; }
     public bool MinimizeToTray { get; set; } = true;
     public bool ShowNotifications { get; set; } = true;
 

@@ -118,7 +118,7 @@ public partial class MainWindow : Window
     }
 
     public bool StartMinimized { get; set; }
-    private bool _isExplicitExit = false;
+    private bool _isExplicitExit;
 
     public void RequestExit()
     {
@@ -371,8 +371,8 @@ public partial class MainWindow : Window
 
     private DispatcherTimer? _progressPreviewTimer;
     private string? _activeHoveredProgressStyle;
-    private double _hoverProgressValue = 0;
-    private int _pauseCounter = 0;
+    private double _hoverProgressValue;
+    private int _pauseCounter;
 
     private void OnProgressCardPointerEntered(object? sender, PointerEventArgs e)
     {

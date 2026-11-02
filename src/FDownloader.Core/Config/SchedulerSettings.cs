@@ -19,7 +19,7 @@ public enum SchedulerEndAction
 
 public sealed class SchedulerSettings
 {
-    public bool IsEnabled { get; set; } = false;
+    public bool IsEnabled { get; set; }
     public string StartTime { get; set; } = "02:00";
     public string EndTime { get; set; } = "07:00";
     public SchedulerStartAction StartAction { get; set; } = SchedulerStartAction.StartAllDownloads;

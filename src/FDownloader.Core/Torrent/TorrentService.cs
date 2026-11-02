@@ -944,7 +944,7 @@ public sealed class TorrentService : IAsyncDisposable
         return null;
     }
 
-    private TorrentDetails BuildTorrentDetailsSync(TorrentManager manager)
+    private static TorrentDetails BuildTorrentDetailsSync(TorrentManager manager)
     {
         var files = new List<TorrentFileInfo>();
         if (manager.Files != null)

@@ -524,7 +524,10 @@ public sealed class DownloadManager : IAsyncDisposable
             task.FinalUrl = newUrl;
             task.LastErrorMessage = null;
             _repository.UpdateTaskUrl(taskId, newUrl);
-            _httpDownloaders.Remove(taskId);
+            if (_httpDownloaders.Remove(taskId, out var oldDownloader))
+            {
+                oldDownloader.Dispose();
+            }
         }
 
         if (resumeImmediately)
@@ -718,8 +721,15 @@ public sealed class DownloadManager : IAsyncDisposable
         {
             task = _tasks.FirstOrDefault(t => t.Id == taskId);
             _tasks.RemoveAll(t => t.Id == taskId);
-            _httpDownloaders.Remove(taskId);
-            _mediaCtsList.Remove(taskId);
+            if (_httpDownloaders.Remove(taskId, out var removedDownloader))
+            {
+                removedDownloader.Dispose();
+            }
+            if (_mediaCtsList.Remove(taskId, out var removedCts))
+            {
+                removedCts.Cancel();
+                removedCts.Dispose();
+            }
         }
 
         task ??= _repository.GetTask(taskId);
@@ -957,7 +967,17 @@ public sealed class DownloadManager : IAsyncDisposable
         foreach (var downloader in _httpDownloaders.Values)
         {
             await downloader.PauseAsync();
+            downloader.Dispose();
         }
+        _httpDownloaders.Clear();
+
+        foreach (var cts in _mediaCtsList.Values)
+        {
+            cts.Cancel();
+            cts.Dispose();
+        }
+        _mediaCtsList.Clear();
+
         await _torrentService.DisposeAsync();
     }
 }

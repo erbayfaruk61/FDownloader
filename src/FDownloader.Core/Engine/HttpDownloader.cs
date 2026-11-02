@@ -15,7 +15,7 @@ namespace FDownloader.Core.Engine;
 /// Tek bir HTTP/HTTPS indirme görevinin yaşam döngüsünü yöneten motor.
 /// Probe -> Plan -> Preallocate -> Multi-worker indirme -> Finalize adımlarını yürütür.
 /// </summary>
-public sealed class HttpDownloader
+public sealed class HttpDownloader : IDisposable
 {
     private readonly DownloadTask _task;
     private readonly DownloadRepository _repository;
@@ -331,5 +331,12 @@ public sealed class HttpDownloader
                 break;
             }
         }
+    }
+
+    public void Dispose()
+    {
+        _cts?.Cancel();
+        _cts?.Dispose();
+        _cts = null;
     }
 }
