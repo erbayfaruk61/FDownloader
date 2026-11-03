@@ -1209,15 +1209,16 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
     // ─── Ayarlar Modalı (Çark Butonu) ─────────────────────────────────────
 
-    public const int SettingsTabAppearance = 0;
+    public const int SettingsTabAppearance = 4;
 
-    public const int SettingsTabNotification = 1;
+    public const int SettingsTabNotification = 2;
 
-    public const int SettingsTabSpeedAndNetwork = 2;
+    public const int SettingsTabSpeedAndNetwork = 0;
 
-    public const int SettingsTabStorage = 3;
+    public const int SettingsTabStorage = 1;
 
-    public const int SettingsTabBitTorrent = 4;
+    public const int SettingsTabTorrent = 3;
+    public const int SettingsTabBitTorrent = 3;
 
     public const int SettingsTabSiteGrabber = 5;
 

@@ -278,7 +278,7 @@ async function sendToFDownloader(item) {
   }
 }
 
-// ─── Alt Tuşu Takibi (Sadece anlık basılı tutuluyorsa devreye girer) ───
+// ─── Alt Tuşu Takibi (5 Saniye Boyunca İndirme Yakalamama / Baypas) ───
 let memIsAltDown = false;
 let memAltPressedUntil = 0;
 
@@ -290,13 +290,24 @@ try {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message && message.type === "ALT_EVENT") {
     memIsAltDown = Boolean(message.isDown);
-    memAltPressedUntil = memIsAltDown ? (Date.now() + 1500) : 0;
+    if (message.isDown) {
+      memAltPressedUntil = Math.max(memAltPressedUntil, Date.now() + 5000);
+    }
     sendResponse({ ok: true });
     return false;
   }
 
   if (message && message.type === "INTERCEPT_LINK" && message.url) {
     (async () => {
+      // 5 saniyelik Alt tuşu baypası aktif mi?
+      const now = Date.now();
+      const isAltActive = memIsAltDown || (now < memAltPressedUntil);
+      if (isAltActive) {
+        console.log("⚡ FDownloader: Alt tuşu (5 sn baypas) devrede. Link doğrudan tarayıcıya bırakıldı.");
+        sendResponse({ success: false, reason: "alt_key_bypass" });
+        return;
+      }
+
       const alive = await isBridgeAlive();
       if (!alive) {
         sendResponse({ success: false, reason: "bridge_offline" });
@@ -338,13 +349,13 @@ chrome.downloads.onDeterminingFilename.addListener((downloadItem, suggest) => {
       return;
     }
 
-    // Yalnızca Alt tuşuna aktif olarak basılıyorsa tarayıcı kendisi indirsin
+    // Alt tuşuna basıldıysa veya 5 saniyelik süre dolmadıysa tarayıcı kendisi indirsin
     if (settings.bypassOnAltKey !== false) {
       const now = Date.now();
-      const isAltActive = memIsAltDown && (now < memAltPressedUntil);
+      const isAltActive = memIsAltDown || (now < memAltPressedUntil);
 
       if (isAltActive) {
-        console.log("⚡ FDownloader: Alt tuşu basılı. İndirme doğrudan tarayıcıya bırakıldı.");
+        console.log("⚡ FDownloader: Alt tuşu (5 sn baypas) devrede. İndirme doğrudan tarayıcıya bırakıldı.");
         suggest();
         return;
       }

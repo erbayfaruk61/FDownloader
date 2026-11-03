@@ -131,6 +131,8 @@ public sealed class ClipboardWatcher : IDisposable
         return false;
     }
 
+    private DateTimeOffset _altBypassUntil = DateTimeOffset.MinValue;
+
     private async Task MonitorLoopAsync(CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)
@@ -144,6 +146,23 @@ public sealed class ClipboardWatcher : IDisposable
                 // Windows panosundan metin oku (P/Invoke ile hafif ve UI thread'i kilitlemeden)
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
+                    // Alt tuşuna basılı mı kontrol et (Alt tuşuna basıldığında 5 saniye indirme yakalamama baypası)
+                    bool isAltPressed = (GetAsyncKeyState(VK_MENU) & 0x8000) != 0;
+                    if (isAltPressed)
+                    {
+                        _altBypassUntil = DateTimeOffset.UtcNow.AddSeconds(5);
+                    }
+
+                    if (DateTimeOffset.UtcNow < _altBypassUntil)
+                    {
+                        var bypassText = GetWindowsClipboardText();
+                        if (!string.IsNullOrEmpty(bypassText))
+                        {
+                            _lastProcessedText = bypassText.Trim();
+                        }
+                        continue;
+                    }
+
                     var text = GetWindowsClipboardText();
                     if (!string.IsNullOrEmpty(text))
                     {
@@ -163,6 +182,11 @@ public sealed class ClipboardWatcher : IDisposable
     }
 
     // ─── Windows P/Invoke Pano Okuyucu ──────────────────────────────────────
+
+    [DllImport("user32.dll")]
+    private static extern short GetAsyncKeyState(int vKey);
+
+    private const int VK_MENU = 0x12; // Alt tuşu
 
     [DllImport("user32.dll")]
     private static extern bool OpenClipboard(IntPtr hWndNewOwner);
