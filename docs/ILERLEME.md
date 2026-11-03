@@ -42,7 +42,7 @@
 | P2-05 | Hata sınıflandırma/yeniden deneme | 🔴 | ✅ Bitti | — | DownloadErrorClassifier, SegmentWorker akıllı yeniden deneme (429 Retry-After, kalıcı 404/410 ve 401/403 erken durdurma, disk full koruması) ve HttpDownloader entegrasyonu tamamlandı (122/122 test yeşil) |
 | P2-06 | Stall tespiti | 🔴 | ✅ Bitti | — | Connect timeout ve Stall timeout (veri akışı durdu) ayrımı, kopan/takılan parçanın Range ile kayıpsız toparlanması Senaryo 4 ve 5 ile kanıtlandı (125/125 test yeşil) |
 | P2-07 | Dinamik parça bölme | 🔴 | ✅ Bitti | — | Boştaki worker'ların iş çalması (work-stealing), dinamik parça bölme, çift yazım/çakışma koruması ve hash bütünlüğü test edildi (128/128 test yeşil) |
-| P2-08 | Disk/dosya sistemi | 🟡 | ⬜ Bekliyor | — | |
+| P2-08 | Disk/dosya sistemi | 🟡 | ✅ Bitti | — | Preallocation, FAT32 4 GB sınırı engeli, hedef klasör silinmesi koruması, atomik taşıma ve TEST_SENARYOLARI.md hazırlandı (133/133 test yeşil) |
 | P2-09 | Dosya adı güvenliği | 🟡 | ⬜ Bekliyor | — | FileNameSanitizer + PathSafetyHelper mevcut |
 | P2-10 | Hız/ETA/ilerleme | 🟡 | ⬜ Bekliyor | — | SpeedCalculator mevcut |
 | P2-11 | Kuyruk/limit/zamanlayıcı | 🟡 | ⬜ Bekliyor | — | |

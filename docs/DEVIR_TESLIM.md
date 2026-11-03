@@ -2,35 +2,38 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** P2-07 — Dinamik Parça Bölme (Dynamic Segment Splitting / Work Stealing)
+**ID:** P2-08 — Disk ve Dosya Sistemi Sağlamlığı
 **Durum:** ✅ Bitti
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
-- `src/FDownloader.Core/Engine/Segmenter/SegmentPlanner.cs`:
-  - `SplitLargestActiveSegment` metodu thread-safe hale getirildi; çalışan en büyük parça kilit altında ikiye bölünerek aralıkların çakışmaması ve toplam bayt sayısının korunması sağlandı.
-- `src/FDownloader.Core/Engine/Worker/SegmentWorker.cs`:
-  - Dinamik parça bölme sırasında çift yazımı (double write) engelleyen sıkı sınır koruması eklendi (`effectiveBytesToWrite = Math.Min(bytesRead, EndByte - writeOffset + 1)`).
+- `src/FDownloader.Core/Engine/Writer/FileWriter.cs`:
+  - `InitializeAsync`: `SetLength` ile önceden yer ayırma (preallocation) parçalanmayı önleyecek şekilde güvence altına alındı.
+  - `CommitAsync`: `.fdown` geçici dosyasından nihai hedefe atomik taşıma öncesinde hedef dizinin varlığı denetlendi (`DirectoryNotFoundException`).
 - `src/FDownloader.Core/Engine/HttpDownloader.cs`:
-  - Dinamik worker havuzu kuruldu (Work-Stealing Dispatcher). Boşa çıkan çalışanlar devam eden en büyük parçanın kalanını bölerek yardıma koşuyor; böylece "son %5'te bekleme" sorunu ortadan kalkıyor.
-  - Resume sırasında tamamlanmamış (`Paused`, `Pending`) parçaların da sırayla işleme alınması sağlandı.
-- `tests/FDownloader.Core.Tests/DynamicSegmentSplitTests.cs`:
-  - Parça bölme sınır doğrulaması (çakışmasız aralıklar), eşik altı koruması ve dinamik bölme altında indirilen deterministik akışın SHA-256 hash doğrulaması yapıldı.
-- Toplam test sayısı 125'ten **128'e** yükseldi. **128/128 test yeşil**.
+  - FAT32 dosya sistemi 4 GB sınırı engeli eklendi (`ExceedsFat32Limit`).
+  - İndirme başında ve indirme sırasında periyodik disk boş alan kontrolleri sağlandı (`DiskFullEvent`).
+- `src/FDownloader.Core/Engine/Exceptions/DownloadErrorClassifier.cs`:
+  - Sürücü çıkarılması veya hedef klasör silinmesi (`DirectoryNotFoundException`, `DriveNotFoundException`) durumları sınıflandırıldı.
+- `docs/TEST_SENARYOLARI.md`:
+  - Disk ve dosya sistemi için otomatik ve elle test senaryoları belgelendi.
+- `tests/FDownloader.Core.Tests/DiskFileSystemTests.cs`:
+  - Preallocation boyutu, atomik dosya taşıma, silinmiş hedef klasör hatası ve ofset yazım doğrulama testleri yazıldı.
+- Toplam test sayısı 128'den **133'e** yükseldi. **133/133 test yeşil**.
 
 ---
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** P2-01'den P2-07'ye kadar olan motor sağlamlaştırma görevleri tamamlandı.
-- **Sıradaki Görev:** **P2-08 — Disk ve Dosya Sistemi Sağlamlığı**.
-  - Seyrek dosya (sparse file) / preallocation doğrulaması (SetLength / diskte önceden yer ayırma).
-  - İndirme tamamlanınca `.fdown` -> nihai dosya adı atomik taşıma (atomic rename) ve dosya sistemi hata yönetimi.
-  - Disk dolduğunda veya izin reddedildiğinde güvenli duraklatma.
+- **Tam olarak nerede kaldım:** P2-01'den P2-08'e kadar olan tüm motor sağlamlaştırma görevleri tamamlandı.
+- **Sıradaki Görev:** **P2-09 — Dosya Adı Güvenliği ve Çakışma Politikası**.
+  - Yasak karakterler (`\ / : * ? " < > |`), Windows ayrılmış adları (CON, PRN, AUX, NUL, COM1–9, LPT1–9), sondaki nokta/boşluk, çok uzun dosya adları, Unicode normalleştirme.
+  - `../` içeren ad hedef klasör dışına **asla** çıkamaz (Path Traversal testi en az 30 örnekli kötü niyetli liste ile).
+  - Çakışma politikası: Üzerine yaz / numaralandır / atla.
 - **Derleme durumu:** ✅ Başarılı (0 hata)
-- **Test durumu:** 128/128 geçiyor
+- **Test durumu:** 133/133 geçiyor
 
 ---
 
@@ -39,9 +42,9 @@
 1. Değişiklikleri commit et:
    ```
    git add src/ tests/ docs/
-   git commit -m "feat(engine): P2-07 - Dinamik parca bolme (work-stealing) ve cift yazim korumasi"
+   git commit -m "feat(engine): P2-08 - Disk preallocation, FAT32 limiti, atomik tasima ve TEST_SENARYOLARI.md"
    ```
-2. **P2-08:** `FileWriter.cs` ve disk alanı / preallocation / atomic rename mekanizmalarını testleriyle güçlendir.
+2. **P2-09:** `FileNameSanitizer.cs` ve `PathSafetyHelper.cs` içinde Windows özel adları, path traversal ve 30+ kötü niyetli ad senaryosunu testleriyle güçlendir.
 
 ---
 

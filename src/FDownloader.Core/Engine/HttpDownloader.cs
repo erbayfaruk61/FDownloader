@@ -163,12 +163,18 @@ public sealed class HttpDownloader : IDisposable
                 Directory.CreateDirectory(_task.SaveDirectory);
                 _task.TempFilePath = Path.Combine(_task.SaveDirectory, _task.FileName + ".fdown");
 
+                // FAT32 dosya sistemi 4 GB sınırı kontrolü
+                if (_task.TotalBytes > 0 && DiskSpaceChecker.ExceedsFat32Limit(_task.SaveDirectory, _task.TotalBytes))
+                {
+                    throw new NotSupportedException($"Hedef sürücü dosya sistemi (FAT32) 4 GB'tan büyük dosyaları desteklemez ({_task.TotalBytes:N0} byte).");
+                }
+
                 // Disk alanı kontrolü
                 if (_task.TotalBytes > 0 && !DiskSpaceChecker.HasEnoughSpace(_task.SaveDirectory, _task.TotalBytes))
                 {
                     var availableBytes = DiskSpaceChecker.GetAvailableSpace(_task.SaveDirectory);
                     _eventBus.Publish(new DiskFullEvent(_task.Id, _task.SaveDirectory, _task.TotalBytes, availableBytes));
-                    throw new IOException($"Yetersiz disk alanı! Gerekli: {_task.TotalBytes}, Mevcut: {availableBytes}");
+                    throw new IOException($"Yetersiz disk alanı! Gerekli: {_task.TotalBytes:N0} byte, Mevcut: {availableBytes:N0} byte");
                 }
 
                 _eventBus.Publish(new ProbeCompletedEvent(
@@ -258,6 +264,21 @@ public sealed class HttpDownloader : IDisposable
                 }
                 Directory.CreateDirectory(_task.SaveDirectory);
                 _task.TempFilePath = Path.Combine(_task.SaveDirectory, _task.FileName + ".fdown");
+            }
+
+            if (_task.TotalBytes > 0)
+            {
+                if (DiskSpaceChecker.ExceedsFat32Limit(_task.SaveDirectory, _task.TotalBytes))
+                {
+                    throw new NotSupportedException($"Hedef sürücü dosya sistemi (FAT32) 4 GB'tan büyük dosyaları desteklemez ({_task.TotalBytes:N0} byte).");
+                }
+
+                if (!DiskSpaceChecker.HasEnoughSpace(_task.SaveDirectory, _task.TotalBytes))
+                {
+                    var available = DiskSpaceChecker.GetAvailableSpace(_task.SaveDirectory);
+                    _eventBus.Publish(new DiskFullEvent(_task.Id, _task.SaveDirectory, _task.TotalBytes, available));
+                    throw new IOException($"Yetersiz disk alanı! Gerekli: {_task.TotalBytes:N0} byte, Mevcut: {available:N0} byte");
+                }
             }
 
             writer = new FileWriter(

@@ -118,6 +118,14 @@ public static class DownloadErrorClassifier
                 inner: ex);
         }
 
+        if (ex is DirectoryNotFoundException or DriveNotFoundException)
+        {
+            return new DownloadException(
+                DownloadErrorKind.DiskFullOrPermission,
+                $"Hedef klasör veya sürücü bulunamadı ya da çıkarıldı: {ex.Message}",
+                inner: ex);
+        }
+
         if (ex is IOException ioEx)
         {
             // Ağ soketinin kapatılması veya HTTP aktarım akışının kesilmesi bir ağ hatasıdır (Transient)

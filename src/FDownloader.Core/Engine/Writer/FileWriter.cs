@@ -113,6 +113,13 @@ public sealed class FileWriter : IAsyncDisposable
             _stream = null;
         }
 
+        // Hedef klasör silinmiş veya sürücü çıkarılmış mı kontrolü
+        string? destDir = Path.GetDirectoryName(finalPath);
+        if (!string.IsNullOrEmpty(destDir) && !Directory.Exists(destDir))
+        {
+            throw new DirectoryNotFoundException($"Hedef klasör mevcut değil veya silinmiş: {destDir}");
+        }
+
         // Atomik taşıma
         try
         {
