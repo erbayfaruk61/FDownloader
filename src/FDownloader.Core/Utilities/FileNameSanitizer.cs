@@ -109,8 +109,8 @@ public static class FileNameSanitizer
     }
 
     /// <summary>
-    /// URL'nin son segmentinden dosya adını çıkarır.
-    /// Sorgu parametrelerini ve fragment'ı atar.
+    /// URL'nin son segmentinden veya sorgu parametrelerinden dosya adını çıkarır.
+    /// Öncelik: Uzantılı Path Segmenti -> Sorgu Parametreleri (?file=..., ?filename=...) -> Uzantısız Path Segmenti
     /// </summary>
     public static string? ExtractFromUrl(string? url)
     {
@@ -121,7 +121,36 @@ public static class FileNameSanitizer
             var uri = new Uri(url);
             string path = uri.AbsolutePath;
             string name = Path.GetFileName(path);
-            return string.IsNullOrWhiteSpace(name) ? null : Uri.UnescapeDataString(name);
+
+            // Eğer path'teki dosya adı bir uzantıya sahipse doğrudan kabul et (örn: /files/setup.exe)
+            if (!string.IsNullOrWhiteSpace(name) && Path.HasExtension(name))
+            {
+                return Uri.UnescapeDataString(name);
+            }
+
+            // Path uzantısız ise veya boşsa önce sorgu parametrelerini ara (?file=..., ?filename=..., ?name=...)
+            if (!string.IsNullOrWhiteSpace(uri.Query))
+            {
+                var queryParams = System.Web.HttpUtility.ParseQueryString(uri.Query);
+                foreach (var key in new[] { "filename", "file", "name", "download", "title" })
+                {
+                    var val = queryParams[key];
+                    if (!string.IsNullOrWhiteSpace(val))
+                    {
+                        var candidate = Path.GetFileName(val.Trim());
+                        if (!string.IsNullOrWhiteSpace(candidate))
+                            return Uri.UnescapeDataString(candidate);
+                    }
+                }
+            }
+
+            // Sorgu parametresinde de yoksa, uzantısız path adını dön
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                return Uri.UnescapeDataString(name);
+            }
+
+            return null;
         }
         catch
         {

@@ -18,6 +18,8 @@ public sealed class DownloadProber
         _logger = logger;
     }
 
+    private const int MaxRedirects = 10;
+
     /// <summary>
     /// Verilen URL'yi probe eder ve dosya hakkında bilgi döner.
     /// </summary>
@@ -39,10 +41,10 @@ public sealed class DownloadProber
         {
             // Önce HEAD isteği dene
             var result = await TryHeadProbeAsync(url, referer, cookies, userAgent, ct);
-            if (result is not null) return result;
+            if (result is not null && result.IsSuccess) return result;
 
             // HEAD başarısız olduysa küçük Range isteği ile dene
-            _logger.LogDebug("HEAD başarısız, Range isteği ile probe deneniyor: {Url}", url);
+            _logger.LogDebug("HEAD başarısız veya desteklenmiyor, Range isteği ile probe deneniyor: {Url}", url);
             return await RangeProbeAsync(url, referer, cookies, userAgent, ct);
         }
         catch (Exception ex)
@@ -61,66 +63,160 @@ public sealed class DownloadProber
     private async Task<Network.ProbeResult?> TryHeadProbeAsync(
         string url, string? referer, string? cookies, string? userAgent, CancellationToken ct)
     {
-        using var request = BuildRequest(HttpMethod.Head, url, referer, cookies, userAgent);
-        HttpResponseMessage response;
+        var (response, finalUrl, error) = await ExecuteWithRedirectsAsync(
+            HttpMethod.Head, url, referer, cookies, userAgent, isRangeProbe: false, ct);
 
-        try
+        if (error is not null)
         {
-            response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
-        }
-        catch
-        {
-            return null; // HEAD çalışmadı, Range ile devam
-        }
-
-        // Bazı sunucular HEAD'e 405 döner
-        if (!response.IsSuccessStatusCode && response.StatusCode != System.Net.HttpStatusCode.PartialContent)
-        {
-            _logger.LogDebug("HEAD {StatusCode} döndü, Range ile devam", (int)response.StatusCode);
-            return null;
+            return new Network.ProbeResult
+            {
+                FinalUrl = finalUrl,
+                FileName = FileNameSanitizer.ExtractFromUrl(finalUrl) ?? "downloaded_file",
+                IsSuccess = false,
+                ErrorMessage = error
+            };
         }
 
-        return BuildResult(url, response.RequestMessage?.RequestUri?.ToString() ?? url, response.Headers, response.Content.Headers);
+        if (response is null) return null;
+
+        using (response)
+        {
+            // Bazı sunucular HEAD metoduna 405 veya 403 döner
+            if (!response.IsSuccessStatusCode && response.StatusCode != System.Net.HttpStatusCode.PartialContent)
+            {
+                _logger.LogDebug("HEAD {StatusCode} döndü, Range ile devam edilecek", (int)response.StatusCode);
+                return null;
+            }
+
+            return BuildResult(url, finalUrl, response.Headers, response.Content.Headers);
+        }
     }
 
     private async Task<Network.ProbeResult> RangeProbeAsync(
         string url, string? referer, string? cookies, string? userAgent, CancellationToken ct)
     {
-        using var request = BuildRequest(HttpMethod.Get, url, referer, cookies, userAgent);
-        // Sadece ilk 0 byte'ı iste — sunucu Range yanıtı verir veya tam içerik döner
-        request.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(0, 0);
+        var (response, finalUrl, error) = await ExecuteWithRedirectsAsync(
+            HttpMethod.Get, url, referer, cookies, userAgent, isRangeProbe: true, ct);
 
-        HttpResponseMessage response;
-        try
+        if (error is not null)
         {
-            response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
-            await response.Content.ReadAsByteArrayAsync(ct); // Bağlantıyı serbest bırak
+            return new Network.ProbeResult
+            {
+                FinalUrl = finalUrl,
+                FileName = FileNameSanitizer.ExtractFromUrl(finalUrl) ?? "downloaded_file",
+                IsSuccess = false,
+                ErrorMessage = error
+            };
         }
-        catch (Exception ex)
+
+        if (response is null)
         {
             return new Network.ProbeResult
             {
                 FinalUrl = url,
                 FileName = FileNameSanitizer.ExtractFromUrl(url) ?? "downloaded_file",
                 IsSuccess = false,
-                ErrorMessage = $"Probe bağlantı hatası: {ex.Message}"
+                ErrorMessage = "Sunucudan yanıt alınamadı."
             };
         }
 
-        if (!response.IsSuccessStatusCode && response.StatusCode != System.Net.HttpStatusCode.PartialContent)
+        using (response)
         {
-            _logger.LogWarning("Range probe başarısız: HTTP {StatusCode} {ReasonPhrase}", (int)response.StatusCode, response.ReasonPhrase);
-            return new Network.ProbeResult
+            try
             {
-                FinalUrl = response.RequestMessage?.RequestUri?.ToString() ?? url,
-                FileName = FileNameSanitizer.ExtractFromUrl(url) ?? "downloaded_file",
-                IsSuccess = false,
-                ErrorMessage = $"Sunucu {(int)response.StatusCode} ({response.ReasonPhrase}) yanıtı döndü."
-            };
+                await response.Content.ReadAsByteArrayAsync(ct); // Yanıtı oku ve bağlantıyı serbest bırak
+            }
+            catch { }
+
+            if (!response.IsSuccessStatusCode && response.StatusCode != System.Net.HttpStatusCode.PartialContent)
+            {
+                _logger.LogWarning("Range probe başarısız: HTTP {StatusCode} {ReasonPhrase}", (int)response.StatusCode, response.ReasonPhrase);
+                return new Network.ProbeResult
+                {
+                    FinalUrl = finalUrl,
+                    FileName = FileNameSanitizer.ExtractFromUrl(finalUrl) ?? "downloaded_file",
+                    IsSuccess = false,
+                    ErrorMessage = $"Sunucu {(int)response.StatusCode} ({response.ReasonPhrase}) yanıtı döndü."
+                };
+            }
+
+            return BuildResult(url, finalUrl, response.Headers, response.Content.Headers);
+        }
+    }
+
+    private async Task<(HttpResponseMessage? Response, string FinalUrl, string? Error)> ExecuteWithRedirectsAsync(
+        HttpMethod method,
+        string startUrl,
+        string? referer,
+        string? cookies,
+        string? userAgent,
+        bool isRangeProbe,
+        CancellationToken ct)
+    {
+        string currentUrl = startUrl;
+        var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        for (int redirectCount = 0; redirectCount <= MaxRedirects; redirectCount++)
+        {
+            if (!visited.Add(currentUrl))
+            {
+                return (null, currentUrl, $"Yönlendirme döngüsü tespit edildi: {currentUrl}");
+            }
+
+            HttpRequestMessage request = BuildRequest(method, currentUrl, referer, cookies, userAgent);
+            if (isRangeProbe)
+            {
+                request.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(0, 0);
+            }
+
+            HttpResponseMessage response;
+            try
+            {
+                response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
+            }
+            catch (HttpRequestException ex) when (ex.Message.Contains("redirect", StringComparison.OrdinalIgnoreCase))
+            {
+                return (null, currentUrl, $"Yönlendirme döngüsü veya çok fazla yönlendirme: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                return (null, currentUrl, ex.Message);
+            }
+
+            // Eğer otomatik yönlendirme ile başka bir URL'e varılmışsa
+            var autoFinalUri = response.RequestMessage?.RequestUri?.ToString();
+            if (!string.IsNullOrEmpty(autoFinalUri) && !string.Equals(autoFinalUri, currentUrl, StringComparison.OrdinalIgnoreCase))
+            {
+                currentUrl = autoFinalUri;
+            }
+
+            if (!IsRedirect(response.StatusCode))
+            {
+                return (response, currentUrl, null);
+            }
+
+            // Manuel 3xx yönlendirme durumu
+            var location = response.Headers.Location;
+            response.Dispose();
+
+            if (location is null)
+            {
+                return (null, currentUrl, "Yönlendirme yanıtında Location başlığı bulunamadı.");
+            }
+
+            var baseUri = new Uri(currentUrl);
+            currentUrl = new Uri(baseUri, location).ToString();
         }
 
-        return BuildResult(url, response.RequestMessage?.RequestUri?.ToString() ?? url, response.Headers, response.Content.Headers);
+        return (null, currentUrl, $"Maksimum yönlendirme sınırı ({MaxRedirects}) aşıldı.");
     }
+
+    private static bool IsRedirect(System.Net.HttpStatusCode code) =>
+        code is System.Net.HttpStatusCode.MovedPermanently
+             or System.Net.HttpStatusCode.Found
+             or System.Net.HttpStatusCode.SeeOther
+             or System.Net.HttpStatusCode.TemporaryRedirect
+             or (System.Net.HttpStatusCode)308;
 
     private Network.ProbeResult BuildResult(
         string originalUrl,
