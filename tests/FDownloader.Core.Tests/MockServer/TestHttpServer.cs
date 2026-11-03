@@ -214,19 +214,52 @@ public sealed class TestHttpServer : IDisposable
                     await res.OutputStream.WriteAsync(dynBytes);
                     break;
 
-                // 13. Büyük deterministik akış (bellekte tutmadan 1 MB deterministik veri)
+                // 13. Büyük deterministik akış (bellekte tutmadan 1 MB deterministik veri, Range destekli)
                 case "/large-stream":
                     long totalLargeBytes = 1024 * 1024; // 1 MB
                     res.Headers["Accept-Ranges"] = "bytes";
-                    res.StatusCode = 200;
-                    res.ContentLength64 = totalLargeBytes;
-
-                    long sent = 0;
-                    while (sent < totalLargeBytes)
+                    var rangeHdr = req.Headers["Range"];
+                    if (!string.IsNullOrEmpty(rangeHdr) && rangeHdr.StartsWith("bytes="))
                     {
-                        int toSend = (int)Math.Min(LargeChunkPattern.Length, totalLargeBytes - sent);
-                        await res.OutputStream.WriteAsync(LargeChunkPattern, 0, toSend);
-                        sent += toSend;
+                        var parts = rangeHdr["bytes=".Length..].Split('-');
+                        long start = long.Parse(parts[0]);
+                        long end = parts.Length > 1 && !string.IsNullOrEmpty(parts[1])
+                            ? long.Parse(parts[1])
+                            : totalLargeBytes - 1;
+
+                        if (start >= totalLargeBytes || end >= totalLargeBytes || start > end)
+                        {
+                            res.StatusCode = 416;
+                            return;
+                        }
+
+                        long len = end - start + 1;
+                        res.StatusCode = 206;
+                        res.Headers["Content-Range"] = $"bytes {start}-{end}/{totalLargeBytes}";
+                        res.ContentLength64 = len;
+
+                        long written = 0;
+                        while (written < len)
+                        {
+                            long globalPos = start + written;
+                            int patternOffset = (int)(globalPos % LargeChunkPattern.Length);
+                            int toWrite = (int)Math.Min(LargeChunkPattern.Length - patternOffset, len - written);
+                            await res.OutputStream.WriteAsync(LargeChunkPattern, patternOffset, toWrite);
+                            written += toWrite;
+                        }
+                    }
+                    else
+                    {
+                        res.StatusCode = 200;
+                        res.ContentLength64 = totalLargeBytes;
+
+                        long sent = 0;
+                        while (sent < totalLargeBytes)
+                        {
+                            int toSend = (int)Math.Min(LargeChunkPattern.Length, totalLargeBytes - sent);
+                            await res.OutputStream.WriteAsync(LargeChunkPattern, 0, toSend);
+                            sent += toSend;
+                        }
                     }
                     break;
 

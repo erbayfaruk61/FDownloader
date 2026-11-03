@@ -35,7 +35,7 @@
 
 | ID | Görev | Zorluk | Durum | Commit | Not |
 |---|---|---|---|---|---|
-| P2-01 | Hash testleri | 🔴 | ⬜ Bekliyor | — | |
+| P2-01 | Hash testleri | 🔴 | ✅ Bitti | — | 1, 2, 4, 8, 16 parça kombinasyonları ve tam bölünmeyen boyutlarda SHA-256 hash doğrulaması yapıldı (104/104 test yeşil) |
 | P2-02 | Kayıpsız resume | 🔴 | ⬜ Bekliyor | — | |
 | P2-03 | Dosya değişim kontrolü | 🟡 | ⬜ Bekliyor | — | |
 | P2-04 | Probe sağlamlığı | 🟡 | ⬜ Bekliyor | — | |

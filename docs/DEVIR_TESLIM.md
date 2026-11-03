@@ -2,31 +2,30 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** Faz 1 Tamamlandı (P1-02, P1-03, P1-04, P1-05) → Faz 2 Başlangıcı (P2-01 Hash Testleri)
-**Durum:** ✅ Faz 1 Bitti
+**ID:** P2-01 — Veri Bütünlüğü Kanıtı (Hash Testleri)
+**Durum:** ✅ Bitti
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
-- `P1-04 (Statik Kod Kalitesi)`:
-  - Kök dizine `.editorconfig` eklendi (girintileme, CS8600-CS8625 nullable uyarıları ve CA2100-CA3004 güvenlik analiz kuralları hata/uyarı olarak yapılandırıldı).
-  - CI hattına (`.github/workflows/ci.yml`) otomatik kod format denetimi (`dotnet format --verify-no-changes`) eklendi.
-  - `Database.cs` içindeki DDL sorguları analizör onayına bağlandı (`[SuppressMessage]`).
-- `P1-05 (Log Altyapısı & Maskeleme)`:
-  - `FDownloader.Core/Logging/SensitiveDataMasker.cs` oluşturuldu. URL query token'ları (`token`, `api_key`, `secret`, `password`), HTTP Authorization başlıkları (`Bearer`, `Basic`) ve Cookie değerleri otomatik `[REDACTED]` ile maskeleniyor.
-  - `SensitiveDataMaskerTests.cs` ile tüm regex ve maskeleme senaryoları doğrulandı.
-- Toplam test sayısı 95'ten **98'e** yükseldi. **98/98 test yeşil**.
+- `tests/FDownloader.Core.Tests/MockServer/TestHttpServer.cs`:
+  - `/large-stream` uç noktasına Range (206 Partial Content) desteği eklendi.
+  - İstenen bayt aralığına göre deterministik model (`LargeChunkPattern`) bayt akışı üretimi sağlandı.
+- `tests/FDownloader.Core.Tests/DataIntegrityHashTests.cs`:
+  - `HttpDownloader` motorunun 1, 2, 4, 8 ve 16 parçalı (segment) indirmelerde deterministik 1 MB veri akışını indirip SHA-256 hash'inin tam eşleştiği doğrulandı.
+  - Parça sayısına tam bölünmeyen (asallardan oluşan) içeriklerin (`/normal`) 4 parçalı indirilmesinde SHA-256 hash doğrulaması test edildi.
+- Toplam test sayısı 98'den **104'e** yükseldi. **104/104 test yeşil**.
 
 ---
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** Faz 1 eksiksiz olarak tamamlandı.
-- **Sıradaki Görev:** **P2-01 — Veri Bütünlüğü Kanıtı (Hash Testleri)**.
-  - Farklı dosya boyutları (1 MB, 10 MB, vb.) ve parça sayıları (1, 2, 4, 8, 16) kombinasyonlarında `HttpDownloader` ile indirme yapılıp SHA-256 hash doğrulaması yapılacak.
+- **Tam olarak nerede kaldım:** Faz 2'nin ilk ve en kritik görevi olan P2-01 (Hash & veri bütünlüğü) başarıyla tamamlandı.
+- **Sıradaki Görev:** **P2-02 — Kalıcı Resume'un Kayıpsızlığı**.
+  - İndirme ortasında duraklatma / iptal / yarım kalma durumlarında diske yazılan veri checkpoint'inin doğrulanması ve indirmeye devam edildiğinde nihai dosya hash'inin eksiksiz çıkması.
 - **Derleme durumu:** ✅ Başarılı (0 hata)
-- **Test durumu:** 98/98 geçiyor
+- **Test durumu:** 104/104 geçiyor
 
 ---
 
@@ -34,10 +33,10 @@
 
 1. Değişiklikleri commit et:
    ```
-   git add src/FDownloader.Core/Logging/ tests/ docs/
-   git commit -m "feat(logging): P1-05 - Hassas veri maskeleme (SensitiveDataMasker) ve Faz 1 tamamlama"
+   git add tests/ docs/
+   git commit -m "test(engine): P2-01 - Cok parcali HTTP indirme SHA-256 veri butunlugu ve hash testleri"
    ```
-2. **P2-01:** `HttpDownloader` için `TestHttpServer` tabanlı deterministik çok parçalı hash & veri bütünlüğü testini yaz ve doğrula.
+2. **P2-02:** Resume kayıpsızlık testini (`Pause` / `Resume` döngüsü ile yarım dosyadan devam edip SHA-256 doğrulama) yaz ve doğrula.
 
 ---
 
