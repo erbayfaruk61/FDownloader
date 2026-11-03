@@ -2,39 +2,42 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** P1-02 & P1-03 — Test CI Hattı ve 13 Uç Noktalı Yerel Test Sunucusu
-**Durum:** ✅ Bitti
+**ID:** Faz 1 Tamamlandı (P1-02, P1-03, P1-04, P1-05) → Faz 2 Başlangıcı (P2-01 Hash Testleri)
+**Durum:** ✅ Faz 1 Bitti
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
-- `.github/workflows/ci.yml` oluşturuldu (push ve PR'larda otomatik restore, build ve `dotnet test` koşturuluyor).
-- `tests/FDownloader.Core.Tests/MockServer/TestHttpServer.cs`: 13 senaryolu deterministik yerel test sunucusu yazıldı (Normal Range 206, No-Range 200, Chunked, Slow, Abort/Drop, Wrong Length, Redirect Chain & Loop, Error 500/503/429/403/404, Content-Disposition, Basic Auth, Cookie/Referer, Dynamic ETag, 1MB Large Stream).
-- `tests/FDownloader.Core.Tests/TestHttpServerTests.cs`: 13 senaryonun tümü için birim testleri yazıldı ve doğrulandı.
-- Toplam test sayısı 82'den **95'e** yükseldi ve **95/95 test yeşil**.
+- `P1-04 (Statik Kod Kalitesi)`:
+  - Kök dizine `.editorconfig` eklendi (girintileme, CS8600-CS8625 nullable uyarıları ve CA2100-CA3004 güvenlik analiz kuralları hata/uyarı olarak yapılandırıldı).
+  - CI hattına (`.github/workflows/ci.yml`) otomatik kod format denetimi (`dotnet format --verify-no-changes`) eklendi.
+  - `Database.cs` içindeki DDL sorguları analizör onayına bağlandı (`[SuppressMessage]`).
+- `P1-05 (Log Altyapısı & Maskeleme)`:
+  - `FDownloader.Core/Logging/SensitiveDataMasker.cs` oluşturuldu. URL query token'ları (`token`, `api_key`, `secret`, `password`), HTTP Authorization başlıkları (`Bearer`, `Basic`) ve Cookie değerleri otomatik `[REDACTED]` ile maskeleniyor.
+  - `SensitiveDataMaskerTests.cs` ile tüm regex ve maskeleme senaryoları doğrulandı.
+- Toplam test sayısı 95'ten **98'e** yükseldi. **98/98 test yeşil**.
 
 ---
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** Faz 1 kapsamında P1-02 ve P1-03 başarıyla tamamlandı. P1-04 (Statik kod kalitesi / .editorconfig) ve P1-05 (Hassas veri maskelemeli log altyapısı) veya Faz 2 motor sağlamlaştırma görevlerine (P2-01 Veri bütünlüğü & Hash testleri) geçilebilir.
+- **Tam olarak nerede kaldım:** Faz 1 eksiksiz olarak tamamlandı.
+- **Sıradaki Görev:** **P2-01 — Veri Bütünlüğü Kanıtı (Hash Testleri)**.
+  - Farklı dosya boyutları (1 MB, 10 MB, vb.) ve parça sayıları (1, 2, 4, 8, 16) kombinasyonlarında `HttpDownloader` ile indirme yapılıp SHA-256 hash doğrulaması yapılacak.
 - **Derleme durumu:** ✅ Başarılı (0 hata)
-- **Test durumu:** 95/95 geçiyor
+- **Test durumu:** 98/98 geçiyor
 
 ---
 
 ## 4. Sıradaki adım (net ve küçük)
 
-1. Yapılan P1-02 ve P1-03 geliştirmelerini commit et:
+1. Değişiklikleri commit et:
    ```
-   git add .github/workflows/ci.yml tests/ docs/
-   git commit -m "feat(test): P1-02 ve P1-03 - CI test hatti ve 13 senaryolu yerel HTTP test sunucusu"
+   git add src/FDownloader.Core/Logging/ tests/ docs/
+   git commit -m "feat(logging): P1-05 - Hassas veri maskeleme (SensitiveDataMasker) ve Faz 1 tamamlama"
    ```
-2. Sıradaki görev:
-   - **P1-04:** Statik kod kalitesi (.editorconfig & nullable referans kuralları)
-   - **P1-05:** Loglama altyapısı ve hassas veri maskeleme
-   - Veya doğrudan motor testlerine geçiş: **P2-01 (Hash & veri bütünlüğü testleri)**.
+2. **P2-01:** `HttpDownloader` için `TestHttpServer` tabanlı deterministik çok parçalı hash & veri bütünlüğü testini yaz ve doğrula.
 
 ---
 

@@ -27,7 +27,7 @@
 | P1-02 | Test projeleri | 🟡 | ✅ Bitti | — | .github/workflows/ci.yml iş akışı eklendi (Release modunda derleme ve test çalıştırma) |
 | P1-03 | Yerel test sunucusu | 🔴 | ✅ Bitti | — | TestHttpServer oluşturuldu; 13 senaryonun tümü (Range, Chunked, ETag, Auth vb.) test edildi (95/95 test yeşil) |
 | P1-04 | Statik kod kalitesi | 🟢 | ✅ Bitti | — | .editorconfig eklendi, güvenlik kuralları (CA2100 vb.) hata seviyesine çıkarıldı, CI'ya kod biçim denetimi entegre edildi |
-| P1-05 | Loglama altyapısı | 🟢 | ⬜ Bekliyor | — | Serilog mevcut ama hassas veri maskeleme eksik |
+| P1-05 | Loglama altyapısı | 🟢 | ✅ Bitti | — | SensitiveDataMasker eklendi (Bearer/Basic Auth, Cookie, URL token/API key maskeleme) ve test edildi (98/98 test yeşil) |
 
 ---
 
