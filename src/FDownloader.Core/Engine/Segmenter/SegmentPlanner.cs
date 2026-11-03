@@ -77,38 +77,50 @@ public static class SegmentPlanner
         segments.Where(s => s.Status != SegmentStatus.Completed);
 
     /// <summary>
-    /// Dinamik bölme: En büyük tamamlanmamış segmenti ikiye böler.
-    /// Diğer segmentler bittikten sonra tek bir büyük segment kaldıysa çağrılır.
+    /// Dinamik bölme: En büyük tamamlanmamış ve aktif indirilen segmenti ikiye böler.
+    /// Boşta kalan (idle) worker'ların yardım etmesi (work-stealing) için çağrılır.
     /// </summary>
     /// <returns>Yeni oluşturulan segment; bölme mümkün değilse null.</returns>
     public static Segment? SplitLargestActiveSegment(
         List<Segment> segments,
-        long minSplitSizeBytes = 4 * 1024 * 1024) // 4 MB minimum
+        long minSplitSizeBytes = 1024 * 1024) // 1 MB minimum
     {
-        var candidate = segments
-            .Where(s => s.Status == SegmentStatus.Downloading && s.RemainingBytes > minSplitSizeBytes * 2)
-            .OrderByDescending(s => s.RemainingBytes)
-            .FirstOrDefault();
-
-        if (candidate is null) return null;
-
-        long splitPoint = candidate.CurrentOffset + candidate.RemainingBytes / 2;
-
-        // Mevcut segmentin bitiş noktasını güncelle
-        long originalEnd = candidate.EndByte;
-        candidate.EndByte = splitPoint - 1;
-
-        // Yeni segment oluştur
-        var newSegment = new Segment
+        lock (segments)
         {
-            TaskId = candidate.TaskId,
-            Index = segments.Max(s => s.Index) + 1,
-            StartByte = splitPoint,
-            EndByte = originalEnd,
-            Status = SegmentStatus.Pending
-        };
+            var candidate = segments
+                .Where(s => s.Status == SegmentStatus.Downloading && s.RemainingBytes >= minSplitSizeBytes * 2)
+                .OrderByDescending(s => s.RemainingBytes)
+                .FirstOrDefault();
 
-        segments.Add(newSegment);
-        return newSegment;
+            if (candidate is null) return null;
+
+            long remaining = candidate.RemainingBytes;
+            long half = remaining / 2;
+            long splitPoint = candidate.CurrentOffset + half;
+            long originalEnd = candidate.EndByte;
+
+            if (splitPoint <= candidate.CurrentOffset || splitPoint > originalEnd)
+            {
+                return null;
+            }
+
+            // Mevcut segmentin bitiş noktasını küçült
+            candidate.EndByte = splitPoint - 1;
+
+            // Yeni segment oluştur (kalan ikinci yarıyı alır)
+            int nextIndex = segments.Count > 0 ? segments.Max(s => s.Index) + 1 : 0;
+            var newSegment = new Segment
+            {
+                TaskId = candidate.TaskId,
+                Index = nextIndex,
+                StartByte = splitPoint,
+                EndByte = originalEnd,
+                DownloadedBytes = 0,
+                Status = SegmentStatus.Pending
+            };
+
+            segments.Add(newSegment);
+            return newSegment;
+        }
     }
 }

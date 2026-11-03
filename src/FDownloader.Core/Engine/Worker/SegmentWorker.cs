@@ -212,20 +212,34 @@ public sealed class SegmentWorker
                 await _speedLimiter.ThrottleAsync(bytesRead, ct);
             }
 
-            // Diske yaz
-            await _writer.WriteAtAsync(writeOffset, buffer, bytesRead, ct);
-
-            // İlerlemeyi güncelle — DISKE YAZILMIŞdaki miktarı güncelle
-            _segment.DownloadedBytes += bytesRead;
-            writeOffset += bytesRead;
-
-            _speedCalc.AddSample(bytesRead);
-            BytesWritten?.Invoke(bytesRead);
-
-            // Beklenen sınırı aştıysak dur (sunucu fazla veri göndermiş olabilir)
-            if (_segment.EndByte > 0 && _segment.EndByte < long.MaxValue && writeOffset > _segment.EndByte + 1)
+            // Dinamik parça bölme ve sınır aşımı koruması (çift yazımı kesin olarak önler)
+            int effectiveBytesToWrite = bytesRead;
+            if (_segment.EndByte > 0 && _segment.EndByte < long.MaxValue)
             {
-                _logger.LogWarning("Segment {Index} beklenen sınırı aştı, durduruluyor", _segment.Index);
+                long maxAllowed = _segment.EndByte - writeOffset + 1;
+                if (maxAllowed <= 0)
+                {
+                    break;
+                }
+                if (effectiveBytesToWrite > maxAllowed)
+                {
+                    effectiveBytesToWrite = (int)maxAllowed;
+                }
+            }
+
+            // Diske yaz
+            await _writer.WriteAtAsync(writeOffset, buffer, effectiveBytesToWrite, ct);
+
+            // İlerlemeyi güncelle — DISKE YAZILMIŞ miktarı güncelle
+            _segment.DownloadedBytes += effectiveBytesToWrite;
+            writeOffset += effectiveBytesToWrite;
+
+            _speedCalc.AddSample(effectiveBytesToWrite);
+            BytesWritten?.Invoke(effectiveBytesToWrite);
+
+            // Parça bittiyse veya dinamik olarak küçültülen sınıra ulaştıysa döngüyü sonlandır
+            if (_segment.EndByte > 0 && _segment.EndByte < long.MaxValue && writeOffset > _segment.EndByte)
+            {
                 break;
             }
         }

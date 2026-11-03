@@ -230,6 +230,11 @@ public sealed class HttpDownloader : IDisposable
                 }
             }
 
+            if (string.IsNullOrEmpty(_task.FinalUrl))
+            {
+                _task.FinalUrl = _task.OriginalUrl;
+            }
+
             // 2. ADIM: Segmentlerin Planlanması (Yoksa oluştur)
             if (_task.Segments.Count == 0)
             {
@@ -245,6 +250,16 @@ public sealed class HttpDownloader : IDisposable
             _repository.UpdateTaskStatus(_task);
 
             // 3. ADIM: FileWriter Başlatma
+            if (string.IsNullOrEmpty(_task.TempFilePath))
+            {
+                if (string.IsNullOrEmpty(_task.SaveDirectory))
+                {
+                    _task.SaveDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + @"\Downloads";
+                }
+                Directory.CreateDirectory(_task.SaveDirectory);
+                _task.TempFilePath = Path.Combine(_task.SaveDirectory, _task.FileName + ".fdown");
+            }
+
             writer = new FileWriter(
                 _task.TempFilePath,
                 _loggerFactory.CreateLogger<FileWriter>());
@@ -254,7 +269,7 @@ public sealed class HttpDownloader : IDisposable
             _task.Status = DownloadStatus.Downloading;
             _repository.UpdateTaskStatus(_task);
 
-            // 4. ADIM: Segment Worker'larının Çalıştırılması
+            // 4. ADIM: Segment Worker'larının Çalıştırılması (Dinamik Parça Bölme / Work-Stealing)
             var workerLogger = _loggerFactory.CreateLogger<SegmentWorker>();
             var workerTasks = new List<Task<bool>>();
 
@@ -262,34 +277,85 @@ public sealed class HttpDownloader : IDisposable
             using var progressCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             var progressReportingTask = StartProgressReportingLoopAsync(progressCts.Token);
 
-            foreach (var segment in _task.Segments)
+            int concurrency = Math.Clamp(_task.SegmentCount > 0 ? _task.SegmentCount : 8, 1, 16);
+            if (!_task.SupportsRange || _task.TotalBytes <= 0)
             {
-                if (segment.IsCompleted) continue;
+                concurrency = 1; // Range desteksiz veya boyutu bilinmeyen indirmeler tek bağlantı
+            }
 
-                var worker = new SegmentWorker(
-                    segment,
-                    _task.FinalUrl,
-                    writer,
-                    _httpClient,
-                    workerLogger,
-                    maxRetries: 5,
-                    connectTimeout: TimeSpan.FromSeconds(15),
-                    stallTimeout: TimeSpan.FromSeconds(30),
-                    userAgent: _task.UserAgent,
-                    referer: _task.Referer,
-                    cookies: _task.Cookies,
-                    speedLimiter: _speedLimiter);
-
-                worker.BytesWritten += bytes =>
+            for (int workerId = 0; workerId < concurrency; workerId++)
+            {
+                workerTasks.Add(System.Threading.Tasks.Task.Run(async () =>
                 {
-                    lock (_speedCalculator)
+                    while (!cancellationToken.IsCancellationRequested)
                     {
-                        _speedCalculator.AddSample(bytes);
-                        _task.DownloadedBytes += bytes;
-                    }
-                };
+                        Segment? segmentToDownload = null;
 
-                workerTasks.Add(worker.RunAsync(cancellationToken));
+                        lock (_task.Segments)
+                        {
+                            // 1. Önce henüz tamamlanmamış ve başlanmamış (Pending / Paused) parça var mı?
+                            segmentToDownload = _task.Segments.FirstOrDefault(s => s.Status != SegmentStatus.Completed && s.Status != SegmentStatus.Downloading);
+                            if (segmentToDownload != null)
+                            {
+                                segmentToDownload.Status = SegmentStatus.Downloading;
+                            }
+                            else if (_task.SupportsRange && _task.TotalBytes > 0)
+                            {
+                                // 2. Boşta kalan (idle) worker: Aktif en büyük parçayı böl ve yardım et (Work-Stealing)
+                                segmentToDownload = SegmentPlanner.SplitLargestActiveSegment(_task.Segments, minSplitSizeBytes: 512 * 1024);
+                                if (segmentToDownload != null)
+                                {
+                                    segmentToDownload.Status = SegmentStatus.Downloading;
+                                    try
+                                    {
+                                        _repository.SaveSegmentProgress(new[] { segmentToDownload });
+                                    }
+                                    catch { }
+                                    _logger.LogInformation(
+                                        "Dinamik parça bölme: Yeni Segment {Index} [{Start}-{End}] oluşturuldu",
+                                        segmentToDownload.Index, segmentToDownload.StartByte, segmentToDownload.EndByte);
+                                }
+                            }
+                        }
+
+                        if (segmentToDownload == null)
+                        {
+                            // İndirilecek veya bölünecek parça kalmadı, bu worker tamamlandı
+                            break;
+                        }
+
+                        var worker = new SegmentWorker(
+                            segmentToDownload,
+                            _task.FinalUrl,
+                            writer,
+                            _httpClient,
+                            workerLogger,
+                            maxRetries: 5,
+                            connectTimeout: TimeSpan.FromSeconds(15),
+                            stallTimeout: TimeSpan.FromSeconds(30),
+                            userAgent: _task.UserAgent,
+                            referer: _task.Referer,
+                            cookies: _task.Cookies,
+                            speedLimiter: _speedLimiter);
+
+                        worker.BytesWritten += bytes =>
+                        {
+                            lock (_speedCalculator)
+                            {
+                                _speedCalculator.AddSample(bytes);
+                                _task.DownloadedBytes += bytes;
+                            }
+                        };
+
+                        bool success = await worker.RunAsync(cancellationToken);
+                        if (!success && !cancellationToken.IsCancellationRequested)
+                        {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                }, cancellationToken));
             }
 
             var workerResults = await System.Threading.Tasks.Task.WhenAll(workerTasks);

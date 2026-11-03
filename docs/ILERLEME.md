@@ -41,7 +41,7 @@
 | P2-04 | Probe sağlamlığı | 🟡 | ✅ Bitti | — | HEAD/Range fallback, yönlendirme döngüsü/sınırı kontrolü, dosya adı önceliği (Content-Disposition > Path > Query) Senaryo 2, 3, 7, 9 ile doğrulandı (114/114 test yeşil) |
 | P2-05 | Hata sınıflandırma/yeniden deneme | 🔴 | ✅ Bitti | — | DownloadErrorClassifier, SegmentWorker akıllı yeniden deneme (429 Retry-After, kalıcı 404/410 ve 401/403 erken durdurma, disk full koruması) ve HttpDownloader entegrasyonu tamamlandı (122/122 test yeşil) |
 | P2-06 | Stall tespiti | 🔴 | ✅ Bitti | — | Connect timeout ve Stall timeout (veri akışı durdu) ayrımı, kopan/takılan parçanın Range ile kayıpsız toparlanması Senaryo 4 ve 5 ile kanıtlandı (125/125 test yeşil) |
-| P2-07 | Dinamik parça bölme | 🔴 | ⬜ Bekliyor | — | |
+| P2-07 | Dinamik parça bölme | 🔴 | ✅ Bitti | — | Boştaki worker'ların iş çalması (work-stealing), dinamik parça bölme, çift yazım/çakışma koruması ve hash bütünlüğü test edildi (128/128 test yeşil) |
 | P2-08 | Disk/dosya sistemi | 🟡 | ⬜ Bekliyor | — | |
 | P2-09 | Dosya adı güvenliği | 🟡 | ⬜ Bekliyor | — | FileNameSanitizer + PathSafetyHelper mevcut |
 | P2-10 | Hız/ETA/ilerleme | 🟡 | ⬜ Bekliyor | — | SpeedCalculator mevcut |

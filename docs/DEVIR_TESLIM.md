@@ -2,35 +2,35 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** P2-06 — Takılma (Stall) Tespiti ve Bağlantı Yönetimi
+**ID:** P2-07 — Dinamik Parça Bölme (Dynamic Segment Splitting / Work Stealing)
 **Durum:** ✅ Bitti
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
+- `src/FDownloader.Core/Engine/Segmenter/SegmentPlanner.cs`:
+  - `SplitLargestActiveSegment` metodu thread-safe hale getirildi; çalışan en büyük parça kilit altında ikiye bölünerek aralıkların çakışmaması ve toplam bayt sayısının korunması sağlandı.
 - `src/FDownloader.Core/Engine/Worker/SegmentWorker.cs`:
-  - `_connectTimeout` (bağlantı kurma zaman aşımı) ve `_stallTimeout` ("veri akışı durdu" zaman aşımı) bağımsız sayaçlar olarak ayrıldı.
-  - Sunucu bağlantısı geciktiğinde `Connect timeout`, veri akışı kesintiye uğradığında `Stall timeout` fırlatılması sağlandı.
-  - Kopan veya takılan bağlantıların kaldıkları `CurrentOffset`'ten yeni bir Range bağlantısı açarak kayıpsız devam etmesi sağlandı.
+  - Dinamik parça bölme sırasında çift yazımı (double write) engelleyen sıkı sınır koruması eklendi (`effectiveBytesToWrite = Math.Min(bytesRead, EndByte - writeOffset + 1)`).
 - `src/FDownloader.Core/Engine/HttpDownloader.cs`:
-  - `SegmentWorker` örneklerine bağımsız `connectTimeout` (15s) ve `stallTimeout` (30s) aktarıldı.
-- `tests/FDownloader.Core.Tests/MockServer/TestHttpServer.cs`:
-  - `/abort` senaryosuna dinamik `AbortRemainingCount` eklendi; ilk istekte abort edip ikinci istekte Range ile kaldığı yerden devam edebilen yapı kuruldu.
-- `tests/FDownloader.Core.Tests/StallAndConnectionTests.cs`:
-  - Senaryo 5 (Abort sonrası toparlanma ve tam SHA-256 hash eşleşmesi), Senaryo 4 (Yavaş aktarım yapan /slow uç noktasının tamamlanması) ve Stall timeout sınır aşımında retry tetikleme testleri yazıldı.
-- Toplam test sayısı 122'den **125'e** yükseldi. **125/125 test yeşil**.
+  - Dinamik worker havuzu kuruldu (Work-Stealing Dispatcher). Boşa çıkan çalışanlar devam eden en büyük parçanın kalanını bölerek yardıma koşuyor; böylece "son %5'te bekleme" sorunu ortadan kalkıyor.
+  - Resume sırasında tamamlanmamış (`Paused`, `Pending`) parçaların da sırayla işleme alınması sağlandı.
+- `tests/FDownloader.Core.Tests/DynamicSegmentSplitTests.cs`:
+  - Parça bölme sınır doğrulaması (çakışmasız aralıklar), eşik altı koruması ve dinamik bölme altında indirilen deterministik akışın SHA-256 hash doğrulaması yapıldı.
+- Toplam test sayısı 125'ten **128'e** yükseldi. **128/128 test yeşil**.
 
 ---
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** P2-01'den P2-06'ya kadar olan tüm motor görevleri tamamlandı.
-- **Sıradaki Görev:** **P2-07 — Dinamik Parça Bölme (Dynamic Segment Splitting)**.
-  - Bir worker işini bitirince, sürmekte olan en büyük parçanın kalanını ikiye bölüp yardım etmesi.
-  - Bölme sırasında veri çakışması ve çift yazım koruması.
+- **Tam olarak nerede kaldım:** P2-01'den P2-07'ye kadar olan motor sağlamlaştırma görevleri tamamlandı.
+- **Sıradaki Görev:** **P2-08 — Disk ve Dosya Sistemi Sağlamlığı**.
+  - Seyrek dosya (sparse file) / preallocation doğrulaması (SetLength / diskte önceden yer ayırma).
+  - İndirme tamamlanınca `.fdown` -> nihai dosya adı atomik taşıma (atomic rename) ve dosya sistemi hata yönetimi.
+  - Disk dolduğunda veya izin reddedildiğinde güvenli duraklatma.
 - **Derleme durumu:** ✅ Başarılı (0 hata)
-- **Test durumu:** 125/125 geçiyor
+- **Test durumu:** 128/128 geçiyor
 
 ---
 
@@ -39,9 +39,9 @@
 1. Değişiklikleri commit et:
    ```
    git add src/ tests/ docs/
-   git commit -m "feat(engine): P2-06 - Connect/stall zaman asimi ayrimi, kopan baglanti toparlanmasi ve testleri"
+   git commit -m "feat(engine): P2-07 - Dinamik parca bolme (work-stealing) ve cift yazim korumasi"
    ```
-2. **P2-07:** Dinamik parça bölme (idle worker work-stealing / segment split) mekanizmasını tasarla ve testlerini yaz.
+2. **P2-08:** `FileWriter.cs` ve disk alanı / preallocation / atomic rename mekanizmalarını testleriyle güçlendir.
 
 ---
 
