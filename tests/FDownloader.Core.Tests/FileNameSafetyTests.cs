@@ -125,3 +125,4 @@ public sealed class FileNameSafetyTests : IDisposable
         Assert.Equal(baseFile, skipResult);
     }
 }
+

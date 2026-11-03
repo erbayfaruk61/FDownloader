@@ -27,23 +27,34 @@ public sealed class SpeedCalculator
         _samples.Enqueue((now, deltaBytes));
         _totalBytesInWindow += deltaBytes;
 
-        // Pencere dışına çıkan örnekleri çıkar
+        PruneExpiredSamples(now);
+    }
+
+    /// <summary>
+    /// Süresi dolan örnekleri pencereden çıkarır.
+    /// </summary>
+    private void PruneExpiredSamples(DateTimeOffset now)
+    {
         var cutoff = now.AddSeconds(-_windowSeconds);
         while (_samples.Count > 0 && _samples.Peek().Timestamp < cutoff)
         {
             var old = _samples.Dequeue();
             _totalBytesInWindow -= old.Bytes;
         }
+
+        if (_totalBytesInWindow < 0) _totalBytesInWindow = 0;
     }
 
     /// <summary>
-    /// Mevcut indirme hızı (byte/sn). Hareketli ortalama.
+    /// Mevcut indirme hızı (byte/sn). Hareketli ortalama (3-5 sn).
     /// </summary>
     public double BytesPerSecond
     {
         get
         {
-            if (_samples.Count < 2) return 0;
+            PruneExpiredSamples(DateTimeOffset.UtcNow);
+
+            if (_samples.Count < 2 || _totalBytesInWindow <= 0) return 0;
 
             double elapsed = (DateTimeOffset.UtcNow - _samples.Peek().Timestamp).TotalSeconds;
             return elapsed > 0 ? _totalBytesInWindow / elapsed : 0;
@@ -58,7 +69,12 @@ public sealed class SpeedCalculator
     {
         double bps = BytesPerSecond;
         if (bps <= 0 || remainingBytes <= 0) return null;
-        return TimeSpan.FromSeconds(remainingBytes / bps);
+
+        double seconds = remainingBytes / bps;
+        if (double.IsInfinity(seconds) || double.IsNaN(seconds) || seconds > 365 * 24 * 3600)
+            return TimeSpan.FromDays(365);
+
+        return TimeSpan.FromSeconds(seconds);
     }
 
     /// <summary>Hızı sıfırla (duraklama sonrası).</summary>

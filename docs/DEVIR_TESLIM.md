@@ -2,33 +2,33 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** P2-09 — Dosya Adı Güvenliği ve Çakışma Politikası
+**ID:** P2-10 — Hız Hesabı, ETA ve İlerleme Olayları
 **Durum:** ✅ Bitti
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
-- `src/FDownloader.Core/Utilities/FileNameSanitizer.cs`:
-  - `Sanitize`: Unicode Form C normalleştirmesi, null byte ve kontrol karakteri temizliği, ters eğik çizgi normalleştirmesi eklendi.
-  - Windows ayrılmış/rezerve cihaz adları (`CON`, `PRN`, `AUX`, `NUL`, `COM1-9`, `LPT1-9`) hem yalın hem de uzantılı varyasyonlarında (`_CON`, `_nul.tar.gz`) güvenli ön eke bağlandı.
-  - `IsSafePath`: Hedef klasör dışına çıkışı (`Path Traversal` - `../`, `..\`) kesin olarak engelleyen doğrulama metodu eklendi.
-  - `FileConflictPolicy` (RenameAuto, Overwrite, Skip) enum ve çakışma çözümleme politikası uygulandı.
-- `tests/FDownloader.Core.Tests/FileNameSafetyTests.cs`:
-  - 33'ü aşkın kötü niyetli girdi varyasyonunu içeren (path traversal, rezerve adlar, yasak karakterler, sondaki nokta/boşluk, kontrol karakterleri, aşırı uzun isimler) kapsamlı güvenlik test seti yazıldı.
-  - Çakışma politikalarının (otomatik numaralandırma `(1)`, `(2)`, üzerine yazma ve atlama) testleri tamamlandı.
-- Toplam test sayısı 133'ten **170'e** yükseldi. **170/170 test yeşil**.
+- `src/FDownloader.Core/Utilities/SpeedCalculator.cs`:
+  - `BytesPerSecond`: Okuma anında süresi dolmuş eski örneklerin pencereden temizlenmesi (`PruneExpiredSamples`) sağlandı; böylece veri akışı durduğunda hızın eski değerde takılı kalmayıp gerçekçi şekilde 0'a inmesi garantilendi.
+  - `GetEta`: Aşırı büyük veya sonsuz/NaN süreler için 365 gün tavanı ve doğru TimeSpan dönüşümü sağlandı.
+- `src/FDownloader.Core/Engine/HttpDownloader.cs`:
+  - İlerleme yayınlama döngüsü 400ms aralıkla çalışarak arayüze giden `ProgressUpdatedEvent` bildirimlerini saniyede 2.5 ile sınırladı (UI kilitlenmesini önleme).
+- `tests/FDownloader.Core.Tests/SpeedCalculatorTests.cs`:
+  - Veri akışı durduğunda hızın sıfırlanması (`SpeedCalculator_WhenStreamStalls_SpeedDropsToZero`), doğru ETA hesabı ve birim biçimlendirme testleri tamamlandı.
+- Toplam test sayısı 170'ten **172'ye** yükseldi. **172/172 test yeşil**.
 
 ---
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** P2-01'den P2-09'a kadar olan motor sağlamlaştırma görevleri tamamlandı.
-- **Sıradaki Görev:** **P2-10 — Hız Hesabı, ETA ve İlerleme Olayları**.
-  - Hareketli ortalama (3-5 sn) hız hesabı, kalan süre (ETA) tahmini.
-  - Arayüze giden ilerleme güncellemelerinin saniyede 2-5 aralığına sınırlandırılması (throttling) ve UI akıcılığı.
+- **Tam olarak nerede kaldım:** P2-01'den P2-10'a kadar olan motor sağlamlaştırma görevleri tamamlandı.
+- **Sıradaki Görev:** **P2-11 — Kuyruk, Hız Sınırlayıcı ve Zamanlayıcı**.
+  - Eşzamanlı indirme limiti (`MaxConcurrentDownloads`), öncelik sırası ve kuyruk yönetimi.
+  - Genel ve görev başı hız sınırlayıcı (`SpeedLimiter` / token bucket).
+  - Ağ kesintisinde otomatik duraklatma ve bağlantı geldiğinde otomatik sürdürme.
 - **Derleme durumu:** ✅ Başarılı (0 hata)
-- **Test durumu:** 170/170 geçiyor
+- **Test durumu:** 172/172 geçiyor
 
 ---
 
@@ -37,9 +37,9 @@
 1. Değişiklikleri commit et:
    ```
    git add src/ tests/ docs/
-   git commit -m "feat(engine): P2-09 - Dosya adi guvenligi, path traversal engeli ve 37 testlik guvenlik seti"
+   git commit -m "feat(engine): P2-10 - Hiz hesabi hareketli ortalama, akis durma sifirlamasi ve ETA dogrulamasi"
    ```
-2. **P2-10:** `SpeedCalculator.cs` ve `HttpDownloader.cs` ilerleme olaylarının hız/ETA doğruluğunu ve saniyede 2-5 UI sınırlandırmasını testleriyle incele ve uygula.
+2. **P2-11:** `DownloadManager.cs` ve `SpeedLimiter.cs` içinde kuyruk limitleri, hız sınırlayıcı ve ağ bağlantısı değişim testlerini uygula.
 
 ---
 

@@ -72,4 +72,36 @@ public class SpeedCalculatorTests
         Assert.Equal(0, calc.BytesPerSecond);
         Assert.Null(calc.GetEta(5000));
     }
+
+    [Fact]
+    public async Task SpeedCalculator_WhenStreamStalls_SpeedDropsToZero()
+    {
+        // 1 saniyelik çok kısa pencere süresi
+        var calc = new SpeedCalculator(windowSeconds: 1);
+        calc.AddSample(1024 * 1024);
+        calc.AddSample(1024 * 1024);
+
+        // Örnek eklendiğinde hız > 0 olmalı
+        Assert.True(calc.BytesPerSecond > 0);
+
+        // 1.1 saniye veri gelmeden bekle (stall simülasyonu)
+        await Task.Delay(1100);
+
+        // Süresi dolan örnekler pencereden çıkarılmalı ve hız 0'a düşmeli
+        Assert.Equal(0, calc.BytesPerSecond);
+        Assert.Null(calc.GetEta(50000));
+    }
+
+    [Fact]
+    public void SpeedCalculator_GetEta_CalculatesAccurateRemainingTime()
+    {
+        var calc = new SpeedCalculator(windowSeconds: 4);
+        // 2 saniye aralık simülasyonu yerine ardışık örnekler
+        calc.AddSample(1024 * 1024);
+        calc.AddSample(1024 * 1024);
+
+        var eta = calc.GetEta(10 * 1024 * 1024);
+        Assert.NotNull(eta);
+        Assert.True(eta.Value.TotalSeconds > 0);
+    }
 }

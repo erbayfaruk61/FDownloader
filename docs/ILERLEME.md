@@ -44,7 +44,7 @@
 | P2-07 | Dinamik parça bölme | 🔴 | ✅ Bitti | — | Boştaki worker'ların iş çalması (work-stealing), dinamik parça bölme, çift yazım/çakışma koruması ve hash bütünlüğü test edildi (128/128 test yeşil) |
 | P2-08 | Disk/dosya sistemi | 🟡 | ✅ Bitti | — | Preallocation, FAT32 4 GB sınırı engeli, hedef klasör silinmesi koruması, atomik taşıma ve TEST_SENARYOLARI.md hazırlandı (133/133 test yeşil) |
 | P2-09 | Dosya adı güvenliği | 🟡 | ✅ Bitti | — | Windows rezerve adları (_CON/_NUL), Unicode normalleştirme, IsSafePath ile path traversal koruması, 37 testlik kötü niyetli liste ve çakışma politikaları doğrulandı (170/170 test yeşil) |
-| P2-10 | Hız/ETA/ilerleme | 🟡 | ⬜ Bekliyor | — | SpeedCalculator mevcut |
+| P2-10 | Hız/ETA/ilerleme | 🟡 | ✅ Bitti | — | SpeedCalculator hareketli ortalama, akış durduğunda hızın sıfıra düşmesi, doğru ETA hesaplaması ve 400ms (saniyede 2.5 kez) UI event sınırlaması doğrulandı (172/172 test yeşil) |
 | P2-11 | Kuyruk/limit/zamanlayıcı | 🟡 | ⬜ Bekliyor | — | |
 | P2-12 | Durum makinesi | 🟡 | ⬜ Bekliyor | — | |
 | P2-13 | Tekrar eden URL/silme | 🟢 | ⬜ Bekliyor | — | |
