@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using FDownloader.Core.Domain;
+using FDownloader.Core.Engine.Exceptions;
 using FDownloader.Core.Engine.Probe;
 using FDownloader.Core.Engine.Segmenter;
 using FDownloader.Core.Engine.Worker;
@@ -340,11 +341,29 @@ public sealed class HttpDownloader : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "İndirme başarısız oldu: {Task}", _task.Id);
-            _task.Status = DownloadStatus.Failed;
-            _task.LastErrorMessage = ex.Message;
-            _repository.UpdateTaskStatus(_task);
-            _eventBus.Publish(new TaskFailedEvent(_task.Id, ex.Message, false));
+            var downloadEx = ex as DownloadException ??
+                             (ex as AggregateException)?.InnerExceptions.OfType<DownloadException>().FirstOrDefault() ??
+                             (ex.InnerException as DownloadException);
+
+            if (downloadEx != null && downloadEx.Kind == DownloadErrorKind.DiskFullOrPermission)
+            {
+                _logger.LogError(downloadEx, "Disk veya erişim hatası nedeniyle indirme duraklatıldı: {Task}", _task.Id);
+                _task.Status = DownloadStatus.Paused;
+                _task.LastErrorMessage = downloadEx.Message;
+                _repository.UpdateTaskStatus(_task);
+                _eventBus.Publish(new TaskFailedEvent(_task.Id, downloadEx.Message, false));
+            }
+            else
+            {
+                string msg = downloadEx?.Message ?? ex.Message;
+                bool isRetrying = downloadEx?.Kind == DownloadErrorKind.Transient || downloadEx?.Kind == DownloadErrorKind.TooManyRequests;
+
+                _logger.LogError(ex, "İndirme başarısız oldu: {Task} ({Msg})", _task.Id, msg);
+                _task.Status = DownloadStatus.Failed;
+                _task.LastErrorMessage = msg;
+                _repository.UpdateTaskStatus(_task);
+                _eventBus.Publish(new TaskFailedEvent(_task.Id, msg, isRetrying));
+            }
         }
         finally
         {

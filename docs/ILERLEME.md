@@ -39,7 +39,7 @@
 | P2-02 | Kayıpsız resume | 🔴 | ✅ Bitti | — | Pause/Cancel anında disk flush ve checkpoint kaydı, GetTask ile segment yükleme, Pause/Resume sonrası SHA-256 hash doğrulaması test edildi (105/105 test yeşil) |
 | P2-03 | Dosya değişim kontrolü | 🟡 | ✅ Bitti | — | Resume öncesi ETag, Last-Modified ve boyut doğrulama, FileChangedOnServerEvent yayını ve iptal koruması eklendi (106/106 test yeşil) |
 | P2-04 | Probe sağlamlığı | 🟡 | ✅ Bitti | — | HEAD/Range fallback, yönlendirme döngüsü/sınırı kontrolü, dosya adı önceliği (Content-Disposition > Path > Query) Senaryo 2, 3, 7, 9 ile doğrulandı (114/114 test yeşil) |
-| P2-05 | Hata sınıflandırma/yeniden deneme | 🔴 | ⬜ Bekliyor | — | |
+| P2-05 | Hata sınıflandırma/yeniden deneme | 🔴 | ✅ Bitti | — | DownloadErrorClassifier, SegmentWorker akıllı yeniden deneme (429 Retry-After, kalıcı 404/410 ve 401/403 erken durdurma, disk full koruması) ve HttpDownloader entegrasyonu tamamlandı (122/122 test yeşil) |
 | P2-06 | Stall tespiti | 🔴 | ⬜ Bekliyor | — | |
 | P2-07 | Dinamik parça bölme | 🔴 | ⬜ Bekliyor | — | |
 | P2-08 | Disk/dosya sistemi | 🟡 | ⬜ Bekliyor | — | |

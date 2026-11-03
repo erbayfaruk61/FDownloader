@@ -2,33 +2,37 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** P2-04 — Probe (Ön İnceleme) Sağlamlığı
+**ID:** P2-05 — Hata Sınıflandırma ve Yeniden Deneme (Retry Logic)
 **Durum:** ✅ Bitti
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
-- `src/FDownloader.Core/Utilities/FileNameSanitizer.cs`:
-  - `ExtractFromUrl` metodu uzantılı dosya adı, sorgu parametreleri (`?file=`, `?filename=`, `?name=`) ve uzantısız path segmentlerini öncelik sırasıyla çözümleyecek şekilde geliştirildi.
-- `src/FDownloader.Core/Engine/Probe/DownloadProber.cs`:
-  - HEAD isteği 405 veya 403 gibi durum kodlarıyla reddedildiğinde Range (0-0 bayt) GET isteği fallback mekanizması sağlandı.
-  - Manuel ve otomatik yönlendirme (redirect) zinciri takibi eklendi; `visited` kümesi ile yönlendirme döngüleri (`redirect loop`) tespit edilip engellendi ve üst yönlendirme sınırı (10) tanımlandı.
-- `tests/FDownloader.Core.Tests/DownloadProberTests.cs`:
-  - TestHttpServer Senaryo 2 (Range desteksiz dosya), Senaryo 3 (Chunked/bilinmeyen boyut), Senaryo 7 (Yönlendirme zinciri ve yönlendirme döngüsü), Senaryo 9 (Content-Disposition: simple, utf-8, zararlı path traversal) ve sorgu parametresi dosya adı çıkarma testleri yazıldı.
-- Toplam test sayısı 106'dan **114'e** yükseldi. **114/114 test yeşil**.
+- `src/FDownloader.Core/Engine/Exceptions/DownloadErrorClassifier.cs`:
+  - `DownloadErrorKind` (Transient, TooManyRequests, PermanentNotFound, PermanentAuth, DiskFullOrPermission, RangeNotSupported) ve `DownloadException` tanımlandı.
+  - HTTP durum kodları (404, 410, 401, 403, 429, 500, 503) ve sistem istisnaları (SocketException, timeout, abort, disk full HRESULT 0x80070070) sınıflandırıldı.
+- `src/FDownloader.Core/Engine/Worker/SegmentWorker.cs`:
+  - Kalıcı hatalarda (404, 410, 401, 403) boşuna tekrar deneme yapılmadan anında hata fırlatma eklendi.
+  - HTTP 429 yanıtında `Retry-After` başlığına uyumlu bekleme sağlandı.
+  - Disk veya izin hatalarında görev duraklatılarak diske/kullanıcıya müdahale imkanı verildi.
+- `src/FDownloader.Core/Engine/HttpDownloader.cs`:
+  - Worker hataları yakalanıp `TaskFailedEvent` ile kurtarılabilir (`isRetrying`) veya kalıcı olarak UI'ya anlaşılır Türkçe mesajlarla iletildi.
+- `tests/FDownloader.Core.Tests/ErrorClassificationTests.cs`:
+  - Senaryo 5 (Abort ve geçici hata yeniden deneme), Senaryo 8 (429 Retry-After, 404 kalıcı hata, 403 erişim engeli, 500/503 geçici hata) ve disk dolu simülasyon testleri yazıldı.
+- Toplam test sayısı 114'ten **122'ye** yükseldi. **122/122 test yeşil**.
 
 ---
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** P2-01, P2-02, P2-03 ve P2-04 tamamlandı.
-- **Sıradaki Görev:** **P2-05 — Hata Sınıflandırma ve Yeniden Deneme (Retry Logic)**.
-  - Tabloya göre durum kodlarına tepki (Üstel geri çekilme + jitter, 429 Retry-After, 404/410 kalıcı hata, 416 range yeniden değerlendirme).
-  - Parça başına deneme sayacı ve toplam süre sınırı.
-  - Senaryo 5, 6, 8 test sunucusu uç noktalarıyla doğrulama.
+- **Tam olarak nerede kaldım:** P2-01, P2-02, P2-03, P2-04 ve P2-05 tamamlandı.
+- **Sıradaki Görev:** **P2-06 — Takılma (Stall) Tespiti ve Bağlantı Yönetimi**.
+  - Bağlantı zaman aşımı, okuma zaman aşımı ve "veri akışı durdu" zaman aşımı ayrımı.
+  - Takılan parçayı kesme ve yeniden bağlanma (Senaryo 4 yavaş yanıt ve Senaryo 5).
+  - Sunucu çok fazla bağlantıyı reddederse parça sayısını otomatik düşüren uyarlamalı mantık.
 - **Derleme durumu:** ✅ Başarılı (0 hata)
-- **Test durumu:** 114/114 geçiyor
+- **Test durumu:** 122/122 geçiyor
 
 ---
 
@@ -37,9 +41,9 @@
 1. Değişiklikleri commit et:
    ```
    git add src/ tests/ docs/
-   git commit -m "feat(engine): P2-04 - DownloadProber fallback, yonlendirme dongusu korumasi ve dosya adi onceligi"
+   git commit -m "feat(engine): P2-05 - Hata siniflandirma, 429 Retry-After ve kalici hata erken durdurma mekanizmasi"
    ```
-2. **P2-05:** `SegmentWorker.cs` ve `HttpDownloader.cs` içinde hata sınıflandırma ve üstel geri çekilme + jitter mantığını uygula, Senaryo 5, 6, 8 testlerini yaz.
+2. **P2-06:** `SegmentWorker.cs` ve `HttpDownloader.cs` içinde stall tespiti ve uyarlamalı bağlantı/parça düşürme mekanizmasını testleriyle uygula.
 
 ---
 

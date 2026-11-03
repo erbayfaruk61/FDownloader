@@ -1,4 +1,5 @@
 using FDownloader.Core.Domain;
+using FDownloader.Core.Engine.Exceptions;
 using FDownloader.Core.Engine.Writer;
 using FDownloader.Core.Utilities;
 using Microsoft.Extensions.Logging;
@@ -59,7 +60,10 @@ public sealed class SegmentWorker
     }
 
     /// <summary>
-    /// Segmenti indirir. Hata durumunda üstel backoff ile yeniden dener.
+    /// Segmenti indirir. Hata sınıflandırmasına göre uygun tepkiyi verir:
+    /// - Geçici hatalar (Transient): Üstel backoff + jitter ile yeniden dener.
+    /// - 429 TooManyRequests: Retry-After başlığına uyar.
+    /// - Kalıcı hatalar (404, 410, 401, 403, Disk/İzin): Yeniden denemez, durur.
     /// </summary>
     /// <returns>Başarılıysa true.</returns>
     public async Task<bool> RunAsync(CancellationToken ct)
@@ -83,21 +87,52 @@ public sealed class SegmentWorker
                 _segment.Status = SegmentStatus.Paused;
                 return false;
             }
-            catch (Exception ex) when (attempt < _maxRetries)
+            catch (Exception rawEx)
             {
+                var classified = DownloadErrorClassifier.ClassifyException(rawEx);
+
+                // Kalıcı hatalar: 404, 410, 401, 403
+                if (classified.Kind is DownloadErrorKind.PermanentNotFound or DownloadErrorKind.PermanentAuth)
+                {
+                    _segment.Status = SegmentStatus.Failed;
+                    _logger.LogError(rawEx, "Segment {Index} kalıcı hata ({Kind}): {Message}", _segment.Index, classified.Kind, classified.Message);
+                    throw classified;
+                }
+
+                // Disk dolu veya erişim izni yok: Duraklat
+                if (classified.Kind == DownloadErrorKind.DiskFullOrPermission)
+                {
+                    _segment.Status = SegmentStatus.Paused;
+                    _logger.LogError(rawEx, "Segment {Index} disk veya erişim hatası: {Message}", _segment.Index, classified.Message);
+                    throw classified;
+                }
+
                 _segment.RetryCount++;
-                var delay = ExponentialBackoff(attempt);
-                _logger.LogWarning(ex,
-                    "Segment {Index} hata (deneme {Attempt}/{Max}), {Delay}sn sonra yeniden deniyor",
-                    _segment.Index, attempt + 1, _maxRetries, delay.TotalSeconds);
+
+                if (attempt >= _maxRetries)
+                {
+                    _segment.Status = SegmentStatus.Failed;
+                    _logger.LogError(rawEx, "Segment {Index} maksimum deneme ({Max}) aşıldı", _segment.Index, _maxRetries);
+                    throw classified;
+                }
+
+                // 429 TooManyRequests: Retry-After başlığına uy
+                TimeSpan delay;
+                if (classified.Kind == DownloadErrorKind.TooManyRequests && classified.RetryAfter.HasValue)
+                {
+                    delay = classified.RetryAfter.Value;
+                    _logger.LogWarning("Segment {Index} 429 Rate Limit aldı. Retry-After süresi ({Delay}sn) bekleniyor",
+                        _segment.Index, delay.TotalSeconds);
+                }
+                else
+                {
+                    delay = ExponentialBackoff(attempt);
+                    _logger.LogWarning(rawEx,
+                        "Segment {Index} geçici hata (deneme {Attempt}/{Max}), {Delay}sn sonra yeniden deniyor",
+                        _segment.Index, attempt + 1, _maxRetries, delay.TotalSeconds);
+                }
 
                 await Task.Delay(delay, ct);
-            }
-            catch (Exception ex)
-            {
-                _segment.Status = SegmentStatus.Failed;
-                _logger.LogError(ex, "Segment {Index} kalıcı olarak başarısız", _segment.Index);
-                return false;
             }
         }
 
@@ -112,18 +147,16 @@ public sealed class SegmentWorker
         using var request = BuildRequest(startFrom, _segment.EndByte);
         using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
 
-        // 206 Partial Content bekliyoruz; 200 de olabilir (range desteksiz, ama okumaya devam)
-        if (!response.IsSuccessStatusCode)
-        {
-            throw new HttpRequestException(
-                $"Sunucu {(int)response.StatusCode} döndü. Segment {_segment.Index}");
-        }
-
         // 416: İstenen aralık geçersiz — segment zaten tamamlanmış olabilir
         if (response.StatusCode == System.Net.HttpStatusCode.RequestedRangeNotSatisfiable)
         {
             _logger.LogWarning("Segment {Index}: 416 Range Not Satisfiable — zaten tamamlanmış sayılıyor", _segment.Index);
             return;
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw DownloadErrorClassifier.ClassifyResponse(response);
         }
 
         // 200 OK geldiğinde (sunucu Range desteklemiyor) sıfırdan başla; 206 Partial Content ise kaldığı offset'ten devam et
