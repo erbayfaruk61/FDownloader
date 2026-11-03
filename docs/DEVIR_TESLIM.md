@@ -2,38 +2,33 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** P2-08 — Disk ve Dosya Sistemi Sağlamlığı
+**ID:** P2-09 — Dosya Adı Güvenliği ve Çakışma Politikası
 **Durum:** ✅ Bitti
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
-- `src/FDownloader.Core/Engine/Writer/FileWriter.cs`:
-  - `InitializeAsync`: `SetLength` ile önceden yer ayırma (preallocation) parçalanmayı önleyecek şekilde güvence altına alındı.
-  - `CommitAsync`: `.fdown` geçici dosyasından nihai hedefe atomik taşıma öncesinde hedef dizinin varlığı denetlendi (`DirectoryNotFoundException`).
-- `src/FDownloader.Core/Engine/HttpDownloader.cs`:
-  - FAT32 dosya sistemi 4 GB sınırı engeli eklendi (`ExceedsFat32Limit`).
-  - İndirme başında ve indirme sırasında periyodik disk boş alan kontrolleri sağlandı (`DiskFullEvent`).
-- `src/FDownloader.Core/Engine/Exceptions/DownloadErrorClassifier.cs`:
-  - Sürücü çıkarılması veya hedef klasör silinmesi (`DirectoryNotFoundException`, `DriveNotFoundException`) durumları sınıflandırıldı.
-- `docs/TEST_SENARYOLARI.md`:
-  - Disk ve dosya sistemi için otomatik ve elle test senaryoları belgelendi.
-- `tests/FDownloader.Core.Tests/DiskFileSystemTests.cs`:
-  - Preallocation boyutu, atomik dosya taşıma, silinmiş hedef klasör hatası ve ofset yazım doğrulama testleri yazıldı.
-- Toplam test sayısı 128'den **133'e** yükseldi. **133/133 test yeşil**.
+- `src/FDownloader.Core/Utilities/FileNameSanitizer.cs`:
+  - `Sanitize`: Unicode Form C normalleştirmesi, null byte ve kontrol karakteri temizliği, ters eğik çizgi normalleştirmesi eklendi.
+  - Windows ayrılmış/rezerve cihaz adları (`CON`, `PRN`, `AUX`, `NUL`, `COM1-9`, `LPT1-9`) hem yalın hem de uzantılı varyasyonlarında (`_CON`, `_nul.tar.gz`) güvenli ön eke bağlandı.
+  - `IsSafePath`: Hedef klasör dışına çıkışı (`Path Traversal` - `../`, `..\`) kesin olarak engelleyen doğrulama metodu eklendi.
+  - `FileConflictPolicy` (RenameAuto, Overwrite, Skip) enum ve çakışma çözümleme politikası uygulandı.
+- `tests/FDownloader.Core.Tests/FileNameSafetyTests.cs`:
+  - 33'ü aşkın kötü niyetli girdi varyasyonunu içeren (path traversal, rezerve adlar, yasak karakterler, sondaki nokta/boşluk, kontrol karakterleri, aşırı uzun isimler) kapsamlı güvenlik test seti yazıldı.
+  - Çakışma politikalarının (otomatik numaralandırma `(1)`, `(2)`, üzerine yazma ve atlama) testleri tamamlandı.
+- Toplam test sayısı 133'ten **170'e** yükseldi. **170/170 test yeşil**.
 
 ---
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** P2-01'den P2-08'e kadar olan tüm motor sağlamlaştırma görevleri tamamlandı.
-- **Sıradaki Görev:** **P2-09 — Dosya Adı Güvenliği ve Çakışma Politikası**.
-  - Yasak karakterler (`\ / : * ? " < > |`), Windows ayrılmış adları (CON, PRN, AUX, NUL, COM1–9, LPT1–9), sondaki nokta/boşluk, çok uzun dosya adları, Unicode normalleştirme.
-  - `../` içeren ad hedef klasör dışına **asla** çıkamaz (Path Traversal testi en az 30 örnekli kötü niyetli liste ile).
-  - Çakışma politikası: Üzerine yaz / numaralandır / atla.
+- **Tam olarak nerede kaldım:** P2-01'den P2-09'a kadar olan motor sağlamlaştırma görevleri tamamlandı.
+- **Sıradaki Görev:** **P2-10 — Hız Hesabı, ETA ve İlerleme Olayları**.
+  - Hareketli ortalama (3-5 sn) hız hesabı, kalan süre (ETA) tahmini.
+  - Arayüze giden ilerleme güncellemelerinin saniyede 2-5 aralığına sınırlandırılması (throttling) ve UI akıcılığı.
 - **Derleme durumu:** ✅ Başarılı (0 hata)
-- **Test durumu:** 133/133 geçiyor
+- **Test durumu:** 170/170 geçiyor
 
 ---
 
@@ -42,9 +37,9 @@
 1. Değişiklikleri commit et:
    ```
    git add src/ tests/ docs/
-   git commit -m "feat(engine): P2-08 - Disk preallocation, FAT32 limiti, atomik tasima ve TEST_SENARYOLARI.md"
+   git commit -m "feat(engine): P2-09 - Dosya adi guvenligi, path traversal engeli ve 37 testlik guvenlik seti"
    ```
-2. **P2-09:** `FileNameSanitizer.cs` ve `PathSafetyHelper.cs` içinde Windows özel adları, path traversal ve 30+ kötü niyetli ad senaryosunu testleriyle güçlendir.
+2. **P2-10:** `SpeedCalculator.cs` ve `HttpDownloader.cs` ilerleme olaylarının hız/ETA doğruluğunu ve saniyede 2-5 UI sınırlandırmasını testleriyle incele ve uygula.
 
 ---
 

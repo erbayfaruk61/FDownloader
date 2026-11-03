@@ -37,3 +37,4 @@ Bu belge, FDownloader indirme motoru ve disk/dosya sistemi için hem otomatik he
   1. USB belleğe bir indirme başlatın.
   2. İndirme ortasında belleği çıkartın.
   3. Uygulamanın çökmeyip görevi duraklattığını (`Paused`) ve "Hedef klasör veya sürücü bulunamadı" uyarısı verdiğini doğrulayın.
+

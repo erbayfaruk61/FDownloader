@@ -1,10 +1,21 @@
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace FDownloader.Core.Utilities;
 
 /// <summary>
+/// Dosya çakışma durumunda uygulanacak politika.
+/// </summary>
+public enum FileConflictPolicy
+{
+    RenameAuto,  // (1), (2) şeklinde otomatik numaralandır
+    Overwrite,   // Mevcut dosyanın üzerine yaz
+    Skip         // Dosyayı atla / indirme yapma
+}
+
+/// <summary>
 /// Dosya adlarını güvenli hale getirir.
-/// Yol geçişi (path traversal), yasak karakterler ve Windows'a özel sorunları temizler.
+/// Yol geçişi (path traversal), yasak karakterler, Windows rezerve adları ve Unicode normalleştirmesini yönetir.
 /// </summary>
 public static class FileNameSanitizer
 {
@@ -32,50 +43,82 @@ public static class FileNameSanitizer
         if (string.IsNullOrWhiteSpace(fileName))
             return FallbackName + fallbackExtension;
 
-        // URL decode (%20 gibi kodları çöz)
+        // URL decode (%20, %2e%2e%2f gibi kodları çöz)
         try { fileName = Uri.UnescapeDataString(fileName); }
         catch { /* geçersiz encoding ise orijinali kullan */ }
 
-        // Yol bileşenlerini at — sadece dosya adını al
+        // Unicode normalleştirme (Form C - composite karakterleri birleştir)
+        try { fileName = fileName.Normalize(NormalizationForm.FormC); }
+        catch { }
+
+        // Null byte ve kontrol karakterlerini kaldır
+        fileName = new string(fileName.Where(c => !char.IsControl(c) && c != '\0').ToArray());
+
+        // Ters eğik çizgileri düz çizgiye çevir ve yol bileşenlerini tamamen at
+        fileName = fileName.Replace('\\', '/');
         fileName = Path.GetFileName(fileName);
 
         // Yasak karakterleri alt çizgiyle değiştir
         var chars = fileName.ToCharArray();
         for (int i = 0; i < chars.Length; i++)
         {
-            if (Array.IndexOf(InvalidChars, chars[i]) >= 0)
+            if (Array.IndexOf(InvalidChars, chars[i]) >= 0 || chars[i] == '/' || chars[i] == '\\')
                 chars[i] = '_';
         }
         fileName = new string(chars);
 
-        // Baştaki ve sondaki nokta/boşlukları temizle (Windows'ta sorun çıkarır)
-        fileName = fileName.Trim('.', ' ');
+        // Baştaki ve sondaki nokta, alt çizgi ve boşlukları temizle (Windows'ta sorun çıkarır)
+        fileName = fileName.Trim('.', ' ', '_');
 
         // Birden fazla ardışık boşluğu/alt çizgiyi temizle
         fileName = Regex.Replace(fileName, @"[\s_]{2,}", "_");
 
-        // Boşluk kaldıysa fallback
+        // Temizleme sonrası boş kaldıysa fallback
         if (string.IsNullOrWhiteSpace(fileName))
             return FallbackName + fallbackExtension;
 
-        // Windows rezerve isim kontrolü
-        string nameWithoutExt = Path.GetFileNameWithoutExtension(fileName);
-        if (WindowsReservedNames.Contains(nameWithoutExt))
+        // Windows rezerve isim kontrolü (CON, NUL, PRN vb. hem yalın hem de con.txt, con.tar.gz gibi ilk segment bazında)
+        string baseName = fileName.Split('.')[0];
+        if (WindowsReservedNames.Contains(baseName))
+        {
             fileName = "_" + fileName;
+        }
 
-        // Uzantı yoksa ekle
+        // Uzantı yoksa fallbackExtension ekle
         if (string.IsNullOrEmpty(Path.GetExtension(fileName)) && !string.IsNullOrEmpty(fallbackExtension))
+        {
             fileName += fallbackExtension;
+        }
 
-        // Maksimum uzunluk kontrolü
+        // Maksimum uzunluk kontrolü (uzantıyı koruyarak kırp)
         if (fileName.Length > MaxFileNameLength)
         {
             string ext = Path.GetExtension(fileName);
             string name = Path.GetFileNameWithoutExtension(fileName);
-            fileName = name[..(MaxFileNameLength - ext.Length)] + ext;
+            int takeLength = Math.Max(1, MaxFileNameLength - ext.Length);
+            if (takeLength < name.Length)
+            {
+                name = name[..takeLength];
+            }
+            fileName = name + ext;
         }
 
         return fileName;
+    }
+
+    /// <summary>
+    /// Hedef dosya yolunun hedef dizin sınırları içinde kaldığını doğrular (Path Traversal önleyici).
+    /// </summary>
+    public static bool IsSafePath(string baseDirectory, string candidateFileName, out string safeFullPath)
+    {
+        string sanitized = Sanitize(candidateFileName);
+        string fullBase = Path.GetFullPath(baseDirectory).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        string combined = Path.GetFullPath(Path.Combine(fullBase, sanitized));
+
+        safeFullPath = combined;
+
+        // Hedef dizin sınırları içinde mi?
+        return combined.StartsWith(fullBase + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
@@ -159,13 +202,22 @@ public static class FileNameSanitizer
     }
 
     /// <summary>
-    /// Hedef klasörde aynı isimde dosya varsa "(1)", "(2)" şeklinde numaralandırır.
+    /// Hedef klasörde aynı isimde dosya varsa çakışma politikasına göre çözer.
     /// </summary>
-    public static string ResolveConflict(string directory, string fileName)
+    public static string ResolveConflict(
+        string directory,
+        string fileName,
+        FileConflictPolicy policy = FileConflictPolicy.RenameAuto)
     {
         string fullPath = Path.Combine(directory, fileName);
         if (!File.Exists(fullPath)) return fileName;
 
+        if (policy == FileConflictPolicy.Overwrite || policy == FileConflictPolicy.Skip)
+        {
+            return fileName;
+        }
+
+        // RenameAuto politikası
         string nameWithoutExt = Path.GetFileNameWithoutExtension(fileName);
         string ext = Path.GetExtension(fileName);
 
