@@ -17,6 +17,8 @@ public record TaskResumedEvent(long TaskId);
 
 public record TaskCancelledEvent(long TaskId);
 
+public record FileChangedOnServerEvent(long TaskId, string? OldEtag, string? NewEtag, string? OldModified, string? NewModified);
+
 public record TaskCompletedEvent(long TaskId, string FilePath, long TotalBytes, TimeSpan Duration);
 
 public record TaskFailedEvent(long TaskId, string Reason, bool IsRetrying);

@@ -2,32 +2,33 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** P2-02 — Kalıcı Resume'un Kayıpsızlığı
+**ID:** P2-03 — Dosya Değişim Kontrolü (ETag / Last-Modified / Boyut Doğrulama)
 **Durum:** ✅ Bitti
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
+- `src/FDownloader.Core/Events/DownloadEvents.cs`:
+  - `FileChangedOnServerEvent(TaskId, OldEtag, NewEtag, OldModified, NewModified)` olayı eklendi.
 - `src/FDownloader.Core/Engine/HttpDownloader.cs`:
-  - `OperationCanceledException` (Pause / İptal) yakalandığında `FileWriter.FlushAsync()` çağrısı yapılarak tamponun diske yazılması garanti altına alındı.
-  - Duraklatılma anında `_repository.SaveSegmentProgress(_task.Segments)` ile en son segment ilerlemesi SQLite'a kaydedildi.
-  - Periyodik ilerleme raporlama döngüsüne DB segment checkpoint kaydı entegre edildi.
-- `src/FDownloader.Core/Storage/DownloadRepository.cs`:
-  - `GetTask(taskId)` metodu güncellendi: Artık görev veritabanından çekilirken ilişkili tüm `Segments` kayıtları da `ORDER BY Idx` ile otomatik yükleniyor (Resume için segmentlerin DB'den eksiksiz geri yüklenmesi sağlandı).
-- `tests/FDownloader.Core.Tests/LosslessResumeTests.cs`:
-  - Çok parçalı (4 segment) indirme ortasında duraklatma (`PauseAsync`), geçici `.fdown` dosyasının ve segment checkpoint verilerinin korunması, ardından ikinci bir downloader ile indirmeye devam edilip (`Resume`) nihai dosyanın SHA-256 hash bütünlüğü doğrulandı.
-- Toplam test sayısı 104'ten **105'e** yükseldi. **105/105 test yeşil**.
+  - Resume öncesinde (kısmen indirilmiş segmentler varsa) `DownloadProber` ile sunucu durumu sorgulanıyor.
+  - Eğer sunucudaki `ETag` veya `Last-Modified` ya da `Content-Length` değişmişse, sessizce bozuk dosya indirmek yerine indirme derhal durduruluyor, `FileChangedOnServerEvent` fırlatılıyor ve görev `Failed` ("Dosya sunucuda değişmiş") olarak işaretleniyor.
+- `tests/FDownloader.Core.Tests/FileChangeDetectionTests.cs`:
+  - `TestHttpServer` Senaryo 12 (`/dynamic-file`) üzerinde ETag sürüm 1'den sürüm 2'ye geçtiğinde resume denemesinin başarıyla engellendiği ve olayın yayınlandığı test edildi.
+- Toplam test sayısı 105'ten **106'ya** yükseldi. **106/106 test yeşil**.
 
 ---
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** P2-01 ve P2-02 (AJAN_PLANI.md Bölüm 13'te belirtilen "bitmeden yeni özellik eklenemez" kuralındaki iki zorunlu motor güvenilirlik şartı) başarıyla tamamlandı.
-- **Sıradaki Görev:** **P2-03 — Dosya Değişim Kontrolü (ETag / Last-Modified Doğrulama)**.
-  - Resume öncesi sunucudaki dosyanın değişip değişmediğini kontrol etme; değiştiyse baştan başlatma veya kullanıcıyı uyarma mekanizması.
+- **Tam olarak nerede kaldım:** P2-01, P2-02 ve P2-03 tamamlandı.
+- **Sıradaki Görev:** **P2-04 — Probe (Ön İnceleme) Sağlamlığı**.
+  - HEAD isteği 405/403 ile reddedilirse yedek olarak küçük Range (0-0 bayt) GET isteği gönderme.
+  - Yönlendirme zinciri takibi, döngü tespiti ve üst limit.
+  - Dosya adı öncelik hiyerarşisi (`Content-Disposition` -> final URL -> sorgu -> mime).
 - **Derleme durumu:** ✅ Başarılı (0 hata)
-- **Test durumu:** 105/105 geçiyor
+- **Test durumu:** 106/106 geçiyor
 
 ---
 
@@ -36,9 +37,9 @@
 1. Değişiklikleri commit et:
    ```
    git add src/ tests/ docs/
-   git commit -m "feat(engine): P2-02 - Kayipsiz resume, disk flush checkpoint ve LosslessResumeTests"
+   git commit -m "feat(engine): P2-03 - Resume oncesi ETag/Last-Modified dosya degisim tespiti ve korumasi"
    ```
-2. **P2-03:** `HttpDownloader` içinde resume öncesi `ETag`/`Last-Modified` kontrolü ekle ve `TestHttpServer`'daki Senaryo 12 (`/dynamic-file`) ile test et.
+2. **P2-04:** `DownloadProber.cs` içinde HEAD fallback (Range 0-0 GET) ve yönlendirme/dosya adı öncelik testlerini yaz ve uygula.
 
 ---
 

@@ -139,3 +139,4 @@ public class LosslessResumeTests : IDisposable
         Assert.Equal(expectedHash, actualHash);
     }
 }
+

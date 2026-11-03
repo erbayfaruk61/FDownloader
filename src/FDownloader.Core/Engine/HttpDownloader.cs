@@ -177,6 +177,57 @@ public sealed class HttpDownloader : IDisposable
                     _task.SupportsRange,
                     _task.SegmentCount));
             }
+            else if (_task.Segments.Any(s => s.DownloadedBytes > 0))
+            {
+                // 1.5. ADIM: Resume Öncesi Dosya Değişim Kontrolü (P2-03)
+                // Sunucudaki dosya değişmiş mi kontrol et (ETag veya LastModified)
+                try
+                {
+                    var prober = new DownloadProber(
+                        _httpClient,
+                        _loggerFactory.CreateLogger<DownloadProber>());
+
+                    var currentProbe = await prober.ProbeAsync(
+                        _task.OriginalUrl,
+                        _task.Referer,
+                        _task.Cookies,
+                        _task.UserAgent,
+                        cancellationToken);
+
+                    bool etagChanged = !string.IsNullOrEmpty(_task.ETag) &&
+                                       !string.IsNullOrEmpty(currentProbe.ETag) &&
+                                       !string.Equals(_task.ETag.Trim('\"'), currentProbe.ETag.Trim('\"'), StringComparison.OrdinalIgnoreCase);
+
+                    bool modifiedChanged = !string.IsNullOrEmpty(_task.LastModified) &&
+                                           !string.IsNullOrEmpty(currentProbe.LastModified) &&
+                                           !string.Equals(_task.LastModified, currentProbe.LastModified, StringComparison.OrdinalIgnoreCase);
+
+                    bool sizeChanged = _task.TotalBytes > 0 && currentProbe.ContentLength > 0 && _task.TotalBytes != currentProbe.ContentLength;
+
+                    if (etagChanged || modifiedChanged || sizeChanged)
+                    {
+                        _logger.LogWarning("Resume öncesi dosya sunucuda değişmiş tespit edildi! Task {Id}. Eski ETag: {OldEtag}, Yeni ETag: {NewEtag}",
+                            _task.Id, _task.ETag, currentProbe.ETag);
+
+                        _eventBus.Publish(new FileChangedOnServerEvent(
+                            _task.Id,
+                            _task.ETag,
+                            currentProbe.ETag,
+                            _task.LastModified,
+                            currentProbe.LastModified));
+
+                        throw new InvalidOperationException("Dosya sunucuda değişmiş. Resume işlemi iptal edildi.");
+                    }
+                }
+                catch (InvalidOperationException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Resume öncesi dosya doğrulama probe'u çalıştırılamadı, mevcut verilerle devam ediliyor.");
+                }
+            }
 
             // 2. ADIM: Segmentlerin Planlanması (Yoksa oluştur)
             if (_task.Segments.Count == 0)

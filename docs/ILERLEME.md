@@ -37,7 +37,7 @@
 |---|---|---|---|---|---|
 | P2-01 | Hash testleri | 🔴 | ✅ Bitti | — | 1, 2, 4, 8, 16 parça kombinasyonları ve tam bölünmeyen boyutlarda SHA-256 hash doğrulaması yapıldı (104/104 test yeşil) |
 | P2-02 | Kayıpsız resume | 🔴 | ✅ Bitti | — | Pause/Cancel anında disk flush ve checkpoint kaydı, GetTask ile segment yükleme, Pause/Resume sonrası SHA-256 hash doğrulaması test edildi (105/105 test yeşil) |
-| P2-03 | Dosya değişim kontrolü | 🟡 | ⬜ Bekliyor | — | |
+| P2-03 | Dosya değişim kontrolü | 🟡 | ✅ Bitti | — | Resume öncesi ETag, Last-Modified ve boyut doğrulama, FileChangedOnServerEvent yayını ve iptal koruması eklendi (106/106 test yeşil) |
 | P2-04 | Probe sağlamlığı | 🟡 | ⬜ Bekliyor | — | |
 | P2-05 | Hata sınıflandırma/yeniden deneme | 🔴 | ⬜ Bekliyor | — | |
 | P2-06 | Stall tespiti | 🔴 | ⬜ Bekliyor | — | |
