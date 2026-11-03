@@ -140,6 +140,7 @@ public sealed class Database : IDisposable
         _logger.LogInformation("Şema V1 oluşturuldu.");
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA2100:Review SQL queries for security vulnerabilities", Justification = "Yalnızca sabit dahili DDL ve şema scriptleri çalıştırılır, kullanıcı girdisi içermez.")]
     private void ExecuteNonQuery(string sql)
     {
         using var cmd = CreateCommand();

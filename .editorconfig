@@ -1,0 +1,36 @@
+# FDownloader EditorConfig
+root = true
+
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = crlf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{cs,csx}]
+# Kod Düzeni ve Biçimlendirme
+csharp_new_line_before_open_brace = all
+csharp_space_after_cast = false
+csharp_space_after_colon_in_inheritance_clause = true
+csharp_space_after_keywords_in_control_flow_statements = true
+csharp_space_before_colon_in_inheritance_clause = true
+
+# Nullable Referans Tipleri & Uyarı Seviyeleri
+dotnet_diagnostic.CS8600.severity = warning
+dotnet_diagnostic.CS8602.severity = warning
+dotnet_diagnostic.CS8603.severity = warning
+dotnet_diagnostic.CS8604.severity = warning
+dotnet_diagnostic.CS8618.severity = warning
+dotnet_diagnostic.CS8625.severity = warning
+
+# Güvenlik Kuralları
+dotnet_diagnostic.CA2100.severity = error # SQL komutlarında güvenlik açığı
+dotnet_diagnostic.CA3001.severity = error # SQL Injection
+dotnet_diagnostic.CA3002.severity = error # XSS
+dotnet_diagnostic.CA3003.severity = error # File Path Injection
+dotnet_diagnostic.CA3004.severity = error # Information Disclosure
+
+[*.{json,yml,yaml}]
+indent_size = 2
