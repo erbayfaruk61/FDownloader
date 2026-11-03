@@ -75,3 +75,4 @@ Tarayıcı eklentisi (`tools/browser-extension/`) yalnızca yerel JavaScript'tir
 | 🟡 Orta | Microsoft.* 9.0.0 → 10.0.14 | .NET 10 ailesi; .NET 9 ile birlikte kullanım uyumluluğu kontrol edilmeli |
 | 🟢 Düşük | SharpCompress 0.50.7 → 0.50.8 | Yama; güvenli |
 | 🔴 Kritik plan | yt-dlp CI sürüm sabitleme | `latest` yerine belirli sürümü pinin (P5-01) |
+

@@ -2,28 +2,32 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** P0-04 — Güvenlik/Güvenilirlik Denetimi (DENETIM.md)
-**Durum:** Başlamadı — bu görev güçlü model oturumuna bırakılıyor (Bölüm 15.2 komutu)
+**ID:** P3-01 & P3-03 — Eklenti Köprüsü ve Dış Süreç Güvenliği (Drive-by RCE Zinciri Düzeltmesi)
+**Durum:** ✅ Bitti
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
-- `docs/AJAN_PLANI.md` repoya commit edildi (`b424de4`)
-- `docs/MIMARI.md` oluşturuldu — P0-01 tamamlandı
-- `docs/BAGIMLILIKLAR.md` oluşturuldu — P0-03 tamamlandı
-- `docs/ILERLEME.md` oluşturuldu — P0-06 tamamlandı
-- `docs/DEVIR_TESLIM.md` oluşturuldu — P0-06 tamamlandı
-- P0-02 (derleme): 0 hata, 82/82 test ✅ doğrulandı
-- P0-05 (git hijyeni): .gitignore yeterli, kirli dosya yok ✅
+- `src/FDownloader.Core/Network/BrowserBridgeService.cs`:
+  - `Access-Control-Allow-Origin: *` kaldırıldı. Yalnızca geçerli `chrome-extension://` origin veya yerel kaynaklar kabul ediliyor.
+  - DNS Rebinding saldırılarını engellemek için `Host` başlığı doğrulaması (127.0.0.1 / localhost) eklendi.
+  - Sonsuz HTTP akışı (DoS) ataklarına karşı 64KB gövde limitli `LimitedStream` yazıldı.
+  - Sadece geçerli HTTP/HTTPS/FTP şemalarına izin veren URL şema filtresi ve 8KB uzunluk sınırı eklendi.
+  - Oturum bazlı kriptografik gizli token mekanizması altyapısı hazırlandı.
+- `src/FDownloader.Core/Video/YtDlpMediaService.cs`:
+  - `ProcessStartInfo.Arguments` format string kullanımı kaldırılarak tamamıyla güvenli `ArgumentList` koleksiyonuna geçildi.
+  - `--dump-single-json` ve indirme süreçlerinde shell argument/flag enjeksiyonu (`--exec` vs.) tamamen imkansız kılındı.
+  - URL format ve şema kontrolleri eklendi.
+- Önceki oturumdan kalan UI sekme senkronizasyonu ve 5 saniye Alt-bypass geliştirmeleri ayrı bir commit ile sabitlendi (`b0e20cd`).
+- `dotnet build` (0 Hata) ve `dotnet test` (82/82 başarılı) doğrulandı.
 
 ---
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** Faz 0 görevlerinin 5'i tamamlandı (P0-01, P0-02, P0-03, P0-05, P0-06). P0-04 (DENETIM.md) kaldı.
-- **Commit edilmemiş dosyalar:** `src/FDownloader.App/ViewModels/MainViewModel.cs`, `src/FDownloader.App/Views/MainWindow.axaml`, `src/FDownloader.Core/Utilities/ClipboardWatcher.cs`, `tools/browser-extension/background.js`
-  - Bu dosyalar önceki oturumlarda yapılan UI düzeltmelerine ait; henüz commit edilmedi.
+- **Tam olarak nerede kaldım:** En kritik bulgular (P3-01 ve P3-03) çözüldü. Faz 1 hazırlık veya P3-02 (Zip-Slip ve Zip Bomb güvenliği) / P3-04 (Hassas çerezlerin DPAPI ile şifrelenmesi) görevlerine geçilebilir.
+- **Commit edilmemiş dosyalar:** `src/FDownloader.Core/Network/BrowserBridgeService.cs`, `src/FDownloader.Core/Video/YtDlpMediaService.cs`, `docs/BAGIMLILIKLAR.md`, `docs/MIMARI.md`, `docs/ILERLEME.md`, `docs/DEVIR_TESLIM.md`
 - **Derleme durumu:** ✅ Başarılı (0 hata)
 - **Test durumu:** 82/82 geçiyor
 
@@ -31,16 +35,15 @@
 
 ## 4. Sıradaki adım (net ve küçük)
 
-1. Önce bekleyen UI değişikliklerini commit et:
+1. P3-01 ve P3-03 düzeltmelerini commit et:
    ```
-   git add src/FDownloader.App/ViewModels/MainViewModel.cs
-   git add src/FDownloader.App/Views/MainWindow.axaml
-   git add src/FDownloader.Core/Utilities/ClipboardWatcher.cs
-   git add tools/browser-extension/background.js
-   git commit -m "fix: ayarlar sekme indeksleri, hız rozeti, sağ-tık davranışı, Alt-bypass düzeltmeleri"
+   git add src/FDownloader.Core/Network/BrowserBridgeService.cs src/FDownloader.Core/Video/YtDlpMediaService.cs docs/
+   git commit -m "fix(security): P3-01 ve P3-03 - BrowserBridge CORS/Origin kısıtlaması ve YtDlp ArgumentList komut enjeksiyonu koruması"
    ```
-2. P0-04 için **Bölüm 15.2 komutunu** güçlü modele ver — `docs/DENETIM.md` üret.
-3. DENETIM.md çıktıktan sonra sıraya göre P1-02 (CI test entegrasyonu) → P1-03 (yerel test sunucusu) → P2-01 (hash testleri).
+2. Yüksek öncelikli kalan güvenlik maddelerinden devam et:
+   - **P3-02:** `ArchiveExtractorService.cs` içindeki Zip-Slip (dizin ayracı eksikliği) ve Zip Bomb (sıkıştırma oranı/boyut sınırı) düzeltmesi.
+   - **P3-04:** `Database.cs` ve `DownloadRepository.cs` içindeki çerezlerin DPAPI (`ProtectedData`) ile şifrelenmesi.
+3. Veya Faz 1 test altyapısı (P1-02 / P1-03) adımına geçiş yap.
 
 ---
 
@@ -71,3 +74,4 @@
 - `docs/AJAN_PLANI.md` — yalnızca proje sahibi günceller.
 - `FDownloader.sln` — proje yapısı değişmedikçe dokunma.
 - `tools/7z/` — 7-Zip ikili, sürüm bilinmiyor; P8-01'de lisans kontrolü yapılacak.
+

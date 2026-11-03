@@ -1,4 +1,5 @@
 using System.Net;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using FDownloader.Core.Events;
@@ -18,6 +19,8 @@ public class BrowserDownloadRequest
 
 /// <summary>
 /// Tarayıcı eklentisi (Chrome, Edge, Firefox, Brave) ile haberleşen yerel HTTP köprüsü (port 9666).
+/// Güvenlik: yalnızca 127.0.0.1'e bağlanır; her oturumda benzersiz gizli token üretilir;
+/// Origin ve Host başlıkları doğrulanır (DNS rebinding ve CSRF koruması).
 /// </summary>
 public sealed class BrowserBridgeService : IDisposable
 {
@@ -25,14 +28,41 @@ public sealed class BrowserBridgeService : IDisposable
     private readonly ILogger<BrowserBridgeService> _logger;
     private HttpListener? _listener;
     private CancellationTokenSource? _cts;
+
     public const int DefaultPort = 9666;
 
+    // ─── Güvenlik Sabitleri ───────────────────────────────────────────────
+    private const string AllowedExtensionId = "chrome-extension://";
+
+    // Yalnızca bu Host değerleri kabul edilir (DNS rebinding koruması)
+    private static readonly HashSet<string> AllowedHosts = new(StringComparer.OrdinalIgnoreCase)
+    {
+        $"127.0.0.1:{DefaultPort}",
+        $"localhost:{DefaultPort}"
+    };
+
+    // Uygulama başlangıcında üretilen, oturum süresi boyunca geçerli gizli token
+    private readonly string _sessionToken;
+
     public bool IsRunning => _listener?.IsListening ?? false;
+
+    // Token'ı eklenti ile paylaşmak için dışarıya sun (BrowserBridgeInfoEvent üzerinden)
+    public string SessionToken => _sessionToken;
 
     public BrowserBridgeService(DownloadEventBus eventBus, ILogger<BrowserBridgeService> logger)
     {
         _eventBus = eventBus;
         _logger = logger;
+        _sessionToken = GenerateSessionToken();
+    }
+
+    private static string GenerateSessionToken()
+    {
+        var bytes = RandomNumberGenerator.GetBytes(32);
+        return Convert.ToBase64String(bytes)
+            .Replace("+", "-")
+            .Replace("/", "_")
+            .Replace("=", "");
     }
 
     public void Start()
@@ -98,21 +128,69 @@ public sealed class BrowserBridgeService : IDisposable
         }
     }
 
+    /// <summary>
+    /// Origin başlığı: yalnızca kendi eklentimizin chrome-extension:// adresinden veya
+    /// null (curl/Postman gibi yerel araçlardan) gelen isteklere izin ver.
+    /// Host başlığı: yalnızca 127.0.0.1:9666 veya localhost:9666 kabul et (DNS rebinding koruması).
+    /// </summary>
+    private bool IsRequestAllowed(HttpListenerRequest request)
+    {
+        // Host doğrulaması — DNS rebinding saldırısını önler
+        var host = request.Headers["Host"] ?? string.Empty;
+        if (!string.IsNullOrEmpty(host) && !AllowedHosts.Contains(host))
+        {
+            _logger.LogWarning("Köprü: geçersiz Host başlığı reddedildi: {Host}", host);
+            return false;
+        }
+
+        // Origin doğrulaması — yabancı web sitelerinin fetch() ile istek atmasını engeller
+        var origin = request.Headers["Origin"] ?? string.Empty;
+        if (!string.IsNullOrEmpty(origin))
+        {
+            // null origin: yerel araçlar (curl, Postman) — kabul et
+            // chrome-extension://* — kabul et (kendi eklentimiz)
+            // diğer her şey (https://evil.com vb.) — reddet
+            if (!origin.StartsWith(AllowedExtensionId, StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogWarning("Köprü: yetkisiz Origin reddedildi: {Origin}", origin);
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private async Task HandleRequestAsync(HttpListenerContext context)
     {
         var request = context.Request;
         var response = context.Response;
 
-        // CORS Başlıkları (Tarayıcı uzantısının localhost'a fetch yapabilmesi için)
-        response.AppendHeader("Access-Control-Allow-Origin", "*");
-        response.AppendHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-        response.AppendHeader("Access-Control-Allow-Headers", "Content-Type, Accept, X-Requested-With");
+        // CORS: yalnızca kendi eklentimizin origin'ine izin ver
+        var requestOrigin = request.Headers["Origin"] ?? string.Empty;
+        var allowedOrigin = (!string.IsNullOrEmpty(requestOrigin) &&
+                             requestOrigin.StartsWith(AllowedExtensionId, StringComparison.OrdinalIgnoreCase))
+            ? requestOrigin
+            : "null";
+
+        response.AppendHeader("Access-Control-Allow-Origin", allowedOrigin);
+        response.AppendHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+        response.AppendHeader("Access-Control-Allow-Headers", "Content-Type, X-Extension-Version, X-Bridge-Token");
+        response.AppendHeader("Access-Control-Max-Age", "600");
+        response.AppendHeader("Vary", "Origin");
 
         try
         {
             if (request.HttpMethod == "OPTIONS")
             {
-                response.StatusCode = 200;
+                response.StatusCode = 204;
+                response.Close();
+                return;
+            }
+
+            // ─── Güvenlik: Origin + Host doğrulaması ───────────────────────
+            if (!IsRequestAllowed(request))
+            {
+                response.StatusCode = 403;
                 response.Close();
                 return;
             }
@@ -203,7 +281,9 @@ public sealed class BrowserBridgeService : IDisposable
                     !string.IsNullOrWhiteSpace(extHeader) ? extHeader.Trim() : "1.0.0",
                     DateTime.UtcNow));
 
-                using var reader = new StreamReader(request.InputStream, Encoding.UTF8);
+                // Gövde boyutunu sınırla (max 64 KB): sonsuz veri saldırısını önler
+                using var limitedStream = new LimitedStream(request.InputStream, maxBytes: 65_536);
+                using var reader = new StreamReader(limitedStream, Encoding.UTF8);
                 var body = await reader.ReadToEndAsync();
 
                 var downloadReq = JsonSerializer.Deserialize<BrowserDownloadRequest>(body, new JsonSerializerOptions
@@ -213,10 +293,28 @@ public sealed class BrowserBridgeService : IDisposable
 
                 if (downloadReq != null && !string.IsNullOrWhiteSpace(downloadReq.Url))
                 {
-                    _logger.LogInformation("Tarayıcıdan indirme yakalandı: {Url} (Dosya: {FileName})", downloadReq.Url, downloadReq.FileName);
+                    // ─── URL şema doğrulaması (komut enjeksiyonu ve yerel dosya erişimini önler) ───
+                    var rawUrl = downloadReq.Url.Trim();
+                    if (!IsUrlSchemeAllowed(rawUrl))
+                    {
+                        _logger.LogWarning("Köprü: izin verilmeyen URL şeması reddedildi: {Url}", rawUrl[..Math.Min(rawUrl.Length, 100)]);
+                        response.StatusCode = 400;
+                        response.Close();
+                        return;
+                    }
+
+                    // URL uzunluk sınırı
+                    if (rawUrl.Length > 8192)
+                    {
+                        response.StatusCode = 400;
+                        response.Close();
+                        return;
+                    }
+
+                    _logger.LogInformation("Tarayıcıdan indirme yakalandı: {Url} (Dosya: {FileName})", rawUrl, downloadReq.FileName);
 
                     _eventBus.Publish(new BrowserDownloadCapturedEvent(
-                        downloadReq.Url.Trim(),
+                        rawUrl,
                         downloadReq.FileName?.Trim(),
                         downloadReq.Referrer?.Trim(),
                         downloadReq.Cookies?.Trim(),
@@ -259,6 +357,17 @@ public sealed class BrowserBridgeService : IDisposable
         response.OutputStream.Close();
     }
 
+    /// <summary>
+    /// Yalnızca http://, https:// ve ftp:// şemalarına izin ver.
+    /// file://, data://, javascript:// ve diğer şemalar reddedilir.
+    /// </summary>
+    private static bool IsUrlSchemeAllowed(string url)
+    {
+        return url.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || url.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+            || url.StartsWith("ftp://", StringComparison.OrdinalIgnoreCase);
+    }
+
     public void Stop()
     {
         try
@@ -275,4 +384,60 @@ public sealed class BrowserBridgeService : IDisposable
         Stop();
         _cts?.Dispose();
     }
+}
+
+/// <summary>
+/// Maksimum okunabilir bayt sınırlaması uygulayan Stream sarmalayıcı.
+/// Sonsuz veri akışı (DoS) saldırısını önler.
+/// </summary>
+internal sealed class LimitedStream(Stream inner, long maxBytes) : Stream
+{
+    private long _remaining = maxBytes;
+
+    public override bool CanRead => inner.CanRead;
+    public override bool CanSeek => false;
+    public override bool CanWrite => false;
+    public override long Length => throw new NotSupportedException();
+    public override long Position
+    {
+        get => throw new NotSupportedException();
+        set => throw new NotSupportedException();
+    }
+
+    public override int Read(byte[] buffer, int offset, int count)
+    {
+        if (_remaining <= 0) return 0;
+        var toRead = (int)Math.Min(count, _remaining);
+        var n = inner.Read(buffer, offset, toRead);
+        _remaining -= n;
+        return n;
+    }
+
+    public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+    {
+        if (_remaining <= 0) return ValueTask.FromResult(0);
+        var toRead = (int)Math.Min(buffer.Length, _remaining);
+        var subBuffer = buffer[..toRead];
+        var readValueTask = inner.ReadAsync(subBuffer, cancellationToken);
+        if (readValueTask.IsCompletedSuccessfully)
+        {
+            var n = readValueTask.Result;
+            _remaining -= n;
+            return ValueTask.FromResult(n);
+        }
+
+        return AwaitReadAsync(readValueTask);
+    }
+
+    private async ValueTask<int> AwaitReadAsync(ValueTask<int> task)
+    {
+        var n = await task;
+        _remaining -= n;
+        return n;
+    }
+
+    public override void Flush() { }
+    public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+    public override void SetLength(long value) => throw new NotSupportedException();
+    public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
 }

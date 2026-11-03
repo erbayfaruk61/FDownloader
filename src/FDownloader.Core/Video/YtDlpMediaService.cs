@@ -147,6 +147,37 @@ public sealed class YtDlpMediaService
         return $"{jsRuntimesArg} {DefaultExtractorArgs}";
     }
 
+    /// <summary>
+    /// ProcessStartInfo.ArgumentList ile kullanılacak güvenli ortak argüman listesini üretir (komut enjeksiyonunu önler).
+    /// </summary>
+    public static List<string> BuildCommonArgumentList()
+    {
+        var list = new List<string>();
+        var nodePath = DetectNodeJsPath();
+        if (!string.IsNullOrEmpty(nodePath))
+        {
+            list.Add("--js-runtimes");
+            list.Add($"node:{nodePath}");
+        }
+        else
+        {
+            list.Add("--js-runtimes");
+            list.Add("node");
+        }
+
+        list.Add("--js-runtimes");
+        list.Add("quickjs");
+        list.Add("--js-runtimes");
+        list.Add("bun");
+        list.Add("--js-runtimes");
+        list.Add("deno");
+
+        list.Add("--extractor-args");
+        list.Add("youtube:player_client=web,default,android");
+
+        return list;
+    }
+
     public YtDlpMediaService(
         DownloadEventBus eventBus,
         ILogger<YtDlpMediaService> logger,
@@ -276,24 +307,49 @@ public sealed class YtDlpMediaService
     }
 
     /// <summary>
+    /// URL'nin yalnızca izin verilen şemalardan (http, https, ftp) birini kullandığını doğrular.
+    /// Komut enjeksiyonu ve yerel dosya erişimini önler.
+    /// </summary>
+    private static bool IsUrlSchemeAllowed(string url)
+    {
+        return url.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || url.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+            || url.StartsWith("ftp://", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
     /// Verilen medya URL'sinin (YouTube vb.) bilgilerini JSON olarak çeker.
     /// </summary>
     public async Task<MediaMetadata?> GetMediaInfoAsync(string url, CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(url) || !IsUrlSchemeAllowed(url))
+        {
+            _logger.LogWarning("GetMediaInfoAsync: izin verilmeyen URL şeması: {Url}", url?[..Math.Min(url?.Length ?? 0, 100)] ?? "");
+            return null;
+        }
+
         await EnsureYtDlpAsync(cancellationToken);
         await EnsureFfmpegAsync(cancellationToken);
         var binary = File.Exists(_ytDlpPath) ? _ytDlpPath : "yt-dlp";
-        var commonArgs = GetCommonArguments();
+        var commonArgs = BuildCommonArgumentList();
 
+        // ArgumentList kullanarak her argümanı ayrı iletir → shell enjeksiyonu imkânsız
         var psi = new ProcessStartInfo
         {
             FileName = binary,
-            Arguments = $"{commonArgs} --dump-single-json --no-warnings --no-playlist \"{url}\"",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true
         };
+
+        foreach (var arg in commonArgs)
+            psi.ArgumentList.Add(arg);
+
+        psi.ArgumentList.Add("--dump-single-json");
+        psi.ArgumentList.Add("--no-warnings");
+        psi.ArgumentList.Add("--no-playlist");
+        psi.ArgumentList.Add(url); // URL argüman listesinin son elemanı; shell yorumlaması yok
 
         try
         {
@@ -388,6 +444,13 @@ public sealed class YtDlpMediaService
         string? customTitle = null,
         CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(url) || !IsUrlSchemeAllowed(url))
+        {
+            _logger.LogWarning("DownloadMediaAsync: izin verilmeyen URL şeması: {Url}", url?[..Math.Min(url?.Length ?? 0, 100)] ?? "");
+            _eventBus.Publish(new TaskFailedEvent(taskId, "Geçersiz veya güvenli olmayan medya URL'si.", false));
+            return;
+        }
+
         await EnsureYtDlpAsync(cancellationToken);
         await EnsureFfmpegAsync(cancellationToken);
         var binary = File.Exists(_ytDlpPath) ? _ytDlpPath : "yt-dlp";
@@ -396,7 +459,7 @@ public sealed class YtDlpMediaService
         _eventBus.Publish(new TaskStartedEvent(taskId));
 
         // Format ve argüman belirleme
-        var commonArgs = GetCommonArguments();
+        var commonArgs = BuildCommonArgumentList();
         string outputTemplate;
         if (!isPlaylist && !string.IsNullOrWhiteSpace(customTitle))
         {
@@ -408,30 +471,51 @@ public sealed class YtDlpMediaService
             outputTemplate = Path.Combine(outputDirectory, "%(uploader)s - %(title)s.%(ext)s");
         }
 
-        string args;
-        string playlistFlag = isPlaylist ? "--yes-playlist" : "--no-playlist";
-        string ffmpegFlag = Directory.Exists(_toolsDir) ? $"--ffmpeg-location \"{_toolsDir}\"" : "";
-
-        if (isAudioOnlyMp3)
-        {
-            // MP3 Ses dönüştürme
-            args = $"{commonArgs} {playlistFlag} {ffmpegFlag} {DefaultAudioFormat} --newline -o \"{outputTemplate}\" \"{url}\"";
-        }
-        else
-        {
-            // MP4 Video (en iyi kalite)
-            args = $"{commonArgs} {playlistFlag} {ffmpegFlag} {DefaultVideoFormat} --newline -o \"{outputTemplate}\" \"{url}\"";
-        }
-
         var psi = new ProcessStartInfo
         {
             FileName = binary,
-            Arguments = args,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true
         };
+
+        foreach (var arg in commonArgs)
+        {
+            psi.ArgumentList.Add(arg);
+        }
+
+        psi.ArgumentList.Add(isPlaylist ? "--yes-playlist" : "--no-playlist");
+
+        if (Directory.Exists(_toolsDir))
+        {
+            psi.ArgumentList.Add("--ffmpeg-location");
+            psi.ArgumentList.Add(_toolsDir);
+        }
+
+        if (isAudioOnlyMp3)
+        {
+            // MP3 Ses dönüştürme: -x --audio-format mp3 --audio-quality 0 --embed-metadata
+            psi.ArgumentList.Add("-x");
+            psi.ArgumentList.Add("--audio-format");
+            psi.ArgumentList.Add("mp3");
+            psi.ArgumentList.Add("--audio-quality");
+            psi.ArgumentList.Add("0");
+            psi.ArgumentList.Add("--embed-metadata");
+        }
+        else
+        {
+            // MP4 Video (en iyi kalite): -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best[ext=mp4]/best" --merge-output-format mp4
+            psi.ArgumentList.Add("-f");
+            psi.ArgumentList.Add("bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best[ext=mp4]/best");
+            psi.ArgumentList.Add("--merge-output-format");
+            psi.ArgumentList.Add("mp4");
+        }
+
+        psi.ArgumentList.Add("--newline");
+        psi.ArgumentList.Add("-o");
+        psi.ArgumentList.Add(outputTemplate);
+        psi.ArgumentList.Add(url);
 
         var proc = new Process { StartInfo = psi };
         _runningProcesses[taskId] = proc;

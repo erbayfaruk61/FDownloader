@@ -183,3 +183,4 @@ Kullanıcı URL girer
 - **Sentry:** Crash raporlama entegre. Kişisel veri filtresi kontrol edilmeli (P3-09).
 - **Tek test projesi:** App katmanı için UI testi yoktur. Core testleri 82 adet.
 - **Gömülü ikili dosyalar:** `tools/ffmpeg/` ve `tools/yt-dlp/` `.gitignore`'da hariç tutulmuş (boyut nedeniyle). CI'da runtime'da indiriliyor.
+

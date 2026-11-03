@@ -1,6 +1,6 @@
 # FDownloader — İlerleme Takibi
 
-> **Son güncelleme:** 2026-11-03 (P0-06 görevi)
+> **Son güncelleme:** 2026-11-03 (P0-04 görevi)
 > Durumlar: `⬜ Bekliyor` · `🔄 Devam` · `✅ Bitti` · `⏸ Engelli (neden)` · `⏭ Atlandı (neden)`
 
 ---
@@ -12,7 +12,7 @@
 | P0-01 | Repo haritası (MIMARI.md) | 🟡 | ✅ Bitti | — | `docs/MIMARI.md` oluşturuldu |
 | P0-02 | Derleme doğrulaması | 🟢 | ✅ Bitti | — | Derleme: ✅ başarılı (app çalışırken dosya kilidi nedeniyle değil); Test: 82/82 ✅ |
 | P0-03 | Bağımlılık envanteri | 🟡 | ✅ Bitti | — | `docs/BAGIMLILIKLAR.md` oluşturuldu; güvenlik açığı yok |
-| P0-04 | Güvenlik/güvenilirlik denetimi | 🔴 | ⬜ Bekliyor | — | DENETIM.md — güçlü model oturumunda yapılacak (Bölüm 15.2) |
+| P0-04 | Güvenlik/güvenilirlik denetimi | 🔴 | ✅ Bitti | — | `docs/DENETIM.md` tamamlandı (15 soru, 2 Kritik, 6 Yüksek bulgu) |
 | P0-05 | Git hijyeni | 🟢 | ✅ Bitti | — | .gitignore yeterli; kirli dosya yok; çalışma değişiklikleri bekliyor (commit edilecek) |
 | P0-06 | İlerleme/devir dosyaları | 🟢 | ✅ Bitti | — | Bu dosya + DEVIR_TESLIM.md oluşturuldu |
 
@@ -55,9 +55,9 @@
 
 | ID | Görev | Zorluk | Durum | Commit | Not |
 |---|---|---|---|---|---|
-| P3-01 | Eklenti köprüsü güvenliği | 🔴 | ⬜ Bekliyor | — | DENETIM.md sonrası netleşecek |
+| P3-01 | Eklenti köprüsü güvenliği | 🔴 | ✅ Bitti | — | Origin + Host kontrolü, sınırlı akış ve şema doğrulaması eklendi |
 | P3-02 | Arşiv çıkarma güvenliği | 🔴 | ⬜ Bekliyor | — | |
-| P3-03 | Dış süreç güvenliği | 🔴 | ⬜ Bekliyor | — | |
+| P3-03 | Dış süreç güvenliği | 🔴 | ✅ Bitti | — | YtDlpMediaService ArgumentList kullanımı ve URL doğrulama ile parametre enjeksiyonu önlendi |
 | P3-04 | Hassas veri saklama | 🟡 | ⬜ Bekliyor | — | |
 | P3-05 | Ağ güvenliği | 🟡 | ⬜ Bekliyor | — | |
 | P3-06 | İndirilen dosya güvenliği | 🟡 | ⬜ Bekliyor | — | Zone.Identifier eksik |
@@ -91,3 +91,4 @@
 | Derleme uyarısı sayısı | ~25 (CA1848 logger, CA1305 kültür, CA5350/CA5351 MD5/SHA1) |
 | `dotnet test` | ✅ 82/82 başarılı |
 | Bekleyen değişiklikler (commit edilmemiş) | `MainViewModel.cs`, `MainWindow.axaml`, `ClipboardWatcher.cs`, `background.js` |
+
