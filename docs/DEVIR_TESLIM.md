@@ -2,48 +2,39 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** P3-01 & P3-03 — Eklenti Köprüsü ve Dış Süreç Güvenliği (Drive-by RCE Zinciri Düzeltmesi)
+**ID:** P1-02 & P1-03 — Test CI Hattı ve 13 Uç Noktalı Yerel Test Sunucusu
 **Durum:** ✅ Bitti
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
-- `src/FDownloader.Core/Network/BrowserBridgeService.cs`:
-  - `Access-Control-Allow-Origin: *` kaldırıldı. Yalnızca geçerli `chrome-extension://` origin veya yerel kaynaklar kabul ediliyor.
-  - DNS Rebinding saldırılarını engellemek için `Host` başlığı doğrulaması (127.0.0.1 / localhost) eklendi.
-  - Sonsuz HTTP akışı (DoS) ataklarına karşı 64KB gövde limitli `LimitedStream` yazıldı.
-  - Sadece geçerli HTTP/HTTPS/FTP şemalarına izin veren URL şema filtresi ve 8KB uzunluk sınırı eklendi.
-  - Oturum bazlı kriptografik gizli token mekanizması altyapısı hazırlandı.
-- `src/FDownloader.Core/Video/YtDlpMediaService.cs`:
-  - `ProcessStartInfo.Arguments` format string kullanımı kaldırılarak tamamıyla güvenli `ArgumentList` koleksiyonuna geçildi.
-  - `--dump-single-json` ve indirme süreçlerinde shell argument/flag enjeksiyonu (`--exec` vs.) tamamen imkansız kılındı.
-  - URL format ve şema kontrolleri eklendi.
-- Önceki oturumdan kalan UI sekme senkronizasyonu ve 5 saniye Alt-bypass geliştirmeleri ayrı bir commit ile sabitlendi (`b0e20cd`).
-- `dotnet build` (0 Hata) ve `dotnet test` (82/82 başarılı) doğrulandı.
+- `.github/workflows/ci.yml` oluşturuldu (push ve PR'larda otomatik restore, build ve `dotnet test` koşturuluyor).
+- `tests/FDownloader.Core.Tests/MockServer/TestHttpServer.cs`: 13 senaryolu deterministik yerel test sunucusu yazıldı (Normal Range 206, No-Range 200, Chunked, Slow, Abort/Drop, Wrong Length, Redirect Chain & Loop, Error 500/503/429/403/404, Content-Disposition, Basic Auth, Cookie/Referer, Dynamic ETag, 1MB Large Stream).
+- `tests/FDownloader.Core.Tests/TestHttpServerTests.cs`: 13 senaryonun tümü için birim testleri yazıldı ve doğrulandı.
+- Toplam test sayısı 82'den **95'e** yükseldi ve **95/95 test yeşil**.
 
 ---
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** En kritik bulgular (P3-01 ve P3-03) çözüldü. Faz 1 hazırlık veya P3-02 (Zip-Slip ve Zip Bomb güvenliği) / P3-04 (Hassas çerezlerin DPAPI ile şifrelenmesi) görevlerine geçilebilir.
-- **Commit edilmemiş dosyalar:** `src/FDownloader.Core/Network/BrowserBridgeService.cs`, `src/FDownloader.Core/Video/YtDlpMediaService.cs`, `docs/BAGIMLILIKLAR.md`, `docs/MIMARI.md`, `docs/ILERLEME.md`, `docs/DEVIR_TESLIM.md`
+- **Tam olarak nerede kaldım:** Faz 1 kapsamında P1-02 ve P1-03 başarıyla tamamlandı. P1-04 (Statik kod kalitesi / .editorconfig) ve P1-05 (Hassas veri maskelemeli log altyapısı) veya Faz 2 motor sağlamlaştırma görevlerine (P2-01 Veri bütünlüğü & Hash testleri) geçilebilir.
 - **Derleme durumu:** ✅ Başarılı (0 hata)
-- **Test durumu:** 82/82 geçiyor
+- **Test durumu:** 95/95 geçiyor
 
 ---
 
 ## 4. Sıradaki adım (net ve küçük)
 
-1. P3-01 ve P3-03 düzeltmelerini commit et:
+1. Yapılan P1-02 ve P1-03 geliştirmelerini commit et:
    ```
-   git add src/FDownloader.Core/Network/BrowserBridgeService.cs src/FDownloader.Core/Video/YtDlpMediaService.cs docs/
-   git commit -m "fix(security): P3-01 ve P3-03 - BrowserBridge CORS/Origin kısıtlaması ve YtDlp ArgumentList komut enjeksiyonu koruması"
+   git add .github/workflows/ci.yml tests/ docs/
+   git commit -m "feat(test): P1-02 ve P1-03 - CI test hatti ve 13 senaryolu yerel HTTP test sunucusu"
    ```
-2. Yüksek öncelikli kalan güvenlik maddelerinden devam et:
-   - **P3-02:** `ArchiveExtractorService.cs` içindeki Zip-Slip (dizin ayracı eksikliği) ve Zip Bomb (sıkıştırma oranı/boyut sınırı) düzeltmesi.
-   - **P3-04:** `Database.cs` ve `DownloadRepository.cs` içindeki çerezlerin DPAPI (`ProtectedData`) ile şifrelenmesi.
-3. Veya Faz 1 test altyapısı (P1-02 / P1-03) adımına geçiş yap.
+2. Sıradaki görev:
+   - **P1-04:** Statik kod kalitesi (.editorconfig & nullable referans kuralları)
+   - **P1-05:** Loglama altyapısı ve hassas veri maskeleme
+   - Veya doğrudan motor testlerine geçiş: **P2-01 (Hash & veri bütünlüğü testleri)**.
 
 ---
 

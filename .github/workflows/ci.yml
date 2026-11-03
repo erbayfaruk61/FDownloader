@@ -1,0 +1,31 @@
+name: CI - Derleme ve Testler
+
+on:
+  push:
+    branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "main", "dev" ]
+
+jobs:
+  test:
+    name: Derleme ve Birim Testleri
+    runs-on: windows-latest
+
+    steps:
+      - name: Kodu Çek
+        uses: actions/checkout@v4
+
+      - name: .NET 9 Kurulumu
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Bağımlılıkları Geri Yükle
+        run: dotnet restore FDownloader.sln
+
+      - name: Çözümü Derle
+        run: dotnet build FDownloader.sln --no-restore -c Release
+
+      - name: Birim Testlerini Çalıştır
+        run: dotnet test tests/FDownloader.Core.Tests/FDownloader.Core.Tests.csproj --no-build -c Release --verbosity normal --logger "trx;LogFileName=test_results.trx"
+

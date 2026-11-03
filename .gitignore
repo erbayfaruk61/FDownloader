@@ -35,7 +35,6 @@ $RECYCLE.BIN/
 
 ## Excluded Folders & Working Notes
 .agents/
-tests/
 .stryker-output/
 StrykerOutput/
 TestResults/

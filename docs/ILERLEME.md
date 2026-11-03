@@ -22,10 +22,10 @@
 
 | ID | Görev | Zorluk | Durum | Commit | Not |
 |---|---|---|---|---|---|
-| P1-00 | (Ad değişirse) Yeniden adlandırma | 🔴 | ⏸ Engelli | — | P0 sonrası proje sahibinin kararına bağlı |
+| P1-00 | (Ad değişirse) Yeniden adlandırma | 🔴 | ⏸ Engelli | — | Şimdilik ertelendi (kullanıcı talimatı) |
 | P1-01 | Çekirdeği arayüzden ayır | 🟡 | ⏭ Atlandı | — | Core zaten ayrı proje; MIMARI.md'ye not düşüldü |
-| P1-02 | Test projeleri | 🟡 | ⬜ Bekliyor | — | xUnit mevcut; CI entegrasyonu yok |
-| P1-03 | Yerel test sunucusu | 🔴 | ⬜ Bekliyor | — | |
+| P1-02 | Test projeleri | 🟡 | ✅ Bitti | — | .github/workflows/ci.yml iş akışı eklendi (Release modunda derleme ve test çalıştırma) |
+| P1-03 | Yerel test sunucusu | 🔴 | ✅ Bitti | — | TestHttpServer oluşturuldu; 13 senaryonun tümü (Range, Chunked, ETag, Auth vb.) test edildi (95/95 test yeşil) |
 | P1-04 | Statik kod kalitesi | 🟢 | ⬜ Bekliyor | — | Nullable enabled; analiz aktif ama hata seviyesinde değil |
 | P1-05 | Loglama altyapısı | 🟢 | ⬜ Bekliyor | — | Serilog mevcut ama hassas veri maskeleme eksik |
 
