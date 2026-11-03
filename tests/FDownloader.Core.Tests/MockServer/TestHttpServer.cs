@@ -24,6 +24,7 @@ public sealed class TestHttpServer : IDisposable
 
     public string DynamicEtag { get; set; } = "\"v1\"";
     public string DynamicContent { get; set; } = "Content Version 1";
+    public int AbortRemainingCount { get; set; } = int.MaxValue;
 
     public TestHttpServer(int port = 0)
     {
@@ -112,12 +113,19 @@ public sealed class TestHttpServer : IDisposable
 
                 // 5. Yarıda kopan bağlantı (belirli bayttan sonra bağlantıyı zorla kes)
                 case "/abort":
-                    res.StatusCode = 200;
-                    res.ContentLength64 = NormalContent.Length;
-                    await res.OutputStream.WriteAsync(NormalContent, 0, 15);
-                    await res.OutputStream.FlushAsync();
-                    res.Abort(); // Bağlantıyı zorla kapatır
-                    return;
+                    if (AbortRemainingCount > 0)
+                    {
+                        AbortRemainingCount--;
+                        res.StatusCode = 200;
+                        res.ContentLength64 = NormalContent.Length;
+                        await res.OutputStream.WriteAsync(NormalContent, 0, 15);
+                        await res.OutputStream.FlushAsync();
+                        res.Abort(); // Bağlantıyı zorla kapatır
+                        return;
+                    }
+                    // Abort hakkı bittiğinde normal Range destekli yanıt ver (kaldığı yerden devam etsin)
+                    await HandleNormalAsync(req, res);
+                    break;
 
                 // 6. Yanlış Content-Length (Content-Length içerikten daha büyük/kısa)
                 case "/wrong-length":

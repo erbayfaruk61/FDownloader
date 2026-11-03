@@ -2,37 +2,35 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** P2-05 — Hata Sınıflandırma ve Yeniden Deneme (Retry Logic)
+**ID:** P2-06 — Takılma (Stall) Tespiti ve Bağlantı Yönetimi
 **Durum:** ✅ Bitti
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
-- `src/FDownloader.Core/Engine/Exceptions/DownloadErrorClassifier.cs`:
-  - `DownloadErrorKind` (Transient, TooManyRequests, PermanentNotFound, PermanentAuth, DiskFullOrPermission, RangeNotSupported) ve `DownloadException` tanımlandı.
-  - HTTP durum kodları (404, 410, 401, 403, 429, 500, 503) ve sistem istisnaları (SocketException, timeout, abort, disk full HRESULT 0x80070070) sınıflandırıldı.
 - `src/FDownloader.Core/Engine/Worker/SegmentWorker.cs`:
-  - Kalıcı hatalarda (404, 410, 401, 403) boşuna tekrar deneme yapılmadan anında hata fırlatma eklendi.
-  - HTTP 429 yanıtında `Retry-After` başlığına uyumlu bekleme sağlandı.
-  - Disk veya izin hatalarında görev duraklatılarak diske/kullanıcıya müdahale imkanı verildi.
+  - `_connectTimeout` (bağlantı kurma zaman aşımı) ve `_stallTimeout` ("veri akışı durdu" zaman aşımı) bağımsız sayaçlar olarak ayrıldı.
+  - Sunucu bağlantısı geciktiğinde `Connect timeout`, veri akışı kesintiye uğradığında `Stall timeout` fırlatılması sağlandı.
+  - Kopan veya takılan bağlantıların kaldıkları `CurrentOffset`'ten yeni bir Range bağlantısı açarak kayıpsız devam etmesi sağlandı.
 - `src/FDownloader.Core/Engine/HttpDownloader.cs`:
-  - Worker hataları yakalanıp `TaskFailedEvent` ile kurtarılabilir (`isRetrying`) veya kalıcı olarak UI'ya anlaşılır Türkçe mesajlarla iletildi.
-- `tests/FDownloader.Core.Tests/ErrorClassificationTests.cs`:
-  - Senaryo 5 (Abort ve geçici hata yeniden deneme), Senaryo 8 (429 Retry-After, 404 kalıcı hata, 403 erişim engeli, 500/503 geçici hata) ve disk dolu simülasyon testleri yazıldı.
-- Toplam test sayısı 114'ten **122'ye** yükseldi. **122/122 test yeşil**.
+  - `SegmentWorker` örneklerine bağımsız `connectTimeout` (15s) ve `stallTimeout` (30s) aktarıldı.
+- `tests/FDownloader.Core.Tests/MockServer/TestHttpServer.cs`:
+  - `/abort` senaryosuna dinamik `AbortRemainingCount` eklendi; ilk istekte abort edip ikinci istekte Range ile kaldığı yerden devam edebilen yapı kuruldu.
+- `tests/FDownloader.Core.Tests/StallAndConnectionTests.cs`:
+  - Senaryo 5 (Abort sonrası toparlanma ve tam SHA-256 hash eşleşmesi), Senaryo 4 (Yavaş aktarım yapan /slow uç noktasının tamamlanması) ve Stall timeout sınır aşımında retry tetikleme testleri yazıldı.
+- Toplam test sayısı 122'den **125'e** yükseldi. **125/125 test yeşil**.
 
 ---
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** P2-01, P2-02, P2-03, P2-04 ve P2-05 tamamlandı.
-- **Sıradaki Görev:** **P2-06 — Takılma (Stall) Tespiti ve Bağlantı Yönetimi**.
-  - Bağlantı zaman aşımı, okuma zaman aşımı ve "veri akışı durdu" zaman aşımı ayrımı.
-  - Takılan parçayı kesme ve yeniden bağlanma (Senaryo 4 yavaş yanıt ve Senaryo 5).
-  - Sunucu çok fazla bağlantıyı reddederse parça sayısını otomatik düşüren uyarlamalı mantık.
+- **Tam olarak nerede kaldım:** P2-01'den P2-06'ya kadar olan tüm motor görevleri tamamlandı.
+- **Sıradaki Görev:** **P2-07 — Dinamik Parça Bölme (Dynamic Segment Splitting)**.
+  - Bir worker işini bitirince, sürmekte olan en büyük parçanın kalanını ikiye bölüp yardım etmesi.
+  - Bölme sırasında veri çakışması ve çift yazım koruması.
 - **Derleme durumu:** ✅ Başarılı (0 hata)
-- **Test durumu:** 122/122 geçiyor
+- **Test durumu:** 125/125 geçiyor
 
 ---
 
@@ -41,9 +39,9 @@
 1. Değişiklikleri commit et:
    ```
    git add src/ tests/ docs/
-   git commit -m "feat(engine): P2-05 - Hata siniflandirma, 429 Retry-After ve kalici hata erken durdurma mekanizmasi"
+   git commit -m "feat(engine): P2-06 - Connect/stall zaman asimi ayrimi, kopan baglanti toparlanmasi ve testleri"
    ```
-2. **P2-06:** `SegmentWorker.cs` ve `HttpDownloader.cs` içinde stall tespiti ve uyarlamalı bağlantı/parça düşürme mekanizmasını testleriyle uygula.
+2. **P2-07:** Dinamik parça bölme (idle worker work-stealing / segment split) mekanizmasını tasarla ve testlerini yaz.
 
 ---
 

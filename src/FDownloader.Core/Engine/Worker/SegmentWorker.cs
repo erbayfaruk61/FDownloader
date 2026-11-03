@@ -21,6 +21,7 @@ public sealed class SegmentWorker
 
     // Worker ayarları
     private readonly int _maxRetries;
+    private readonly TimeSpan _connectTimeout;
     private readonly TimeSpan _stallTimeout;
     private readonly string? _userAgent;
     private readonly string? _referer;
@@ -39,6 +40,7 @@ public sealed class SegmentWorker
         HttpClient http,
         ILogger<SegmentWorker> logger,
         int maxRetries = 5,
+        TimeSpan? connectTimeout = null,
         TimeSpan? stallTimeout = null,
         string? userAgent = null,
         string? referer = null,
@@ -51,6 +53,7 @@ public sealed class SegmentWorker
         _http = http;
         _logger = logger;
         _maxRetries = maxRetries;
+        _connectTimeout = connectTimeout ?? TimeSpan.FromSeconds(15);
         _stallTimeout = stallTimeout ?? TimeSpan.FromSeconds(30);
         _userAgent = userAgent;
         _referer = referer;
@@ -145,7 +148,20 @@ public sealed class SegmentWorker
         long startFrom = _segment.CurrentOffset;
 
         using var request = BuildRequest(startFrom, _segment.EndByte);
-        using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
+        HttpResponseMessage response;
+
+        using (var connectCts = CancellationTokenSource.CreateLinkedTokenSource(ct))
+        {
+            connectCts.CancelAfter(_connectTimeout);
+            try
+            {
+                response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, connectCts.Token);
+            }
+            catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+            {
+                throw new TimeoutException($"Segment {_segment.Index} sunucu bağlantı zaman aşımına uğradı (Connect timeout: {_connectTimeout.TotalSeconds}s).");
+            }
+        }
 
         // 416: İstenen aralık geçersiz — segment zaten tamamlanmış olabilir
         if (response.StatusCode == System.Net.HttpStatusCode.RequestedRangeNotSatisfiable)

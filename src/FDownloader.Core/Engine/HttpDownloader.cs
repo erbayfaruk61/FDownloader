@@ -273,6 +273,7 @@ public sealed class HttpDownloader : IDisposable
                     _httpClient,
                     workerLogger,
                     maxRetries: 5,
+                    connectTimeout: TimeSpan.FromSeconds(15),
                     stallTimeout: TimeSpan.FromSeconds(30),
                     userAgent: _task.UserAgent,
                     referer: _task.Referer,
