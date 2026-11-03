@@ -2,30 +2,32 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** P2-01 — Veri Bütünlüğü Kanıtı (Hash Testleri)
+**ID:** P2-02 — Kalıcı Resume'un Kayıpsızlığı
 **Durum:** ✅ Bitti
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
-- `tests/FDownloader.Core.Tests/MockServer/TestHttpServer.cs`:
-  - `/large-stream` uç noktasına Range (206 Partial Content) desteği eklendi.
-  - İstenen bayt aralığına göre deterministik model (`LargeChunkPattern`) bayt akışı üretimi sağlandı.
-- `tests/FDownloader.Core.Tests/DataIntegrityHashTests.cs`:
-  - `HttpDownloader` motorunun 1, 2, 4, 8 ve 16 parçalı (segment) indirmelerde deterministik 1 MB veri akışını indirip SHA-256 hash'inin tam eşleştiği doğrulandı.
-  - Parça sayısına tam bölünmeyen (asallardan oluşan) içeriklerin (`/normal`) 4 parçalı indirilmesinde SHA-256 hash doğrulaması test edildi.
-- Toplam test sayısı 98'den **104'e** yükseldi. **104/104 test yeşil**.
+- `src/FDownloader.Core/Engine/HttpDownloader.cs`:
+  - `OperationCanceledException` (Pause / İptal) yakalandığında `FileWriter.FlushAsync()` çağrısı yapılarak tamponun diske yazılması garanti altına alındı.
+  - Duraklatılma anında `_repository.SaveSegmentProgress(_task.Segments)` ile en son segment ilerlemesi SQLite'a kaydedildi.
+  - Periyodik ilerleme raporlama döngüsüne DB segment checkpoint kaydı entegre edildi.
+- `src/FDownloader.Core/Storage/DownloadRepository.cs`:
+  - `GetTask(taskId)` metodu güncellendi: Artık görev veritabanından çekilirken ilişkili tüm `Segments` kayıtları da `ORDER BY Idx` ile otomatik yükleniyor (Resume için segmentlerin DB'den eksiksiz geri yüklenmesi sağlandı).
+- `tests/FDownloader.Core.Tests/LosslessResumeTests.cs`:
+  - Çok parçalı (4 segment) indirme ortasında duraklatma (`PauseAsync`), geçici `.fdown` dosyasının ve segment checkpoint verilerinin korunması, ardından ikinci bir downloader ile indirmeye devam edilip (`Resume`) nihai dosyanın SHA-256 hash bütünlüğü doğrulandı.
+- Toplam test sayısı 104'ten **105'e** yükseldi. **105/105 test yeşil**.
 
 ---
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** Faz 2'nin ilk ve en kritik görevi olan P2-01 (Hash & veri bütünlüğü) başarıyla tamamlandı.
-- **Sıradaki Görev:** **P2-02 — Kalıcı Resume'un Kayıpsızlığı**.
-  - İndirme ortasında duraklatma / iptal / yarım kalma durumlarında diske yazılan veri checkpoint'inin doğrulanması ve indirmeye devam edildiğinde nihai dosya hash'inin eksiksiz çıkması.
+- **Tam olarak nerede kaldım:** P2-01 ve P2-02 (AJAN_PLANI.md Bölüm 13'te belirtilen "bitmeden yeni özellik eklenemez" kuralındaki iki zorunlu motor güvenilirlik şartı) başarıyla tamamlandı.
+- **Sıradaki Görev:** **P2-03 — Dosya Değişim Kontrolü (ETag / Last-Modified Doğrulama)**.
+  - Resume öncesi sunucudaki dosyanın değişip değişmediğini kontrol etme; değiştiyse baştan başlatma veya kullanıcıyı uyarma mekanizması.
 - **Derleme durumu:** ✅ Başarılı (0 hata)
-- **Test durumu:** 104/104 geçiyor
+- **Test durumu:** 105/105 geçiyor
 
 ---
 
@@ -33,10 +35,10 @@
 
 1. Değişiklikleri commit et:
    ```
-   git add tests/ docs/
-   git commit -m "test(engine): P2-01 - Cok parcali HTTP indirme SHA-256 veri butunlugu ve hash testleri"
+   git add src/ tests/ docs/
+   git commit -m "feat(engine): P2-02 - Kayipsiz resume, disk flush checkpoint ve LosslessResumeTests"
    ```
-2. **P2-02:** Resume kayıpsızlık testini (`Pause` / `Resume` döngüsü ile yarım dosyadan devam edip SHA-256 doğrulama) yaz ve doğrula.
+2. **P2-03:** `HttpDownloader` içinde resume öncesi `ETag`/`Last-Modified` kontrolü ekle ve `TestHttpServer`'daki Senaryo 12 (`/dynamic-file`) ile test et.
 
 ---
 

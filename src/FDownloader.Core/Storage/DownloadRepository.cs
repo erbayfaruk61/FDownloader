@@ -99,16 +99,32 @@ public sealed class DownloadRepository
         cmd.ExecuteNonQuery();
     }
 
-    /// <summary>Belirli bir görevi Id'ye göre getirir.</summary>
+    /// <summary>Belirli bir görevi Id'ye göre getirir (segmentleriyle birlikte).</summary>
     public DownloadTask? GetTask(long taskId)
     {
-        using var cmd = _db.CreateCommand();
-        cmd.CommandText = "SELECT * FROM DownloadTasks WHERE Id = @Id;";
-        cmd.Parameters.AddWithValue("@Id", taskId);
-        using var reader = cmd.ExecuteReader();
-        if (reader.Read())
-            return ReadTask(reader);
-        return null;
+        DownloadTask? task = null;
+        using (var cmd = _db.CreateCommand())
+        {
+            cmd.CommandText = "SELECT * FROM DownloadTasks WHERE Id = @Id;";
+            cmd.Parameters.AddWithValue("@Id", taskId);
+            using var reader = cmd.ExecuteReader();
+            if (reader.Read())
+                task = ReadTask(reader);
+        }
+
+        if (task != null)
+        {
+            using var segCmd = _db.CreateCommand();
+            segCmd.CommandText = "SELECT * FROM Segments WHERE TaskId = @TaskId ORDER BY Idx;";
+            segCmd.Parameters.AddWithValue("@TaskId", taskId);
+            using var segReader = segCmd.ExecuteReader();
+            while (segReader.Read())
+            {
+                task.Segments.Add(ReadSegment(segReader));
+            }
+        }
+
+        return task;
     }
 
     /// <summary>Tüm görevleri yükler (segment listesi dahil).</summary>

@@ -274,6 +274,18 @@ public sealed class HttpDownloader : IDisposable
         catch (OperationCanceledException)
         {
             _logger.LogInformation("İndirme duraklatıldı veya iptal edildi: {Task}", _task.Id);
+            try
+            {
+                if (writer != null)
+                {
+                    await writer.FlushAsync();
+                }
+                _repository.SaveSegmentProgress(_task.Segments);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "İndirme duraklatılırken segment ilerleme checkpoint'i kaydedilemedi: {Task}", _task.Id);
+            }
         }
         catch (Exception ex)
         {
@@ -298,7 +310,15 @@ public sealed class HttpDownloader : IDisposable
         {
             try
             {
+                // 400ms aralıklarla hem UI'ya bildir hem de DB'ye checkpoint al
                 await System.Threading.Tasks.Task.Delay(400, cancellationToken);
+
+                // Periyodik checkpoint: diske flush ve DB'ye kaydet
+                try
+                {
+                    _repository.SaveSegmentProgress(_task.Segments);
+                }
+                catch { }
 
                 double speed;
                 TimeSpan? eta;
