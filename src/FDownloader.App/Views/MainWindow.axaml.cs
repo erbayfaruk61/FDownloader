@@ -353,7 +353,8 @@ public partial class MainWindow : Window
 
     private void OnSpeedLimitButtonPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (e.GetCurrentPoint(this).Properties.IsRightButtonPressed)
+        var point = e.GetCurrentPoint(sender as Visual ?? this);
+        if (point.Properties.IsRightButtonPressed && !point.Properties.IsLeftButtonPressed)
         {
             if (DataContext is MainViewModel vm)
             {

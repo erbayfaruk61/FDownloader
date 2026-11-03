@@ -655,6 +655,11 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     private const string SettingKeyMinimizeToTrayOnClose = "System.MinimizeToTrayOnClose";
 
     private const string SettingKeyShowTrayIcon = "System.ShowTrayIcon";
+    private const string SettingKeyGlobalDownloadLimitKiB = "Network.GlobalDownloadLimitKiB";
+    private const string SettingKeyGlobalUploadLimitKiB = "Network.GlobalUploadLimitKiB";
+    private const string SettingKeyAltDownloadLimitKiB = "Network.AltDownloadLimitKiB";
+    private const string SettingKeyAltUploadLimitKiB = "Network.AltUploadLimitKiB";
+    private const string SettingKeyIsAltRateLimitActive = "Network.IsAltRateLimitActive";
 
     private void SetProgressBarStyle(ProgressBarStyleKey style)
 
@@ -1254,7 +1259,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
     [ObservableProperty] private bool _isSettingsDialogOpen;
 
-    [ObservableProperty] private int _settingsTabIndex = SettingsTabAppearance;
+    [ObservableProperty] private int _settingsTabIndex = SettingsTabSpeedAndNetwork;
 
     [ObservableProperty] private string _settingsDefaultSaveDirectory = string.Empty;
 
@@ -4330,7 +4335,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
         _savedThemeMode = _currentThemeMode;
 
-        SettingsTabIndex = SettingsTabAppearance;
+        SettingsTabIndex = SettingsTabSpeedAndNetwork;
 
         IsSettingsDialogOpen = true;
 
@@ -4379,6 +4384,12 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         _downloadManager.SetSetting(SettingKeyMinimizeToTrayOnClose, MinimizeToTrayOnClose.ToString());
 
         _downloadManager.SetSetting(SettingKeyShowTrayIcon, ShowTrayIcon.ToString());
+
+        _downloadManager.SetSetting(SettingKeyGlobalDownloadLimitKiB, GlobalDownloadLimitKiB.ToString());
+        _downloadManager.SetSetting(SettingKeyGlobalUploadLimitKiB, GlobalUploadLimitKiB.ToString());
+        _downloadManager.SetSetting(SettingKeyAltDownloadLimitKiB, AltDownloadLimitKiB.ToString());
+        _downloadManager.SetSetting(SettingKeyAltUploadLimitKiB, AltUploadLimitKiB.ToString());
+        _downloadManager.SetSetting(SettingKeyIsAltRateLimitActive, IsAltRateLimitActive.ToString());
 
         if (OperatingSystem.IsWindows())
 
@@ -6108,7 +6119,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         _downloadManager.SetSetting("Scheduler_EndTime", SchedulerEndTime);
         UpdateSchedulerSummary();
         IsSchedulerDialogOpen = false;
-        ShowNotification("⏰ Zamanlayıcı", "Zamanlayıcı ayarları kaydedildi.", null, "⏰", CompletionSound.Notify);
+        // ShowNotification sessize alındı
     }
 
     [RelayCommand]
