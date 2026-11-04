@@ -241,3 +241,29 @@ Bu belge, FDownloader indirme motoru ve disk/dosya sistemi için hem otomatik he
   2. Bu siteden bir dosya indirme bağlantısı verin.
   3. FDownloader'ın 401 yetkisiz hatası almadan indirmeyi sorunsuzca tamamladığını doğrulayın.
   4. SQLite veritabanındaki `site_credentials` tablosunu inceleyerek parolanın açık metin olarak DEĞİL, DPAPI ile şifrelenmiş olarak saklandığını teyit edin.
+
+---
+
+## 7. Toplu İndirme Senaryoları (P5-06)
+
+### 7.1 Çok Satırlı Link Listesi ve Yorum Satırları
+- **Amaç:** Panodan veya metin dosyasından yapıştırılan çoklu URL listesinin satır satır ayrıştırılması, `#` ile başlayan yorum satırlarının ve geçersiz satırların güvenle ayıklanması.
+- **Otomatik Test:** `BatchDownloadTests.BatchDownloadParser_MultilineText_ParsesAndDeduplicates`.
+- **Elle Test:**
+  1. İndirme > Toplu İndirme penceresini açın.
+  2. Metin kutusuna aralarda geçersiz satırlar ve `# yorum` satırları bulunan 5 adet URL yapıştırın.
+  3. Yalnızca geçerli URL'lerin indirme listesine aktarıldığını doğrulayın.
+
+### 7.2 Sayısal ve Alfabetik Aralık Desenleri ([01-20], [a-z])
+- **Amaç:** Tek bir URL şablonu ile ardışık dosyaların ([01-20], [1-100:2], [a-z]) otomatik olarak genişletilerek toplu indirme kuyruğuna eklenmesi.
+- **Otomatik Test:** `BatchDownloadTests.BatchRangePattern_NumericPadding_ExpandsCorrectly`, `BatchDownloadTests.BatchRangePattern_StepAndDescending_ExpandsCorrectly`, `BatchDownloadTests.BatchRangePattern_Alphabetic_ExpandsLetters`.
+- **Elle Test:**
+  1. Toplu indirme kutusuna `https://site.org/galeri/resim_[01-05].jpg` yazın.
+  2. Listeye `resim_01.jpg`'den `resim_05.jpg`'ye kadar 5 adet görevin sıfır dolgusuyla eklendiğini doğrulayın.
+
+### 7.3 Özel Dosya Adı Şablonları ({index}, {name})
+- **Amaç:** Toplu indirmelerde dosyaların `{name}`, `{index:D2}`, `{ext}` gibi şablonlarla isimlendirilebilmesi.
+- **Otomatik Test:** `BatchDownloadTests.BatchDownloadParser_WithCustomFileNamePattern_AppliesTemplate`, `BatchDownloadTests.DownloadManager_AddBatchDownloadsAsync_CreatesAndQueuesTasks`.
+- **Elle Test:**
+  1. Toplu indirmede dosya adı şablonu olarak `Bolum_{index:D2}_{name}.{ext}` belirtin.
+  2. Oluşturulan görevlerin adlarının `Bolum_01_dosya.mp4`, `Bolum_02_dosya.mp4` şeklinde biçimlendirildiğini doğrulayın.

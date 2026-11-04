@@ -89,7 +89,7 @@
 | P5-03 | Torrent sağlamlığı | 🟡 | ✅ Bitti | — | MonoTorrent entegrasyonu testleri eklendi (dosya önceliği, sıralı streaming indirme, hash kontrolü, tracker yönetimi, restore ve remote .torrent denetimi - 324/324 test yeşil) |
 | P5-04 | Site/galeri yakalayıcı | 🟡 | ✅ Bitti | — | SiteGrabberService güçlendirildi; tarama derinliği (MaxDepth), aynı alan adı kısıtı, robots.txt ayrıştırma/nezaketi, hız sınırı gecikmesi, ReDoS koruması, iptal desteği ve HEAD boyut sorgulama eklendi (335/335 test yeşil) |
 | P5-05 | Proxy ve kimlik doğrulama | 🟡 | ✅ Bitti | — | HTTP/HTTPS/SOCKS5 proxy, sistem proxy, site giriş bilgileri yöneticisi (DPAPI şifreli, CredentialCache, Basic/Digest/NTLM desteği) (344/344 test yeşil) |
-| P5-06 | Toplu indirme | 🟢 | 🔄 Devam | — | Link listesi yapıştırma, sayı aralığı deseni |
+| P5-06 | Toplu indirme | 🟢 | ✅ Bitti | — | Link listesi yapıştırma, sayı/harf aralığı deseni ([01-20], [a-z]), dosya adı şablonları ({index}, {name}), kuyruk yönetimi (351/351 test yeşil) |
 
 ---
 

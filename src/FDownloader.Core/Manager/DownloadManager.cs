@@ -1,3 +1,4 @@
+using FDownloader.Core.Batch;
 using FDownloader.Core.Domain;
 using FDownloader.Core.Engine;
 using FDownloader.Core.Events;
@@ -487,6 +488,45 @@ public sealed class DownloadManager : IAsyncDisposable
         }
 
         return System.Threading.Tasks.Task.FromResult(task);
+    }
+
+    /// <summary>
+    /// Çok satırlı metin veya aralık deseni içeren girdiyi ayrıştırarak toplu indirme görevleri oluşturur.
+    /// </summary>
+    /// <param name="batchText">URL listesi veya sayı/harf deseni (Örn: file_[01-20].zip).</param>
+    /// <param name="options">Toplu indirme seçenekleri (hedef klasör, tekilleştirme, ad şablonu vb.).</param>
+    /// <param name="startImmediately">Görevlerin hemen kuyruk sınırına göre başlatılıp başlatılmayacağı.</param>
+    /// <returns>Oluşturulan ve kuyruğa eklenen geçerli DownloadTask listesi.</returns>
+    public async Task<List<DownloadTask>> AddBatchDownloadsAsync(
+        string batchText,
+        BatchDownloadOptions? options = null,
+        bool startImmediately = true)
+    {
+        options ??= new BatchDownloadOptions();
+        var items = BatchDownloadParser.Parse(batchText, options);
+        var createdTasks = new List<DownloadTask>();
+
+        foreach (var item in items)
+        {
+            if (!item.IsValid)
+            {
+                _logger.LogWarning("Toplu indirme satırı atlandı: {Error} -> {Url}", item.ErrorMessage, item.Url);
+                continue;
+            }
+
+            var task = await AddHttpDownloadAsync(
+                url: item.Url,
+                fileName: item.SuggestedFileName,
+                saveDirectory: options.DestinationDirectory,
+                segmentCount: options.Segments,
+                startImmediately: startImmediately,
+                allowDuplicate: !options.DeduplicateUrls);
+
+            createdTasks.Add(task);
+        }
+
+        _logger.LogInformation("Toplu indirme ayrıştırıldı: {Count} geçerli görev oluşturuldu ve kuyruğa eklendi.", createdTasks.Count);
+        return createdTasks;
     }
 
     /// <summary>
