@@ -198,6 +198,7 @@ public partial class App : Application
         services.AddSingleton<ClipboardWatcher>();
         services.AddSingleton<SiteGrabberService>();
         services.AddSingleton<FDownloader.Core.Network.BrowserBridgeService>();
+        services.AddSingleton<FDownloader.Core.Network.SiteCredentialManager>();
         services.AddSingleton<DownloadManager>();
         services.AddSingleton<FDownloader.App.Services.UpdateService>();
 

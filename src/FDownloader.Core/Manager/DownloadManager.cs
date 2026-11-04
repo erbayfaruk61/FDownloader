@@ -1,6 +1,7 @@
 using FDownloader.Core.Domain;
 using FDownloader.Core.Engine;
 using FDownloader.Core.Events;
+using FDownloader.Core.Network;
 using FDownloader.Core.Storage;
 using FDownloader.Core.Torrent;
 using FDownloader.Core.Utilities;
@@ -34,6 +35,7 @@ public sealed class DownloadManager : IAsyncDisposable
     public ArchiveExtractorService ArchiveExtractor { get; }
     public DownloadScheduler Scheduler { get; }
     public NetworkWatcher NetworkWatcher { get; }
+    public SiteCredentialManager CredentialManager { get; }
 
     public string? GetSetting(string key) => _repository.GetSetting(key);
     public void SetSetting(string key, string value) => _repository.SetSetting(key, value);
@@ -44,7 +46,8 @@ public sealed class DownloadManager : IAsyncDisposable
         TorrentService torrentService,
         YtDlpMediaService mediaService,
         HttpClient httpClient,
-        ILoggerFactory loggerFactory)
+        ILoggerFactory loggerFactory,
+        SiteCredentialManager? credentialManager = null)
     {
         _repository = repository;
         _eventBus = eventBus;
@@ -54,6 +57,9 @@ public sealed class DownloadManager : IAsyncDisposable
         _loggerFactory = loggerFactory;
         _logger = loggerFactory.CreateLogger<DownloadManager>();
         ArchiveExtractor = new ArchiveExtractorService(loggerFactory.CreateLogger<ArchiveExtractorService>());
+
+        CredentialManager = credentialManager ?? new SiteCredentialManager(loggerFactory.CreateLogger<SiteCredentialManager>());
+        CredentialManager.LoadFromRepository(_repository);
 
         Scheduler = new DownloadScheduler(
             eventBus,
@@ -1106,6 +1112,66 @@ public sealed class DownloadManager : IAsyncDisposable
         _repository.SetSetting("Torrent.NetworkInterfaceId", settings.NetworkInterfaceId ?? "");
 
         await _torrentService.ApplySettingsAsync(settings);
+    }
+
+    /// <summary>
+    /// Kayıtlı proxy yapılandırmasını döner.
+    /// </summary>
+    public ProxyConfig GetProxyConfig()
+    {
+        var config = new ProxyConfig();
+        var modeStr = _repository.GetSetting("Proxy.Mode");
+        if (Enum.TryParse<ProxyMode>(modeStr, out var mode))
+        {
+            config.Mode = mode;
+        }
+        else
+        {
+            var useSystem = _repository.GetSetting("Proxy.UseSystemProxy");
+            config.Mode = (useSystem == null || useSystem == "1" || useSystem.Equals("true", StringComparison.OrdinalIgnoreCase))
+                ? ProxyMode.System
+                : ProxyMode.Manual;
+        }
+
+        var protoStr = _repository.GetSetting("Proxy.Protocol");
+        if (Enum.TryParse<ProxyProtocol>(protoStr, out var proto))
+        {
+            config.Protocol = proto;
+        }
+
+        config.Server = _repository.GetSetting("Proxy.Server") ?? _repository.GetSetting("Proxy.ManualProxyUrl");
+        if (int.TryParse(_repository.GetSetting("Proxy.Port"), out var port))
+        {
+            config.Port = port;
+        }
+        config.Username = _repository.GetSetting("Proxy.Username");
+        config.Password = _repository.GetSetting("Proxy.Password");
+
+        var bypassLocal = _repository.GetSetting("Proxy.BypassLocal");
+        config.BypassLocal = bypassLocal == null || bypassLocal == "1" || bypassLocal.Equals("true", StringComparison.OrdinalIgnoreCase);
+
+        var bypassList = _repository.GetSetting("Proxy.BypassList");
+        if (!string.IsNullOrWhiteSpace(bypassList))
+        {
+            config.BypassList = bypassList.Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+        }
+
+        return config;
+    }
+
+    /// <summary>
+    /// Proxy yapılandırmasını güvenli olarak kaydeder.
+    /// </summary>
+    public void SaveProxyConfig(ProxyConfig config)
+    {
+        _repository.SetSetting("Proxy.Mode", config.Mode.ToString());
+        _repository.SetSetting("Proxy.Protocol", config.Protocol.ToString());
+        _repository.SetSetting("Proxy.Server", config.Server ?? string.Empty);
+        _repository.SetSetting("Proxy.Port", config.Port.ToString());
+        _repository.SetSetting("Proxy.Username", config.Username ?? string.Empty);
+        _repository.SetSetting("Proxy.Password", config.Password ?? string.Empty);
+        _repository.SetSetting("Proxy.BypassLocal", config.BypassLocal.ToString());
+        _repository.SetSetting("Proxy.BypassList", string.Join(";", config.BypassList));
     }
 
     public async ValueTask DisposeAsync()

@@ -213,3 +213,31 @@ Bu belge, FDownloader indirme motoru ve disk/dosya sistemi için hem otomatik he
 - **Elle Test:**
   1. Sadece "Video" kategorisini seçerek bir web sayfasını tarayın.
   2. Yalnızca video dosyalarının listelendiğini ve dosya boyutlarının göründüğünü doğrulayın.
+
+---
+
+## 6. Proxy ve Kimlik Doğrulama Senaryoları (P5-05)
+
+### 6.1 Sistem Proxy ve Özel Proxy (HTTP / HTTPS / SOCKS5)
+- **Amaç:** Kullanıcının işletim sistemi proxy ayarlarını doğrudan kullanabilmesi veya özel HTTP/HTTPS/SOCKS5 proxy tanımlayarak trafiği bu vekil sunucu üzerinden yönlendirebilmesi.
+- **Otomatik Test:** `NetworkProxyAndCredentialTests.ProxyConfig_CreateWebProxy_ReturnsExpectedProxyType`, `NetworkProxyAndCredentialTests.NetworkHandlerFactory_CreateHandler_ConfiguresProxyAndCredentials`.
+- **Elle Test:**
+  1. Ayarlar > Proxy sekmesine gidin.
+  2. "Özel Proxy Kullan" seçip SOCKS5 veya HTTP proxy adres ve portunu girin.
+  3. Bir dosya indirin ve ağ trafiğinin girilen vekil sunucu üzerinden aktığını doğrulayın.
+
+### 6.2 Proxy Kimlik Doğrulaması (Kullanıcı Adı & Parola)
+- **Amaç:** Parolalı vekil sunucularda kimlik bilgilerinin güvenli taşınması ve yetkilendirme başlıklarının doğru üretilmesi.
+- **Otomatik Test:** `NetworkProxyAndCredentialTests.ProxyConfig_WithCredentials_ConfiguresNetworkCredential`.
+- **Elle Test:**
+  1. Kimlik doğrulaması gerektiren bir vekil sunucu adresi, kullanıcı adı ve parolası girin.
+  2. İndirme başlatarak bağlantının 407 (Proxy Authentication Required) hatasına düşmeden başarıyla gerçekleştiğini test edin.
+
+### 6.3 Site Bazlı Kimlik Doğrulama (Site Credentials & DPAPI)
+- **Amaç:** Basic, Digest veya NTLM korumalı siteler için kullanıcı adı ve parolaların DPAPI ile yerel veritabanında şifreli saklanması, indirme sırasında sunucuya otomatik sunulması.
+- **Otomatik Test:** `NetworkProxyAndCredentialTests.SiteCredentialManager_AddAndRetrieve_StoresAndFindsCorrectly`, `NetworkProxyAndCredentialTests.SiteCredentialManager_DpapiEncryption_StoresPasswordsEncryptedOnDisk`, `NetworkProxyAndCredentialTests.SiteCredentials_AuthenticatesAgainstProtectedServerSuccessfully`.
+- **Elle Test:**
+  1. Ayarlar > Site Şifreleri menüsünden `korumali-site.com` için kullanıcı adı ve parola ekleyin.
+  2. Bu siteden bir dosya indirme bağlantısı verin.
+  3. FDownloader'ın 401 yetkisiz hatası almadan indirmeyi sorunsuzca tamamladığını doğrulayın.
+  4. SQLite veritabanındaki `site_credentials` tablosunu inceleyerek parolanın açık metin olarak DEĞİL, DPAPI ile şifrelenmiş olarak saklandığını teyit edin.

@@ -302,3 +302,4 @@ public class SiteGrabberServiceTests : IDisposable
         Assert.Equal(expectedAllowed, rules.IsAllowed(testUri));
     }
 }
+
