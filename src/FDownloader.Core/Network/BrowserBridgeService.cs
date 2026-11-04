@@ -32,7 +32,26 @@ public sealed class BrowserBridgeService : IDisposable
     public const int DefaultPort = 9666;
 
     // ─── Güvenlik Sabitleri ───────────────────────────────────────────────
-    private const string AllowedExtensionId = "chrome-extension://";
+    private static readonly string[] AllowedOriginPrefixes =
+    [
+        "chrome-extension://",
+        "moz-extension://",
+        "extension://"
+    ];
+
+    private static bool IsAllowedOrigin(string origin)
+    {
+        if (string.IsNullOrEmpty(origin) || origin.Equals("null", StringComparison.OrdinalIgnoreCase))
+            return true; // yerel araçlar (curl, Postman) veya null origin
+
+        foreach (var prefix in AllowedOriginPrefixes)
+        {
+            if (origin.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
+    }
 
     // Yalnızca bu Host değerleri kabul edilir (DNS rebinding koruması)
     private static readonly HashSet<string> AllowedHosts = new(StringComparer.OrdinalIgnoreCase)
@@ -145,16 +164,10 @@ public sealed class BrowserBridgeService : IDisposable
 
         // Origin doğrulaması — yabancı web sitelerinin fetch() ile istek atmasını engeller
         var origin = request.Headers["Origin"] ?? string.Empty;
-        if (!string.IsNullOrEmpty(origin))
+        if (!IsAllowedOrigin(origin))
         {
-            // null origin: yerel araçlar (curl, Postman) — kabul et
-            // chrome-extension://* — kabul et (kendi eklentimiz)
-            // diğer her şey (https://evil.com vb.) — reddet
-            if (!origin.StartsWith(AllowedExtensionId, StringComparison.OrdinalIgnoreCase))
-            {
-                _logger.LogWarning("Köprü: yetkisiz Origin reddedildi: {Origin}", origin);
-                return false;
-            }
+            _logger.LogWarning("Köprü: yetkisiz Origin reddedildi: {Origin}", origin);
+            return false;
         }
 
         return true;
@@ -165,10 +178,9 @@ public sealed class BrowserBridgeService : IDisposable
         var request = context.Request;
         var response = context.Response;
 
-        // CORS: yalnızca kendi eklentimizin origin'ine izin ver
+        // CORS: yalnızca izin verilen eklenti origin'lerine izin ver
         var requestOrigin = request.Headers["Origin"] ?? string.Empty;
-        var allowedOrigin = (!string.IsNullOrEmpty(requestOrigin) &&
-                             requestOrigin.StartsWith(AllowedExtensionId, StringComparison.OrdinalIgnoreCase))
+        var allowedOrigin = (!string.IsNullOrEmpty(requestOrigin) && IsAllowedOrigin(requestOrigin))
             ? requestOrigin
             : "null";
 

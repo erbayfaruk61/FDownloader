@@ -38,3 +38,46 @@ Bu belge, FDownloader indirme motoru ve disk/dosya sistemi için hem otomatik he
   2. İndirme ortasında belleği çıkartın.
   3. Uygulamanın çökmeyip görevi duraklattığını (`Paused`) ve "Hedef klasör veya sürücü bulunamadı" uyarısı verdiğini doğrulayın.
 
+---
+
+## 2. Tarayıcı Eklentisi ve Yakalama Senaryoları (P4-02)
+
+### 2.1 Uygulama Açıkken Otomatik Yakalama
+- **Amaç:** Desteklenen uzantı veya MIME türündeki bir dosya indirilirken tarayıcının kendi indirmesini iptal edip tüm parametreleri (URL, dosya adı, çerez, Referer, User-Agent, boyut) FDownloader'a eksiksiz devretmesi.
+- **Otomatik Test:** `IndirmeIstegiTumParametrelerleYakalanir`, `PingIstegiExtensionHeartbeatEventYayinlar`.
+- **Elle Test:**
+  1. FDownloader masaüstü uygulamasını çalıştırın.
+  2. Tarayıcıda bir `.zip` veya `.iso` indirme bağlantısına tıklayın.
+  3. Tarayıcının kendi indirme çubuğunda görevin anında temizlendiğini (iptal edildiğini) ve FDownloader üzerinde indirme onay/başlatma penceresinin açıldığını doğrulayın.
+
+### 2.2 Uygulama Kapalıyken Kesintisiz İndirme
+- **Amaç:** FDownloader kapalıyken veya ulaşılamazken kullanıcının hiçbir indirmeyi kaybetmemesi, tarayıcının standart indirme yöneticisinin normal devam etmesi.
+- **Kural:** `isBridgeAlive()` yanıt vermezse `suggest()` çağrılır; tarayıcı indirmesi asla engellenmez.
+- **Elle Test:**
+  1. FDownloader masaüstü uygulamasını tamamen kapatın.
+  2. Tarayıcıda herhangi bir dosya indirme bağlantısına tıklayın.
+  3. Tarayıcının indirmeyi normal bir şekilde kendi içinde tamamladığını, hata veya iptal vermediğini doğrulayın.
+
+### 2.3 Alt Tuşu ile Atlama (IDM Stili Baypas)
+- **Amaç:** Kullanıcı belirli bir dosyayı FDownloader yerine doğrudan tarayıcı ile indirmek istediğinde tek tuşla geçiş yapabilmesi.
+- **Kural:** `Alt` tuşuna basılı tutularak tıklandığında veya son 5 saniye içinde basılmışsa eklenti indirmeyi yakalamaz.
+- **Elle Test:**
+  1. Klavyede `Alt` tuşuna basılı tutun.
+  2. Büyük bir arşiv (.rar/.zip) indirme linkine tıklayın.
+  3. FDownloader'ın açılmadığını ve dosyanın doğrudan tarayıcı tarafından indirildiğini doğrulayın.
+
+### 2.4 Hariç Tutulan Siteler (Excluded Domains)
+- **Amaç:** Belirli sitelerden yapılan indirmelerin otomatik yakalama dışında tutulması (örn: iç ağ siteleri, GitHub vb.).
+- **Elle Test:**
+  1. Eklenti ayarlarına `github.com` domainini hariç tutulanlar arasına ekleyin.
+  2. GitHub üzerinden bir release asset indirin.
+  3. İndirmenin yakalanmadığını ve doğrudan tarayıcıda indiğini doğrulayın.
+
+### 2.5 Minimum Boyut Eşiği (Min Size Threshold)
+- **Amaç:** Küçük boyutlu dosyaların (örn. 500 KB altı) FDownloader'a aktarılmadan tarayıcıda hızlıca inmesi.
+- **Elle Test:**
+  1. Minimum boyutu 1 MB (1.048.576 byte) olarak ayarlayın.
+  2. 200 KB boyutunda bir PDF veya küçük zip indirin.
+  3. Dosyanın doğrudan tarayıcı tarafından indirildiğini doğrulayın.
+
+

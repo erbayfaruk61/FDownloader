@@ -72,7 +72,7 @@
 | ID | Görev | Zorluk | Durum | Commit | Not |
 |---|---|---|---|---|---|
 | P4-01 | Eklenti denetimi ve temizliği | 🟡 | ✅ Bitti | — | Manifest V3 izinleri asgariye indirildi (scripting ve polling heartbeat kaldırıldı), docs/EKLENTI.md ve docs/GIZLILIK.md hazırlandı |
-| P4-02 | Yakalama doğruluğu | 🔴 | ⬜ Bekliyor | — | Tarayıcı indirmesini iptal edip uygulamaya devretme, Alt tuşu ile atlama, uygulama kapalıyken normal devam |
+| P4-02 | Yakalama doğruluğu | 🔴 | ✅ Bitti | — | Tarayıcı indirmesini iptal edip uygulamaya devretme, Alt tuşu ile atlama, hariç tutulan siteler/minimum boyut kuralları, uygulama kapalıyken normal devam (265/265 test yeşil) |
 | P4-03 | Medya algılama | 🟡 | ⬜ Bekliyor | — | Doğrudan video, HLS/DASH algılama ve DRM korumalı içerik uyarısı |
 | P4-04 | Firefox desteği | 🟡 | ⬜ Bekliyor | — | Firefox uyarlaması, webextension polyfill/manifest |
 | P4-05 | Eklenti paketleme otomasyonu | 🟢 | ⬜ Bekliyor | — | CI üzerinden otomatik eklenti ZIP üretimi |

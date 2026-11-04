@@ -119,7 +119,52 @@ function extractCandidateExtensions(str) {
   return results;
 }
 
-function shouldCapture(downloadItem, allowedExtensions) {
+function extractHostname(urlStr) {
+  if (!urlStr) return "";
+  try {
+    const u = new URL(urlStr);
+    return (u.hostname || "").toLowerCase().trim();
+  } catch (e) {
+    return "";
+  }
+}
+
+function isDomainExcluded(url, referrer, excludedList) {
+  if (!Array.isArray(excludedList) || excludedList.length === 0) return false;
+
+  const urlHost = extractHostname(url);
+  const refHost = extractHostname(referrer);
+
+  for (const item of excludedList) {
+    if (!item || typeof item !== "string") continue;
+    let pattern = item.toLowerCase().trim();
+    if (!pattern) continue;
+
+    if (pattern.startsWith("*.")) {
+      pattern = pattern.substring(2);
+    }
+
+    if (urlHost && (urlHost === pattern || urlHost.endsWith("." + pattern))) return true;
+    if (refHost && (refHost === pattern || refHost.endsWith("." + pattern))) return true;
+  }
+
+  return false;
+}
+
+function shouldCapture(downloadItem, allowedExtensions, minSizeBytes = 0, excludedDomains = []) {
+  // 1. Hariç tutulan alan adları kontrolü
+  if (isDomainExcluded(downloadItem.url, downloadItem.referrer, excludedDomains) ||
+      isDomainExcluded(downloadItem.finalUrl, downloadItem.referrer, excludedDomains)) {
+    return false;
+  }
+
+  // 2. Minimum boyut kontrolü (fileSize biliniyorsa ve sınır konmuşsa)
+  if (typeof minSizeBytes === "number" && minSizeBytes > 0) {
+    if (downloadItem.fileSize > 0 && downloadItem.fileSize < minSizeBytes) {
+      return false;
+    }
+  }
+
   if (downloadItem.mime && matchesMime(downloadItem.mime)) {
     return true;
   }
@@ -244,6 +289,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return;
       }
 
+      const storageSettings = await new Promise(resolve => {
+        chrome.storage.local.get({ excludedDomains: [] }, resolve);
+      });
+      if (isDomainExcluded(message.url, message.referrer || sender.url || "", storageSettings.excludedDomains)) {
+        sendResponse({ success: false, reason: "excluded_domain" });
+        return;
+      }
+
       const alive = await isBridgeAlive();
       if (!alive) {
         sendResponse({ success: false, reason: "bridge_offline" });
@@ -278,7 +331,9 @@ chrome.downloads.onDeterminingFilename.addListener((downloadItem, suggest) => {
   chrome.storage.local.get({
     isEnabled: true,
     bypassOnAltKey: true,
-    extensions: []
+    extensions: [],
+    minSizeBytes: 0,
+    excludedDomains: []
   }, async (settings) => {
     if (!settings.isEnabled) {
       suggest();
@@ -303,7 +358,7 @@ chrome.downloads.onDeterminingFilename.addListener((downloadItem, suggest) => {
       ...(settings.extensions || [])
     ]));
 
-    const isTargetFile = shouldCapture(downloadItem, allowed);
+    const isTargetFile = shouldCapture(downloadItem, allowed, settings.minSizeBytes, settings.excludedDomains);
 
     if (!isTargetFile) {
       suggest();
