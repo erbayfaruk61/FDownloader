@@ -33,7 +33,7 @@
 ## 🚀 Öne Çıkan Özellikler (v1.5.0)
 
 * ⚡ **Çok Kanallı & Parçalı Hızlı İndirme:** HTTP/HTTPS bağlantılarını dinamik parçalara bölerek bant genişliğinizi tam kapasite kullanır; kopan veya duraklatılan indirmeleri sıfır kayıpla sürdürür.
-* 🧩 **IDM Tarzı Video Köşe Yakalayıcısı (Floating Grabber):** Web sayfalarındaki videolarda fareyi hareket ettirdiğinizde sağ üstte otomatik beliren şık indirme butonu (YouTube, Vimeo ve popüler video platformları tam uyumlu).
+* 🧩 **Akıllı Medya Yakalayıcısı (Floating Grabber):** Web sayfalarındaki videolarda sağ üstte beliren indirme butonu (yt-dlp tarafından desteklenen sitelerden medya indirme uyumlu). Telif haklarına ve sitelerin kullanım şartlarına uymak kullanıcının sorumluluğundadır.
 * 🖥️ **Sistem Tepsisi (Tray) & Windows Başlangıcı:** Uygulama kapatıldığında veya simge durumuna alındığında bildirim alanına (Tray) küçülür; Windows açılışında otomatik başlatılabilir.
 * 🔒 **Otomatik Arşiv Çözücü & Şifreli Arşiv Desteği:** İndirilen ZIP, RAR, 7Z, TAR dosyalarını indirme biter bitmez otomatik klasöre çıkartır. Şifreli arşivler için parola sorma diyalogu ve gömülü 7-Zip motoru içerir.
 * 🛡️ **Ağ Adaptörü Kilidi (VPN Kill-Switch):** İndirmeleri yalnızca seçtiğiniz fiziksel ağ kartına veya VPN adaptörüne kilitler; VPN kesildiğinde indirmeleri anında güvenle durdurur.
@@ -79,6 +79,12 @@ dotnet run --project src/FDownloader.App/FDownloader.App.csproj
 
 ---
 
+## ⚖️ Yasal Uyarı ve Sorumluluk Reddi
+
+FDownloader, kullanıcılara genel amaçlı dosya ve içerik indirme kolaylığı sağlayan açık kaynaklı bir araçtır. Telif haklarına, fikri mülkiyet yasalarına ve ziyaret edilen web sitelerinin hizmet şartlarına uymak tamamen kullanıcının kendi sorumluluğundadır. FDownloader, DRM veya şifreleme ile korunan içeriklerin aşılmasına yönelik herhangi bir mekanizma içermez ve desteklemez.
+
+---
+
 ## 📜 Krediler & Teşekkürler
 
 FDownloader aşağıdaki açık kaynak teknolojiler ve projeler üzerine inşa edilmiştir:
@@ -88,6 +94,7 @@ FDownloader aşağıdaki açık kaynak teknolojiler ve projeler üzerine inşa e
 * [yt-dlp](https://github.com/yt-dlp/yt-dlp) - Video ve ses işleme motoru.
 * [SharpCompress](https://github.com/adamhathcock/sharpcompress) & [7-Zip](https://www.7-zip.org/) - Arşiv ayrıştırma motorları.
 * [Velopack](https://velopack.io) - Modern kurulum ve güncelleme dağıtım çerçevesi.
+* Ayrıntılı lisans bildirimleri için: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) | Gizlilik politikası için: [docs/GIZLILIK.md](docs/GIZLILIK.md)
 
 ---
 

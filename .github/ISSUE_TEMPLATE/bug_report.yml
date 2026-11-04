@@ -1,0 +1,51 @@
+name: Hata Raporu (Bug Report)
+description: FDownloader uygulamasında karşılaştığınız bir sorunu veya hatayı bildirin.
+title: "[HATA]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Hata bildiriminde bulunduğunuz için teşekkür ederiz! Lütfen sorunu en kısa sürede çözebilmemiz için aşağıdaki bilgileri eksiksiz doldurun.
+  - type: input
+    id: version
+    attributes:
+      label: FDownloader Sürümü
+      placeholder: "Örn: 1.5.0 (Ayarlar > Hakkında sekmesinden kontrol edebilirsiniz)"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: İşletim Sistemi
+      options:
+        - "Windows 11 (64-bit)"
+        - "Windows 10 (64-bit)"
+        - "Windows Server"
+        - "Diğer"
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Hatanın Açıklaması
+      description: Ne oldu ve ne olmasını bekliyordunuz?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Hatayı Yeniden Üretme Adımları
+      description: Sorunun adım adım nasıl tetiklendiğini belirtin.
+      placeholder: |
+        1. Yeni indirme butonuna tıkla
+        2. Belirtilen linki yapıştır...
+        3. İndirme duraklatıldığında hata veriyor
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Günlük / Log Kayıtları
+      description: Varsa hata logunu veya ekran görüntüsünü ekleyin (varsayılan log konumu: `%LocalAppData%\FDownloader\logs`).
+

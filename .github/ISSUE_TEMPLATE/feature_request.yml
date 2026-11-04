@@ -1,0 +1,29 @@
+name: Özellik İsteği (Feature Request)
+description: FDownloader için yeni bir fikir veya geliştirme önerin.
+title: "[ÖNERİ]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        FDownloader'ı geliştirmemize yardımcı olduğunuz için teşekkür ederiz!
+  - type: textarea
+    id: problem
+    attributes:
+      label: Çözülmek İstenen Problem / İhtiyaç
+      description: Karşılaştığınız bir zorluk veya eksiklik nedir?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Önerilen Çözüm veya Özellik
+      description: Uygulamaya nasıl bir özellik veya iyileştirme eklenmeli?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Değerlendirilen Alternatifler
+      description: Düşündüğünüz başka alternatif yollar var mı?
+

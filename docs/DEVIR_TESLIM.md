@@ -2,26 +2,31 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** Faz 7 — Dağıtım ve Güven (P7-01 .. P7-06)  
-**Durum:** ✅ Bitti (Böylece **Faz 7** tüm maddeleriyle eksiksiz tamamlandı)
+**ID:** Faz 8 — Hukuk, Belgeler, Topluluk (P8-01 .. P8-05)  
+**Durum:** ✅ Bitti (Böylece **Faz 8** tüm maddeleriyle eksiksiz tamamlandı)
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
-- `docs/KOD_IMZALAMA.md`:
-  - Kod imzalama stratejisi, seçenekler (Azure Trusted Signing, SignPath.io, OV/EV), CI anahtar saklama politikası ve Velopack `vpk pack --signParams` entegrasyonu belgelendi (P7-01).
-- `.github/workflows/release.yml`:
-  - Tag (`v*`) tetikleyicisiyle uçtan uca otomatik dağıtım hattı güncellendi.
-  - Velopack kurulum paketlerinin ardından tüm release dosyalarının SHA-256 hash listesini (`SHA256SUMS.txt`) otomatik üreten adım eklendi (P7-02, P7-03).
-- `docs/YANLIS_POZITIF.md`:
-  - Antivirüs / EDR motorları için Yanlış Pozitif (False Positive) itiraz rehberi ve Türkçe/İngilizce bildirim form şablonları hazırlandı (P7-03).
-- `packaging/winget/manifests/f/FarukErbay/FDownloader/1.5.0/`:
-  - Windows Package Manager (winget) için `FarukErbay.FDownloader.yaml`, `FarukErbay.FDownloader.installer.yaml`, `FarukErbay.FDownloader.locale.tr-TR.yaml` ve `FarukErbay.FDownloader.locale.en-US.yaml` resmi manifestleri oluşturuldu (P7-04).
-- `UpdateService` & `MainViewModel`:
-  - Velopack güncelleme denetimi, indirme ve sessiz yeniden başlatma entegrasyonu doğrulandı; fazladan oluşan kod blokları ve uyku yönetimi temizlendi (P7-05).
+- `THIRD_PARTY_NOTICES.md`:
+  - Dahil edilen harici ikili dosyalar (yt-dlp, 7-Zip, FFmpeg) ve tüm NuGet kütüphanelerinin (Avalonia, MonoTorrent, SharpCompress, Velopack, Serilog, Sentry) telif ve lisans metinleri derlendi (P8-01).
+- `src/FDownloader.App/Views/MainWindow.axaml`:
+  - Ayarlar > Hakkında sekmesine "Açık Kaynak Lisansları ve Yasal Bildirim" kartı entegre edildi (P8-01).
+- `README.md` & `README.en.md`:
+  - Yasal sorumluluk reddi metni eklendi; "YouTube ve popüler platformlar tam uyumlu" gibi ifadeler "yt-dlp tarafından desteklenen sitelerden medya indirme" olarak yumuşatıldı; DRM aşmama ilkesi açıklandı (P8-02, P8-04).
+  - Kapsamlı İngilizce dokümantasyon (`README.en.md`) oluşturuldu (P8-04).
+- `docs/GIZLILIK.md`:
+  - Sıfır telemetri, sıfır izleme, yerel DPAPI depolama ve tarayıcı eklentisi izinleri doğrulandı (P8-03).
+- Topluluk ve Katkı Dosyaları:
+  - `CONTRIBUTING.md`: Geliştirme adımları ve kodlama ilkeleri (P8-04).
+  - `SECURITY.md`: Zafiyet bildirim prosedürü ve sorumlu bildirim kanalları (P8-04).
+  - `CODE_OF_CONDUCT.md`: Kapsayıcı topluluk standartları (P8-04).
+  - `.github/ISSUE_TEMPLATE/bug_report.yml` & `feature_request.yml`: GitHub Issue formları (P8-05).
+  - `.github/PULL_REQUEST_TEMPLATE.md`: GitHub PR kontrol listesi şablonu (P8-05).
+  - `CHANGELOG.md`: Keep a Changelog ve SemVer 2.0 formatında değişiklik günlüğü (P8-05).
 - `docs/ILERLEME.md`:
-  - Faz 7 tablosu tamamlandı olarak güncellendi.
+  - Faz 8 tamamlandı olarak güncellendi.
 - **Doğrulama:**
   - `dotnet build` -> 0 Hata
   - `dotnet test` -> 365/365 test yeşil.
@@ -30,11 +35,12 @@
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** Faz 7 bitti. Sıradaki faz: **Faz 8 — Hukuk, Belgeler, Topluluk**.
-  - **P8-01 🟡 Lisans ve üçüncü taraf bildirimleri (`THIRD_PARTY_NOTICES.md` ve arayüz)**
-  - **P8-02 🟡 Sorumluluk reddi ve içerik politikası (Telif hakları, DRM yok kararı)**
-  - **P8-03 🟢 Gizlilik politikası ve kullanım koşulları (`docs/GIZLILIK.md`)**
-  - **P8-04 🟡 README ve dokümantasyon (TR & EN README)**
+- **Tam olarak nerede kaldım:** Faz 8 bitti. Sıradaki ve son faz: **Faz 9 — Kararlılık ve Sürüm 2.0**.
+  - **P9-01 🔴 Kaos ve dayanıklılık testleri (`docs/TEST_SENARYOLARI.md` gözden geçirme ve doğrulama)**
+  - **P9-02 🔴 Performans ölçümü (`docs/PERFORMANS.md`)**
+  - **P9-03 🟡 Beta programı**
+  - **P9-04 🟡 Son güvenlik gözden geçirmesi (`docs/DENETIM.md` kontrolü)**
+  - **P9-05 🟡 Sürüm 2.0 yayını hazırlığı**
 - **Derleme durumu:** ✅ Başarılı (0 hata)
 - **Test durumu:** 365/365 geçiyor
 
@@ -44,7 +50,7 @@
 
 1. Değişiklikleri commit et:
    ```bash
-   git add .github/ docs/ packaging/ src/
-   git commit -m "feat(distribution): Faz 7 - Kod imzalama kilavuzu, winget manifestleri, SHA256SUMS ve release hatti (365 test yesil)"
+   git add .github/ README* docs/ THIRD_PARTY_NOTICES.md CONTRIBUTING.md SECURITY.md CODE_OF_CONDUCT.md CHANGELOG.md src/
+   git commit -m "feat(community): Faz 8 - Lisanslar, sorumluluk reddi, gizlilik, topluluk sablonlari ve CHANGELOG (365 test yesil)"
    ```
-2. **P8-01:** `THIRD_PARTY_NOTICES.md` oluşturmak ve tüm açık kaynak kütüphanelerin lisans bildirimlerini derlemek.
+2. **Faz 9 (P9-01 / P9-02):** Performans ve stres testlerinin belgelenmesi (`docs/PERFORMANS.md` ve `docs/TEST_SENARYOLARI.md`).

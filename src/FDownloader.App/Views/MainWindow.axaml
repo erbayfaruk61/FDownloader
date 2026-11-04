@@ -2211,6 +2211,18 @@
                                             <SelectableTextBlock Text="erbayfaruk61@gmail.com" FontSize="12" FontWeight="Bold" Foreground="#38BDF8" />
                                         </StackPanel>
                                     </Border>
+
+                                    <!-- Açık Kaynak ve Üçüncü Taraf Lisanslar -->
+                                    <Border Background="{DynamicResource SystemChromeLowColor}" CornerRadius="8" Padding="14">
+                                        <StackPanel Spacing="6">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="📜" FontSize="14" VerticalAlignment="Center" />
+                                                <TextBlock Text="Açık Kaynak Lisansları ve Yasal Bildirim:" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                            <TextBlock Text="FDownloader, MIT lisanslı açık kaynaklı bir yazılımdır. MonoTorrent, yt-dlp, SharpCompress, Velopack ve Avalonia UI bileşenlerini kullanır. Ayrıntılı bildirimler için repo kökündeki THIRD_PARTY_NOTICES.md belgesini inceleyebilirsiniz." TextWrapping="Wrap" FontSize="11" LineHeight="16" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                            <TextBlock Text="Telif haklarına ve sitelerin kullanım koşullarına uymak kullanıcının sorumluluğundadır." FontSize="11" FontWeight="SemiBold" Foreground="#F59E0B" Margin="0,4,0,0" />
+                                        </StackPanel>
+                                    </Border>
                                 </StackPanel>
                             </ScrollViewer>
                         </TabItem>

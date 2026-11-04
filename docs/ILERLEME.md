@@ -122,9 +122,21 @@
 
 ## Faz 8 — Hukuk, Belgeler, Topluluk
 
+| ID | Görev | Zorluk | Durum | Commit | Not |
+|---|---|---|---|---|---|
+| P8-01 | Lisans ve üçüncü taraf bildirimleri | 🟡 | ✅ Bitti | — | THIRD_PARTY_NOTICES.md (Avalonia, MonoTorrent, yt-dlp, 7-Zip, SharpCompress vb.) ve Ayarlar > Hakkında sekmesinde lisans kartı |
+| P8-02 | Sorumluluk reddi ve içerik politikası | 🟡 | ✅ Bitti | — | Telif hakları, kullanım koşulları sorumluluk reddi ve DRM aşmama beyanı (README.md, README.en.md) |
+| P8-03 | Gizlilik politikası ve kullanım koşulları | 🟢 | ✅ Bitti | — | docs/GIZLILIK.md (Sıfır izleme, sıfır telemetri ve yerel depolama ilkeleri) |
+| P8-04 | README ve dokümantasyon | 🟡 | ✅ Bitti | — | Türkçe (README.md) ve İngilizce (README.en.md), CONTRIBUTING.md, SECURITY.md, CODE_OF_CONDUCT.md |
+| P8-05 | Topluluk altyapısı | 🟢 | ✅ Bitti | — | Issue şablonları (.github/ISSUE_TEMPLATE/), PR şablonu (PULL_REQUEST_TEMPLATE.md), CHANGELOG.md (SemVer) |
+
+---
+
+## Faz 9 — Kararlılık ve Sürüm 2.0
+
 | ID | Görev | Zorluk | Durum |
 |---|---|---|---|
-| P8-01 → P8-04 | (Tüm görevler) | — | ⬜ Bekliyor |
+| P9-01 → P9-05 | (Tüm görevler) | — | ⬜ Bekliyor |
 
 ---
 
