@@ -87,3 +87,4 @@ public sealed class NetworkWatcher : IDisposable
         NetworkChange.NetworkAvailabilityChanged -= HandleNetworkAvailabilityChanged;
     }
 }
+

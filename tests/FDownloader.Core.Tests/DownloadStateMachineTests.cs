@@ -91,3 +91,4 @@ public class DownloadStateMachineTests
         Assert.Equal(DownloadStatus.Completed, task.Status);
     }
 }
+

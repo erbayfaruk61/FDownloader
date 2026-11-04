@@ -152,3 +152,4 @@ public sealed class DownloadScheduler : IDisposable
         _cts.Dispose();
     }
 }
+

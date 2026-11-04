@@ -56,7 +56,7 @@
 | ID | Görev | Zorluk | Durum | Commit | Not |
 |---|---|---|---|---|---|
 | P3-01 | Eklenti köprüsü güvenliği | 🔴 | ✅ Bitti | — | Origin + Host kontrolü, sınırlı akış ve şema doğrulaması eklendi |
-| P3-02 | Arşiv çıkarma güvenliği | 🔴 | ⬜ Bekliyor | — | |
+| P3-02 | Arşiv çıkarma güvenliği | 🔴 | ✅ Bitti | — | Zip-Slip (dizin dışına çıkma engeli) ve Zip-Bomb (maks dosya sayısı, maks bayt ve aşırı sıkıştırma oranı denetimi) 7z & SharpCompress için uygulandı (214/214 test yeşil) |
 | P3-03 | Dış süreç güvenliği | 🔴 | ✅ Bitti | — | YtDlpMediaService ArgumentList kullanımı ve URL doğrulama ile parametre enjeksiyonu önlendi |
 | P3-04 | Hassas veri saklama | 🟡 | ⬜ Bekliyor | — | |
 | P3-05 | Ağ güvenliği | 🟡 | ⬜ Bekliyor | — | |

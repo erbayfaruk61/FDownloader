@@ -2,31 +2,33 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** P2-13 — Tekrar Eden URL ve Silme Politikası
-**Durum:** ✅ Bitti (Faz 2 Tamamlandı!)
+**ID:** P3-02 — Arşiv Çıkarma Güvenliği (Zip Slip / Zip Bomb Koruması)
+**Durum:** ✅ Bitti
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
-- `src/FDownloader.Core/Manager/DownloadManager.cs`:
-  - `FindDuplicateTask(url)` metodu eklendi. Orijinal veya nihai URL üzerinden eşleşen mevcut görevlerin tespiti sağlandı.
-  - `AddHttpDownloadAsync` metoduna `allowDuplicate` (varsayılan true) parametresi eklendi. Tekrar eklenmek istendiğinde ve izin verilmediğinde var olan görev döndürülerek çift indirme engellendi.
-  - `RemoveTaskAsync(taskId, deleteFile)` mantığı doğrulandı: Görev veritabanından ve aktif kuyruktan silinirken `deleteFile: false` durumunda indirilen dosyalar korunuyor, `deleteFile: true` durumunda hedef dosya ve tüm geçici dosyalar (`.fdown`, `.part`, `.tmp`) güvenli şekilde temizleniyor.
-- `tests/FDownloader.Core.Tests/DuplicateAndDeletionTests.cs`:
-  - 4 yeni birim testi yazıldı: duplicate engelleme, duplicate izin verme, disk dosyalarını koruyarak silme ve disk dosyalarını tamamen temizleyerek silme senaryoları doğrulandı.
-- Toplam test sayısı 207'den **211'e** yükseldi. **211/211 test yeşil**.
+- `src/FDownloader.Core/Utilities/ArchiveExtractorService.cs`:
+  - Zip-Slip engeli sertleştirildi: Çıkartılacak dosyanın tam hedef dizin sınırı içinde (`fullFinalDir`) kaldığı garanti altına alındı, dışarı taşma girişimleri engellendi ve uyarı günlüğü basıldı.
+  - Zip-Bomb savunması eklendi:
+    - `maxExtractedFilesCount` (Varsayılan 50.000 adet) aşıldığında indirme güvenli şekilde durdurulup Türkçe hata mesajı üretiliyor.
+    - `maxTotalExtractedBytes` (Varsayılan 20 GB) aşıldığında işlem durdurulup disk taşması engelleniyor.
+    - `maxCompressionRatio` (Varsayılan 100x): Aşırı sıkıştırma oranına sahip şüpheli arşivler tespit edilip durduruluyor.
+    - Hem SharpCompress doğrudan çıkartma hem de 7-Zip harici süreç çıkartma senaryolarında temizleme (`Directory.Delete`) ve güvenlik sınırları entegre edildi.
+- `tests/FDownloader.Core.Tests/ArchiveExtractorServiceTests.cs`:
+  - 3 yeni birim testi yazıldı: Zip-Slip dizin dışına taşma engeli, Zip-Bomb dosya sayısı sınırı aşımı ve Zip-Bomb açılma boyutu aşımı test edildi.
+- Toplam test sayısı 211'den **214'e** yükseldi. **214/214 test yeşil**.
 
 ---
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** **FAZ 2 (İndirme Motorunu Sağlamlaştırma) EKSİKSİZ TAMAMLANDI!** (P2-01'den P2-13'e kadar tüm görevler bitti).
-- **Sıradaki Görev:** **Faz 3 — Güvenlik Sertleştirme**.
-  - P3-01 (Eklenti köprüsü güvenliği) ve P3-03 (Dış süreç güvenliği) önceden tamamlanmıştı.
-  - Sıradaki güvenlik görevi: **P3-02 — Arşiv Çıkarma Güvenliği (Zip Slip / Zip Bomb koruması)** (`ArchiveExtractorService.cs`).
+- **Tam olarak nerede kaldım:** P3-02 (Arşiv Çıkarma Güvenliği) tamamlandı.
+- **Sıradaki Görev:** **P3-04 — Hassas Veri Saklama (Kullanıcı kimlik bilgileri ve proxy şifreleme)**.
+  - `DataProtectionProvider` / DPAPI ile SQLite'daki parola, token, proxy kimlik bilgilerinin şifrelenerek saklanması.
 - **Derleme durumu:** ✅ Başarılı (0 hata)
-- **Test durumu:** 211/211 geçiyor
+- **Test durumu:** 214/214 geçiyor
 
 ---
 
@@ -35,9 +37,9 @@
 1. Değişiklikleri commit et:
    ```
    git add src/ tests/ docs/
-   git commit -m "feat(engine): P2-13 - Tekrar eden URL kontrolu ve diskten silme politikalari (Faz 2 tamamlandi)"
+   git commit -m "feat(security): P3-02 - Arsiv cikarma guvenligi, Zip-Slip ve Zip-Bomb savunmasi"
    ```
-2. **P3-02:** `ArchiveExtractorService.cs` Zip Slip path traversal ve Zip Bomb (sıkıştırma oranı / aşırı açılma boyutu) güvenlik kontrolleri ve testlerini uygula.
+2. **P3-04:** DPAPI / Windows Data Protection tabanlı hassas veri şifreleme altyapısını ve testlerini hazırla.
 
 ---
 

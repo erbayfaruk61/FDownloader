@@ -30,6 +30,26 @@ public class ArchiveExtractorService
     private static readonly Regex MultiPart7zRegex = new(@"\.7z\.(\d+)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private static readonly Regex OldMultiPartRarRegex = new(@"\.r(\d{2})$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
+    /// <summary>
+    /// Zip-bomb koruması için tek bir arşivden çıkarılabilecek maksimum toplam bayt boyutu (Varsayılan: 20 GB).
+    /// </summary>
+    public const long DefaultMaxTotalExtractedBytes = 20L * 1024 * 1024 * 1024;
+
+    /// <summary>
+    /// Zip-bomb koruması için tek bir arşivden çıkarılabilecek maksimum dosya sayısı (Varsayılan: 50.000 adet).
+    /// </summary>
+    public const int DefaultMaxExtractedFilesCount = 50_000;
+
+    /// <summary>
+    /// Zip-bomb koruması için sıkıştırma oranı eşiği (Varsayılan: 100 kat). 
+    /// Açılan boyut sıkıştırılmış boyutun 100 katını aşarsa ve açılan boyut > 50 MB ise şüpheli kabul edilir.
+    /// </summary>
+    public const double DefaultMaxCompressionRatio = 100.0;
+
+    private readonly long _maxTotalExtractedBytes;
+    private readonly int _maxExtractedFilesCount;
+    private readonly double _maxCompressionRatio;
+
     static ArchiveExtractorService()
     {
         try
@@ -41,9 +61,16 @@ public class ArchiveExtractorService
 
     private readonly ILogger<ArchiveExtractorService>? _logger;
 
-    public ArchiveExtractorService(ILogger<ArchiveExtractorService>? logger = null)
+    public ArchiveExtractorService(
+        ILogger<ArchiveExtractorService>? logger = null,
+        long maxTotalExtractedBytes = DefaultMaxTotalExtractedBytes,
+        int maxExtractedFilesCount = DefaultMaxExtractedFilesCount,
+        double maxCompressionRatio = DefaultMaxCompressionRatio)
     {
         _logger = logger;
+        _maxTotalExtractedBytes = maxTotalExtractedBytes;
+        _maxExtractedFilesCount = maxExtractedFilesCount;
+        _maxCompressionRatio = maxCompressionRatio;
     }
 
     /// <summary>
@@ -148,12 +175,20 @@ public class ArchiveExtractorService
             {
                 var sevenZipRes = ExtractWith7z(sevenZipExe, archivePath, finalDirectory, password, cancellationToken);
                 if (sevenZipRes.Success) return sevenZipRes;
+                if (sevenZipRes.ErrorMessage?.Contains("Güvenlik Uyarısı", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    return sevenZipRes;
+                }
 
                 var trimmed = password?.Trim();
                 if (!string.IsNullOrEmpty(trimmed) && trimmed != password)
                 {
                     var trimRes = ExtractWith7z(sevenZipExe, archivePath, finalDirectory, trimmed, cancellationToken);
                     if (trimRes.Success) return trimRes;
+                    if (trimRes.ErrorMessage?.Contains("Güvenlik Uyarısı", StringComparison.OrdinalIgnoreCase) == true)
+                    {
+                        return trimRes;
+                    }
                 }
 
                 if (string.IsNullOrEmpty(password) && sevenZipRes.IsPasswordProtected)
@@ -311,11 +346,43 @@ public class ArchiveExtractorService
             if (proc.ExitCode == 0)
             {
                 int count = 0;
+                long totalBytes = 0;
                 try
                 {
-                    count = Directory.GetFiles(finalDirectory, "*", SearchOption.AllDirectories).Length;
+                    var di = new DirectoryInfo(finalDirectory);
+                    var files = di.GetFiles("*", SearchOption.AllDirectories);
+                    count = files.Length;
+                    totalBytes = files.Sum(f => f.Length);
                 }
                 catch { }
+
+                // 7-Zip ile açılmış olsa dahi Zip-Bomb güvenlik sınırlarını denetle
+                if (count > _maxExtractedFilesCount)
+                {
+                    try { Directory.Delete(finalDirectory, true); } catch { }
+                    _logger?.LogWarning("Zip-Bomb koruması (7-Zip): Maksimum dosya sayısı ({Max}) aşıldı: {Path}", _maxExtractedFilesCount, archivePath);
+                    return new ArchiveExtractionResult(false, null, 0, $"Güvenlik Uyarısı: Arşiv izin verilen maksimum dosya sayısını ({_maxExtractedFilesCount:N0}) aşıyor (Zip-Bomb şüphesi).");
+                }
+
+                if (totalBytes > _maxTotalExtractedBytes)
+                {
+                    try { Directory.Delete(finalDirectory, true); } catch { }
+                    _logger?.LogWarning("Zip-Bomb koruması (7-Zip): Maksimum açılma boyutu ({Max} byte) aşıldı: {Path}", _maxTotalExtractedBytes, archivePath);
+                    return new ArchiveExtractionResult(false, null, 0, $"Güvenlik Uyarısı: Arşiv izin verilen maksimum açılma boyutunu ({_maxTotalExtractedBytes:N0} byte) aşıyor (Zip-Bomb şüphesi).");
+                }
+
+                long archiveSize = 0;
+                try { archiveSize = new FileInfo(archivePath).Length; } catch { }
+                if (archiveSize > 0 && totalBytes > 50L * 1024 * 1024)
+                {
+                    double ratio = (double)totalBytes / archiveSize;
+                    if (ratio > _maxCompressionRatio)
+                    {
+                        try { Directory.Delete(finalDirectory, true); } catch { }
+                        _logger?.LogWarning("Zip-Bomb koruması (7-Zip): Aşırı sıkıştırma oranı ({Ratio:F1}x): {Path}", ratio, archivePath);
+                        return new ArchiveExtractionResult(false, null, 0, $"Güvenlik Uyarısı: Arşiv aşırı yüksek sıkıştırma oranına ({ratio:F1}x) sahip (Zip-Bomb şüphesi).");
+                    }
+                }
 
                 _logger?.LogInformation("7-Zip ile arşiv başarıyla çıkarıldı: {Path} -> {Dir} ({Count} dosya)", archivePath, finalDirectory, count);
                 return new ArchiveExtractionResult(true, finalDirectory, count, null);
@@ -372,6 +439,9 @@ public class ArchiveExtractorService
         }
 
         int extractedCount = 0;
+        long totalExtractedBytes = 0;
+        long archiveFileSize = new FileInfo(archivePath).Length;
+
         var extractionOptions = new ExtractionOptions
         {
             ExtractFullPath = true,
@@ -388,14 +458,46 @@ public class ArchiveExtractorService
             var relativePath = entry.Key?.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar) ?? "";
             var destinationPath = Path.GetFullPath(Path.Combine(finalDirectory, relativePath));
 
-            if (!destinationPath.StartsWith(Path.GetFullPath(finalDirectory), StringComparison.OrdinalIgnoreCase))
+            var fullFinalDir = Path.GetFullPath(finalDirectory);
+            if (!fullFinalDir.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal))
+            {
+                fullFinalDir += Path.DirectorySeparatorChar;
+            }
+
+            if (!destinationPath.StartsWith(fullFinalDir, StringComparison.OrdinalIgnoreCase))
             {
                 _logger?.LogWarning("Zip-Slip koruması: Şüpheli arşiv dosyası engellendi: {Key}", entry.Key);
                 continue;
             }
 
-            entry.WriteToDirectory(finalDirectory, extractionOptions);
+            // Zip-Bomb zafiyet koruması: Dosya sayısı ve boyut sınırları kontrolü
             extractedCount++;
+            if (extractedCount > _maxExtractedFilesCount)
+            {
+                _logger?.LogWarning("Zip-Bomb koruması: Maksimum dosya sayısı ({Max}) aşıldı: {ArchivePath}", _maxExtractedFilesCount, archivePath);
+                throw new InvalidOperationException($"Güvenlik Uyarısı: Arşiv izin verilen maksimum dosya sayısını ({_maxExtractedFilesCount:N0}) aşıyor (Zip-Bomb şüphesi).");
+            }
+
+            long entrySize = entry.Size > 0 ? entry.Size : 0;
+            totalExtractedBytes += entrySize;
+
+            if (totalExtractedBytes > _maxTotalExtractedBytes)
+            {
+                _logger?.LogWarning("Zip-Bomb koruması: Maksimum açılma boyutu ({Max} byte) aşıldı: {ArchivePath}", _maxTotalExtractedBytes, archivePath);
+                throw new InvalidOperationException($"Güvenlik Uyarısı: Arşiv izin verilen maksimum açılma boyutunu ({_maxTotalExtractedBytes:N0} byte) aşıyor (Zip-Bomb şüphesi).");
+            }
+
+            if (archiveFileSize > 0 && totalExtractedBytes > 50L * 1024 * 1024)
+            {
+                double ratio = (double)totalExtractedBytes / archiveFileSize;
+                if (ratio > _maxCompressionRatio)
+                {
+                    _logger?.LogWarning("Zip-Bomb koruması: Aşırı sıkıştırma oranı ({Ratio:F1}x) tespit edildi: {ArchivePath}", ratio, archivePath);
+                    throw new InvalidOperationException($"Güvenlik Uyarısı: Arşiv aşırı yüksek sıkıştırma oranına ({ratio:F1}x) sahip (Zip-Bomb şüphesi).");
+                }
+            }
+
+            entry.WriteToDirectory(finalDirectory, extractionOptions);
         }
 
         _logger?.LogInformation("Arşiv başarıyla çıkarıldı: {ArchivePath} -> {FinalDir} ({Count} dosya)",
@@ -426,6 +528,10 @@ public class ArchiveExtractorService
     private static string FormatTurkishErrorMessage(Exception ex)
     {
         var msg = ex.Message ?? "";
+        if (msg.Contains("Güvenlik Uyarısı", StringComparison.OrdinalIgnoreCase))
+        {
+            return msg;
+        }
         if (msg.Contains("not a valid", StringComparison.OrdinalIgnoreCase) ||
             msg.Contains("unknown format", StringComparison.OrdinalIgnoreCase) ||
             msg.Contains("header", StringComparison.OrdinalIgnoreCase))

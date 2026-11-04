@@ -112,4 +112,82 @@ public class ArchiveExtractorServiceTests : IDisposable
         Assert.NotNull(result.ErrorMessage);
         Assert.DoesNotContain("Winzip AES authentication failed", result.ErrorMessage);
     }
+
+    [Fact]
+    public async Task ExtractAsync_ZipSlipAttack_BlocksMaliciousEntriesOutsideTarget()
+    {
+        var zipPath = Path.Combine(_testDir, "zipslip_attack.zip");
+        using (var archive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
+        {
+            // Hedef klasörün dışına çıkmaya çalışan kötü niyetli dosya yolu (..\..\hacked.txt)
+            var maliciousEntry = archive.CreateEntry("../../../outside_safe_zone.txt");
+            using (var writer = new StreamWriter(maliciousEntry.Open()))
+            {
+                writer.Write("malicious content");
+            }
+
+            var safeEntry = archive.CreateEntry("safe_file.txt");
+            using (var writer = new StreamWriter(safeEntry.Open()))
+            {
+                writer.Write("safe content");
+            }
+        }
+
+        var extractor = new ArchiveExtractorService();
+        var destFolder = Path.Combine(_testDir, "extracted_safe");
+        var result = await extractor.ExtractAsync(zipPath, destFolder, createSubfolder: true);
+
+        Assert.True(result.Success);
+        // Güvenli dosya açılmış olmalı
+        Assert.True(File.Exists(Path.Combine(result.ExtractedDirectory!, "safe_file.txt")));
+
+        // Hedef klasörün dışına dosya yazılmamış olmalı
+        var outsideFile = Path.Combine(_testDir, "outside_safe_zone.txt");
+        Assert.False(File.Exists(outsideFile));
+    }
+
+    [Fact]
+    public async Task ExtractAsync_ZipBombFileCountExceeded_BlocksAndReturnsTurkishError()
+    {
+        var zipPath = Path.Combine(_testDir, "zipbomb_filecount.zip");
+        using (var archive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
+        {
+            for (int i = 0; i < 10; i++)
+            {
+                var entry = archive.CreateEntry($"file_{i}.txt");
+                using var writer = new StreamWriter(entry.Open());
+                writer.Write("some content");
+            }
+        }
+
+        // Maksimum dosya sayısı limitini 5 olarak belirleyelim
+        var extractor = new ArchiveExtractorService(maxExtractedFilesCount: 5);
+        var destFolder = Path.Combine(_testDir, "extracted_bomb_count");
+        var result = await extractor.ExtractAsync(zipPath, destFolder, createSubfolder: true);
+
+        Assert.False(result.Success);
+        Assert.Contains("Zip-Bomb", result.ErrorMessage);
+        Assert.Contains("maksimum dosya sayısını", result.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task ExtractAsync_ZipBombTotalBytesExceeded_BlocksAndReturnsTurkishError()
+    {
+        var zipPath = Path.Combine(_testDir, "zipbomb_bytes.zip");
+        using (var archive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
+        {
+            var entry = archive.CreateEntry("large_file.txt");
+            using var writer = new StreamWriter(entry.Open());
+            writer.Write(new string('A', 10_000)); // 10 KB
+        }
+
+        // Maksimum açılma bayt boyutunu 5.000 byte (5 KB) olarak belirleyelim
+        var extractor = new ArchiveExtractorService(maxTotalExtractedBytes: 5_000);
+        var destFolder = Path.Combine(_testDir, "extracted_bomb_bytes");
+        var result = await extractor.ExtractAsync(zipPath, destFolder, createSubfolder: true);
+
+        Assert.False(result.Success);
+        Assert.Contains("Zip-Bomb", result.ErrorMessage);
+        Assert.Contains("maksimum açılma boyutunu", result.ErrorMessage);
+    }
 }
