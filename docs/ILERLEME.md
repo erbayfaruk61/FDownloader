@@ -103,7 +103,7 @@
 | P6-04 | Arayüz iyileştirmeleri | 🟡 | ✅ Bitti | — | VirtualizingStackPanel sanallaştırma, global klavye kısayolları (Ctrl+N, Ctrl+O, Ctrl+S, Ctrl+P, F1, Space, Del, Shift+Del), sürükle-bırak desteği ve sistem tepsisi menüsü (361/361 test yeşil) |
 | P6-05 | Erişilebilirlik ve ekran uyumu | 🟡 | ✅ Bitti | — | AutomationProperties etiketleri (ekran okuyucu), klavyeyle tam kullanım (Tab, Space, Enter), HighContrast yüksek kontrast renk teması (361/361 test yeşil) |
 | P6-06 | Ayarlar düzeni | 🟢 | ✅ Bitti | — | Ayarlar sekmeleri, ayar açıklamaları, varsayılana sıfırla, JSON dışa/içe aktarma (365/365 test yeşil) |
-| P6-07 | Güç ve sistem davranışları | 🟡 | ⬜ Bekliyor | — | İndirme sürerken uyku engelleme, çıkışta aktif indirme onayı |
+| P6-07 | Güç ve sistem davranışları | 🟡 | ✅ Bitti | — | PowerManagementService SetThreadExecutionState uyku engelleme, aktif indirmede çıkış onay diyaloğu (365/365 test yeşil) |
 
 ---
 

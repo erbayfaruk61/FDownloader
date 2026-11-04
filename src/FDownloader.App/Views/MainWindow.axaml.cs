@@ -27,6 +27,15 @@ public partial class MainWindow : Window
                 vm.RequestBrowseFolder = BrowseFolderAsync;
                 vm.RequestSaveSettingsFile = SaveSettingsFileAsync;
                 vm.RequestOpenSettingsFile = OpenSettingsFileAsync;
+                vm.RequestCloseWindow += () =>
+                {
+                    _isExplicitExit = true;
+                    Close();
+                };
+                vm.RequestHideToTray += () =>
+                {
+                    Hide();
+                };
             }
         };
     }
@@ -196,11 +205,21 @@ public partial class MainWindow : Window
 
     protected override void OnClosing(WindowClosingEventArgs e)
     {
-        if (!_isExplicitExit && DataContext is MainViewModel vm && vm.MinimizeToTrayOnClose)
+        if (!_isExplicitExit && DataContext is MainViewModel vm)
         {
-            e.Cancel = true;
-            Hide();
-            return;
+            if (vm.MinimizeToTrayOnClose)
+            {
+                e.Cancel = true;
+                Hide();
+                return;
+            }
+
+            // Doğrudan kapanış isteniyorsa aktif indirme kontrolü yap
+            if (!vm.TryRequestAppExit())
+            {
+                e.Cancel = true;
+                return;
+            }
         }
 
         base.OnClosing(e);

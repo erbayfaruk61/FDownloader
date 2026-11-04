@@ -701,6 +701,8 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     private const string SettingKeyMinimizeToTrayOnClose = "System.MinimizeToTrayOnClose";
 
     private const string SettingKeyShowTrayIcon = "System.ShowTrayIcon";
+    private const string SettingKeyPreventSleepWhileDownloading = "System.PreventSleepWhileDownloading";
+    private const string SettingKeyWarnOnExitWithActiveDownloads = "System.WarnOnExitWithActiveDownloads";
     private const string SettingKeyDefaultSaveDirectory = "Download.DefaultSaveDirectory";
     private const string SettingKeyFirstRunCompleted = "App.FirstRunCompleted";
     private const string SettingKeyLanguage = "Ui.Language";
@@ -1421,6 +1423,23 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private bool _minimizeToTrayOnClose = true;
 
     [ObservableProperty] private bool _showTrayIcon = true;
+    [ObservableProperty] private bool _preventSleepWhileDownloading = true;
+    [ObservableProperty] private bool _warnOnExitWithActiveDownloads = true;
+    [ObservableProperty] private bool _isExitConfirmDialogOpen = false;
+    [ObservableProperty] private string _exitConfirmMessage = string.Empty;
+    public event Action? RequestCloseWindow;
+    public event Action? RequestHideToTray;
+
+
+    [ObservableProperty] private bool _preventSleepWhileDownloading = true;
+
+    [ObservableProperty] private bool _warnOnExitWithActiveDownloads = true;
+
+    [ObservableProperty] private bool _isExitConfirmDialogOpen = false;
+
+    [ObservableProperty] private string _exitConfirmMessage = string.Empty;
+
+    public event Action? RequestCloseWindow;
 
     // ─── Ağ Adaptörü & VPN Kill-Switch ─────────────────────────────────────
 
@@ -1754,6 +1773,16 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         else
 
             ShowTrayIcon = true;
+
+        if (bool.TryParse(_downloadManager.GetSetting(SettingKeyPreventSleepWhileDownloading), out var pswd))
+            PreventSleepWhileDownloading = pswd;
+        else
+            PreventSleepWhileDownloading = true;
+
+        if (bool.TryParse(_downloadManager.GetSetting(SettingKeyWarnOnExitWithActiveDownloads), out var woe))
+            WarnOnExitWithActiveDownloads = woe;
+        else
+            WarnOnExitWithActiveDownloads = true;
 
         // P6-01: İlk Açılış Sihirbazı kontrolü
         var firstRunCompletedStr = _downloadManager.GetSetting(SettingKeyFirstRunCompleted);
@@ -2621,6 +2650,15 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
         UpdateHybridState();
 
+        // P6-07: Aktif indirme durumuna göre Windows uyku modunu yönet
+        if (PreventSleepWhileDownloading && active.Count > 0)
+        {
+            Services.PowerManagementService.PreventSleep();
+        }
+        else
+        {
+            Services.PowerManagementService.AllowSleep();
+        }
     }
 
     /// <summary>
@@ -2697,6 +2735,15 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
         UpdateHybridState();
 
+        // P6-07: Aktif indirme durumuna göre Windows uyku modunu yönet
+        if (PreventSleepWhileDownloading && active.Count > 0)
+        {
+            Services.PowerManagementService.PreventSleep();
+        }
+        else
+        {
+            Services.PowerManagementService.AllowSleep();
+        }
     }
 
     [RelayCommand]
@@ -3530,6 +3577,15 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
         UpdateHybridState();
 
+        // P6-07: Aktif indirme durumuna göre Windows uyku modunu yönet
+        if (PreventSleepWhileDownloading && active.Count > 0)
+        {
+            Services.PowerManagementService.PreventSleep();
+        }
+        else
+        {
+            Services.PowerManagementService.AllowSleep();
+        }
     }
 
     [RelayCommand]
@@ -3614,6 +3670,15 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
         UpdateHybridState();
 
+        // P6-07: Aktif indirme durumuna göre Windows uyku modunu yönet
+        if (PreventSleepWhileDownloading && active.Count > 0)
+        {
+            Services.PowerManagementService.PreventSleep();
+        }
+        else
+        {
+            Services.PowerManagementService.AllowSleep();
+        }
     }
 
     public void AdjustColumnWidth(string columnName, double deltaX)
@@ -3876,6 +3941,15 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
         UpdateHybridState();
 
+        // P6-07: Aktif indirme durumuna göre Windows uyku modunu yönet
+        if (PreventSleepWhileDownloading && active.Count > 0)
+        {
+            Services.PowerManagementService.PreventSleep();
+        }
+        else
+        {
+            Services.PowerManagementService.AllowSleep();
+        }
     }
 
     private static void DeleteLocalFilesForDownload(DownloadItemViewModel target)
@@ -4521,6 +4595,12 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         _downloadManager.SetSetting(SettingKeyMinimizeToTrayOnClose, MinimizeToTrayOnClose.ToString());
 
         _downloadManager.SetSetting(SettingKeyShowTrayIcon, ShowTrayIcon.ToString());
+        _downloadManager.SetSetting(SettingKeyPreventSleepWhileDownloading, PreventSleepWhileDownloading.ToString());
+        _downloadManager.SetSetting(SettingKeyWarnOnExitWithActiveDownloads, WarnOnExitWithActiveDownloads.ToString());
+
+        _downloadManager.SetSetting(SettingKeyPreventSleepWhileDownloading, PreventSleepWhileDownloading.ToString());
+
+        _downloadManager.SetSetting(SettingKeyWarnOnExitWithActiveDownloads, WarnOnExitWithActiveDownloads.ToString());
 
         if (!string.IsNullOrWhiteSpace(SettingsDefaultSaveDirectory))
         {
@@ -4623,6 +4703,8 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         StartMinimizedToTray = false;
         MinimizeToTrayOnClose = true;
         ShowTrayIcon = true;
+        PreventSleepWhileDownloading = true;
+        WarnOnExitWithActiveDownloads = true;
 
         if (OperatingSystem.IsWindows())
         {
@@ -4787,6 +4869,12 @@ public partial class MainViewModel : ViewModelBase, IDisposable
             if (settingsDict.TryGetValue(SettingKeyIsAltRateLimitActive, out var arl) && bool.TryParse(arl, out var bArl))
                 IsAltRateLimitActive = bArl;
 
+            if (settingsDict.TryGetValue(SettingKeyPreventSleepWhileDownloading, out var pswd) && bool.TryParse(pswd, out var bPswd))
+                PreventSleepWhileDownloading = bPswd;
+
+            if (settingsDict.TryGetValue(SettingKeyWarnOnExitWithActiveDownloads, out var woe) && bool.TryParse(woe, out var bWoe))
+                WarnOnExitWithActiveDownloads = bWoe;
+
             UpdateLimitDisplays();
             UpdateDiskSpace();
 
@@ -4845,8 +4933,58 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
             ShowTrayIcon = true;
 
+        if (bool.TryParse(_downloadManager.GetSetting(SettingKeyPreventSleepWhileDownloading), out var pswd))
+            PreventSleepWhileDownloading = pswd;
+        else
+            PreventSleepWhileDownloading = true;
+
+        if (bool.TryParse(_downloadManager.GetSetting(SettingKeyWarnOnExitWithActiveDownloads), out var woe))
+            WarnOnExitWithActiveDownloads = woe;
+        else
+            WarnOnExitWithActiveDownloads = true;
+
         IsSettingsDialogOpen = false;
 
+    }
+
+    /// <summary>
+    /// Aktif indirmeler varken çıkış yapılmak istendiğinde onay sürecini başlatır veya doğrudan pencereyi kapatır.
+    /// </summary>
+    public bool TryRequestAppExit()
+    {
+        var activeDownloadsCount = Downloads.Count(d => d.IsActive);
+        if (WarnOnExitWithActiveDownloads && activeDownloadsCount > 0)
+        {
+            ExitConfirmMessage = string.Format(
+                System.Globalization.CultureInfo.CurrentCulture,
+                Loc["ExitConfirm.Message"],
+                activeDownloadsCount);
+            IsExitConfirmDialogOpen = true;
+            return false;
+        }
+
+        return true;
+    }
+
+    [RelayCommand]
+    public async Task ConfirmExitApp()
+    {
+        IsExitConfirmDialogOpen = false;
+        await PauseAllAsync();
+        RequestCloseWindow?.Invoke();
+    }
+
+    [RelayCommand]
+    public void MinimizeToTrayFromExitDialog()
+    {
+        IsExitConfirmDialogOpen = false;
+        RequestHideToTray?.Invoke();
+    }
+
+    [RelayCommand]
+    public void CancelExitDialog()
+    {
+        IsExitConfirmDialogOpen = false;
     }
 
     // ─── BitTorrent Gelişmiş Komutları ────────────────────────
@@ -7084,6 +7222,24 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
         UpdateHybridState();
 
+        // P6-07: Aktif indirme durumuna gore Windows uyku modunu yonet
+        if (PreventSleepWhileDownloading && active.Count > 0)
+        {
+            Services.PowerManagementService.PreventSleep();
+        }
+        else
+        {
+            Services.PowerManagementService.AllowSleep();
+        }
+        // P6-07: Aktif indirme durumuna göre Windows uyku modunu yönet
+        if (PreventSleepWhileDownloading && active.Count > 0)
+        {
+            Services.PowerManagementService.PreventSleep();
+        }
+        else
+        {
+            Services.PowerManagementService.AllowSleep();
+        }
     }
 
     public void RefreshSpeedGraph()

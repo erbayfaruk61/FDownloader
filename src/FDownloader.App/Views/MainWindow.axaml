@@ -2137,6 +2137,23 @@
                                                         <TextBlock Text="Görev çubuğu bildirim alanında FDownloader hızlı erişim simgesini görüntüler." FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" />
                                                     </StackPanel>
                                                 </CheckBox>
+
+                                                <Rectangle Height="1" Fill="{DynamicResource SystemBaseLowColor}" Margin="0,4" />
+
+                                                <!-- P6-07 GÜÇ VE SİSTEM DAVRANIŞLARI -->
+                                                <CheckBox IsChecked="{Binding PreventSleepWhileDownloading, Mode=TwoWay}">
+                                                    <StackPanel Spacing="2">
+                                                        <TextBlock Text="{Binding Loc[Settings.PreventSleepWhileDownloading], FallbackValue='İndirme sürerken bilgisayarın uyku moduna geçmesini engelle'}" FontWeight="SemiBold" FontSize="12" />
+                                                        <TextBlock Text="{Binding Loc[Settings.PreventSleepDesc], FallbackValue='Aktif indirmeler devam ettiği sürece sistemin uyku veya askıya alma moduna geçmesini önler.'}" FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                                    </StackPanel>
+                                                </CheckBox>
+
+                                                <CheckBox IsChecked="{Binding WarnOnExitWithActiveDownloads, Mode=TwoWay}">
+                                                    <StackPanel Spacing="2">
+                                                        <TextBlock Text="{Binding Loc[Settings.WarnOnExitWithActiveDownloads], FallbackValue='Aktif indirmeler varken uygulamadan çıkışta onay iste'}" FontWeight="SemiBold" FontSize="12" />
+                                                        <TextBlock Text="{Binding Loc[Settings.WarnOnExitDesc], FallbackValue='İndirmeler sürerken uygulama tamamen kapatılmak istendiğinde uyarı penceresi görüntüler.'}" FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                                    </StackPanel>
+                                                </CheckBox>
                                             </StackPanel>
                                         </StackPanel>
                                     </Border>
@@ -2223,6 +2240,29 @@
                         </StackPanel>
                     </Grid>
                 </Grid>
+            </Border>
+        </Border>
+
+        <!-- ─── P6-07 MODAL: ⚠️ AKTİF İNDİRME ÇIKIŞ ONAY DİYALOĞU ───────────── -->
+        <Border Background="#80000000" IsVisible="{Binding IsExitConfirmDialogOpen}">
+            <Border Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="12" Width="520" Padding="22" HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 10 30 0 #40000000">
+                <StackPanel Spacing="16">
+                    <Grid ColumnDefinitions="*, Auto">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="⚠️" FontSize="20" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding Loc[ExitConfirm.Title], FallbackValue='Aktif İndirmeler Var'}" FontSize="18" FontWeight="Bold" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <Button Grid.Column="1" Command="{Binding CancelExitDialogCommand}" Content="✕" Background="Transparent" BorderThickness="0" FontSize="16" />
+                    </Grid>
+
+                    <TextBlock Text="{Binding ExitConfirmMessage}" TextWrapping="Wrap" FontSize="13" LineHeight="20" />
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,10,0,0">
+                        <Button Command="{Binding CancelExitDialogCommand}" Content="{Binding Loc[Common.Cancel]}" Padding="14,7" Height="36" />
+                        <Button Command="{Binding MinimizeToTrayFromExitDialogCommand}" Content="{Binding Loc[ExitConfirm.MinimizeToTray]}" Background="{Binding ThemeAccentBg}" Foreground="{Binding ThemeAccentFg}" Padding="14,7" Height="36" />
+                        <Button Command="{Binding ConfirmExitAppCommand}" Content="{Binding Loc[ExitConfirm.ExitAnyway]}" Background="#EF4444" Foreground="White" FontWeight="Bold" Padding="14,7" Height="36" />
+                    </StackPanel>
+                </StackPanel>
             </Border>
         </Border>
 

@@ -2,34 +2,30 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** P6-06 — Ayarlar Düzeni ve Varsayılana Sıfırla (Faz 6 — Kullanıcı Deneyimi)  
-**Durum:** ✅ Bitti
+**ID:** P6-07 — Güç ve Sistem Davranışları (Faz 6 — Kullanıcı Deneyimi)  
+**Durum:** ✅ Bitti (Böylece **Faz 6 — Kullanıcı Deneyimi** tüm maddeleriyle %100 tamamlandı)
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
-- `src/FDownloader.Core/Storage/DownloadRepository.cs`:
-  - `GetAllSettings()`: SQLite Settings tablosundaki tüm anahtar-değer çiftlerini sözlük olarak getirme ve hassas alanları (`Proxy.Password`, `Secret`, `Token` vb.) DPAPI ile otomatik çözme desteği.
-  - `ClearAllSettings()`: Ayarlar tablosunu temizleyerek sıfırlama altyapısı.
-  - `ImportSettings(dict)`: Dış kaynaktan gelen ayarları toplu içe aktarma desteği.
-- `src/FDownloader.Core/Manager/DownloadManager.cs`:
-  - `GetAllSettings()`, `ClearAllSettings()` ve `ImportSettings()` arayüzleri üst katmana sunuldu.
+- `src/FDownloader.App/Services/PowerManagementService.cs`:
+  - Windows `kernel32.dll` `SetThreadExecutionState` Win32 API (`ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED`) entegrasyonu oluşturuldu.
+  - `PreventSleep()` ve `AllowSleep()` metotları ile thread-safe güç yönetimi sağlandı.
 - `src/FDownloader.Core/Localization/LocalizationService.cs`:
-  - `Settings.ResetDefaults`, `Settings.ResetDefaultsTooltip`, `Settings.ResetConfirmTitle`, `Settings.Export`, `Settings.Import` vb. i18n anahtarları Türkçe ve İngilizce sözlüklerine eklendi.
+  - `Settings.PreventSleepWhileDownloading`, `Settings.PreventSleepDesc`, `Settings.WarnOnExitWithActiveDownloads`, `Settings.WarnOnExitDesc`, `ExitConfirm.Title`, `ExitConfirm.Message`, `ExitConfirm.MinimizeToTray`, `ExitConfirm.ExitAnyway` anahtarları Türkçe ve İngilizce sözlüklerine eklendi.
 - `src/FDownloader.App/ViewModels/MainViewModel.cs`:
-  - `ResetSettingsToDefaultsCommand`: Tüm ayarları fabrika varsayılanlarına sıfırlayan, motor ve tema durumunu anında güncelleyen ve bildirim sunan metot eklendi.
-  - `ExportSettingsCommand`: Ayarları JSON biçiminde diske kaydeden komut eklendi.
-  - `ImportSettingsCommand`: Dışa aktarılmış JSON ayar dosyasını okuyup sisteme uygulayan komut eklendi.
-  - `RequestSaveSettingsFile` ve `RequestOpenSettingsFile` delegate'leri tanımlandı.
+  - `PreventSleepWhileDownloading` ve `WarnOnExitWithActiveDownloads` ObservableProperty ve ayar kalıcılığı (`SettingKeyPreventSleepWhileDownloading`, `SettingKeyWarnOnExitWithActiveDownloads`) bağlandı.
+  - `UpdateGlobalStats()` döngüsü içinde aktif indirme olduğunda sistemin uykuya geçmesi engellendi, indirmeler durduğunda uyku kilidi kaldırıldı.
+  - `TryRequestAppExit()`, `ConfirmExitApp()`, `MinimizeToTrayFromExitDialog()` ve `CancelExitDialog()` komutları eklendi.
 - `src/FDownloader.App/Views/MainWindow.axaml.cs`:
-  - `SaveSettingsFileAsync` ve `OpenSettingsFileAsync` StorageProvider dosya seçici entegrasyonu tamamlandı.
+  - `OnClosing` pencere kapatma olayı `TryRequestAppExit` ile genişletildi; aktif indirme varken doğrudan çıkış engellendi ve kullanıcıya seçenek sunuldu.
+  - `RequestCloseWindow` ve `RequestHideToTray` olayları pencere işlemlerine bağlandı.
 - `src/FDownloader.App/Views/MainWindow.axaml`:
-  - Ayarlar modalının alt çubuğu iki bölümlü (Sol: `🔄 Varsayılana Sıfırla`, `📤 Dışa Aktar`, `📥 İçe Aktar` butonları; Sağ: `Vazgeç` ve `Ayarları Kaydet`) Grid düzenine kavuşturuldu.
-- `tests/FDownloader.Core.Tests/SettingsRepositoryTests.cs`:
-  - 4 yeni birim testi yazıldı: `SetAndGetSetting_StandardAndSensitiveValues_WorkCorrectly`, `GetAllSettings_ReturnsAllStoredKeys`, `ClearAllSettings_RemovesAllKeys`, `ImportSettings_RestoresConfigurationCorrectly`.
+  - Ayarlar > Davranış sekmesine "İndirme sürerken bilgisayarın uyku moduna geçmesini engelle" ve "Aktif indirmeler varken uygulamadan çıkışta onay iste" seçenekleri eklendi.
+  - Aktif İndirme Çıkış Onay Modalı (`IsExitConfirmDialogOpen`) eklendi.
 - `docs/ILERLEME.md`:
-  - `P6-06` bitti olarak güncellendi.
+  - `P6-07` tamamlandı olarak güncellendi.
 - **Doğrulama:**
   - `dotnet build` -> 0 Hata
   - `dotnet test` -> 365/365 test yeşil.
@@ -38,9 +34,11 @@
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** P6-06 bitti. Sıradaki görev: **P6-07 — Güç ve Sistem Davranışları (Power & System Behavior)**.
-  - İndirme sürerken uyku modunu engelleme (`SetThreadExecutionState` Windows API).
-  - Uygulama kapatılırken aktif indirmeler varsa kullanıcıya onay diyaloğu gösterme.
+- **Tam olarak nerede kaldım:** P6-07 tamamlandı. **Faz 6 (Kullanıcı Deneyimi)** tamamen bitti.
+- **Sıradaki Faz:** **Faz 7 — Dağıtım ve Güven**
+  - **P7-01 🧑 Kod imzalama stratejisi ve CI yapılandırması**
+  - **P7-02 🟡 CI/CD sürüm hattı (GitHub Releases, Velopack)**
+  - **P7-03 🟢 Güven artırıcılar (SHA-256 doğrulama hash listesi)**
 - **Derleme durumu:** ✅ Başarılı (0 hata)
 - **Test durumu:** 365/365 geçiyor
 
@@ -51,6 +49,6 @@
 1. Değişiklikleri commit et:
    ```bash
    git add src/ tests/ docs/
-   git commit -m "feat(settings): P6-06 - Ayarlar duzeni, varsayilana sifirla ve disa/ice aktarma (365 test yesil)"
+   git commit -m "feat(power): P6-07 - Windows uyku engelleme ve cikista aktif indirme onay korumasi (Faz 6 tamamlandi)"
    ```
-2. **P6-07:** Güç ve sistem davranışları entegrasyonu (`PowerManagementService` uyku engelleme ve kapatma koruması).
+2. **P7-01 / P7-02:** CI/CD sürüm hattı ve Velopack dağıtım yapılandırmasını incelemek/güncellemek.

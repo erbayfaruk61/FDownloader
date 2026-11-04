@@ -204,7 +204,17 @@ public sealed class LocalizationService : INotifyPropertyChanged
         ["Settings.ImportTooltip"] = "Daha önce yedeklenen JSON ayar dosyasını içe aktarır.",
         ["Settings.ExportSuccess"] = "Ayarlar başarıyla dışa aktarıldı.",
         ["Settings.ImportSuccess"] = "Ayarlar başarıyla içe aktarıldı ve uygulandı.",
-        ["Settings.ImportFailed"] = "Ayar dosyası okunamadı veya biçimi geçersiz."
+        ["Settings.ImportFailed"] = "Ayar dosyası okunamadı veya biçimi geçersiz.",
+
+        // P6-07 Güç ve Sistem Davranışları
+        ["Settings.PreventSleepWhileDownloading"] = "İndirme sürerken bilgisayarın uyku moduna geçmesini engelle",
+        ["Settings.PreventSleepDesc"] = "Aktif indirmeler devam ettiği sürece sistemin uyku veya askıya alma moduna geçmesini önler.",
+        ["Settings.WarnOnExitWithActiveDownloads"] = "Aktif indirmeler varken uygulamadan çıkışta onay iste",
+        ["Settings.WarnOnExitDesc"] = "İndirmeler sürerken uygulama tamamen kapatılmak istendiğinde uyarı penceresi görüntüler.",
+        ["ExitConfirm.Title"] = "Aktif İndirmeler Var",
+        ["ExitConfirm.Message"] = "Şu anda devam eden {0} adet indirme bulunuyor. Uygulamadan çıkarsanız indirmeler duraklatılacak.\n\nNe yapmak istersiniz?",
+        ["ExitConfirm.MinimizeToTray"] = "Arka Planda Devam Et (Tepsiye Küçült)",
+        ["ExitConfirm.ExitAnyway"] = "Yine de Çık (İndirmeleri Duraklat)"
     };
 
     // ─── İngilizce Çeviri Sözlüğü ──────────────────────────────────────────
@@ -298,7 +308,17 @@ public sealed class LocalizationService : INotifyPropertyChanged
         ["Settings.ImportTooltip"] = "Restores configuration from a previously exported JSON backup file.",
         ["Settings.ExportSuccess"] = "Settings successfully exported.",
         ["Settings.ImportSuccess"] = "Settings successfully restored and applied.",
-        ["Settings.ImportFailed"] = "Failed to import settings file or format is invalid."
+        ["Settings.ImportFailed"] = "Failed to import settings file or format is invalid.",
+
+        // P6-07 Power & System Behaviors
+        ["Settings.PreventSleepWhileDownloading"] = "Prevent computer from sleeping while downloading",
+        ["Settings.PreventSleepDesc"] = "Prevents Windows from entering sleep or standby mode while downloads are in progress.",
+        ["Settings.WarnOnExitWithActiveDownloads"] = "Warn before closing if there are active downloads",
+        ["Settings.WarnOnExitDesc"] = "Shows a confirmation dialog when attempting to close the app while downloads are running.",
+        ["ExitConfirm.Title"] = "Active Downloads in Progress",
+        ["ExitConfirm.Message"] = "There are currently {0} active download(s). If you exit, the downloads will be paused.\n\nWhat would you like to do?",
+        ["ExitConfirm.MinimizeToTray"] = "Keep Running in Background (Minimize to Tray)",
+        ["ExitConfirm.ExitAnyway"] = "Exit Anyway (Pause Downloads)"
     };
 }
 
