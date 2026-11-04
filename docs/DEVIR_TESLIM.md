@@ -2,30 +2,31 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** P3-08 — Güncelleme Güvenliği
-**Durum:** ✅ Bitti
+**ID:** P3-09 — Gizlilik ve Kişisel Veri Filtresi
+**Durum:** ✅ Bitti (Faz 3 Tamamlandı!)
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
-- `src/FDownloader.App/Services/UpdateService.cs`:
-  - Velopack GitHub Releases entegrasyonu, HTTPS/TLS 1.3 zorunluluğu ve `UpdateManager.IsInstalled` kontrolü doğrulandı.
-- `docs/GUNCELLEME.md`:
-  - Kapsamlı güncelleme ve güvenlik mimarisi dokümanı oluşturuldu.
-  - Taşıma güvenliği (In-Transit HTTPS), `releases.win.json` içindeki SHA-256 ve SHA-1 paket bütünlüğü denetimi, kullanıcı izni ve onay mekanizması belgelendi.
-  - Acil durum geri alma prosedürleri (GitHub Releases geri çekme, Roll-Forward yama dağıtımı ve Velopack istemci taraflı fail-safe rollback) açıklandı.
-- Test durumu korundu: **260/260 test yeşil**.
+- `src/FDownloader.Core/Logging/SensitiveDataMasker.cs`:
+  - `WindowsUserPathRegex` (`C:\Users\<Username>\`) ve `UnixUserPathRegex` (`/home/<username>/`) eklendi. Log ve hata dökümlerinde yer alan yerel kullanıcı adı yolları otomatik olarak `[USER]` etiketiyle anonimleştirildi.
+- `src/FDownloader.App/Program.cs`:
+  - Sentry başlatma konfigürasyonuna `SetBeforeSend` kancası entegre edildi.
+  - Sentry'ye gönderilen olay başlıkları ve mesajlar `SensitiveDataMasker.MaskMessage` süzgecinden geçiriliyor; `User.Username`, `User.IpAddress` ve `User.Email` alanları `null` yapılarak telemetri gizliliği garanti altına alındı.
+- `tests/FDownloader.Core.Tests/SensitiveDataMaskerTests.cs`:
+  - Windows ve Unix yerel profil yollarının maskelenmesi testi eklendi.
+- Toplam test sayısı 260'tan **261'e** yükseldi. **261/261 test yeşil**.
 
 ---
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** P3-08 tamamlandı.
-- **Sıradaki Görev:** **P3-09 — Gizlilik ve Kişisel Veri Filtresi (Sentry & Log filtreleme)**.
-  - Sentry ve Serilog hata raporlama mekanizmalarında kullanıcı adı, parola, token, çerez ve yerel dosya yollarının maskelenmesi/filtrelenmesi.
+- **Tam olarak nerede kaldım:** **FAZ 3 (Güvenlik Sertleştirme) EKSİKSİZ TAMAMLANDI!** (P3-01'den P3-09'a kadar tüm görevler bitti).
+- **Sıradaki Görev:** **Faz 4 — BitTorrent Sağlamlaştırma**.
+  - İlk görev: **P4-01 — Torrent Dosya Seçimi ve Önceliklendirme** (`SetFilePriority`, arayüz seçici, parça önceliği).
 - **Derleme durumu:** ✅ Başarılı (0 hata)
-- **Test durumu:** 260/260 geçiyor
+- **Test durumu:** 261/261 geçiyor
 
 ---
 
@@ -34,9 +35,9 @@
 1. Değişiklikleri commit et:
    ```
    git add src/ tests/ docs/
-   git commit -m "docs(security): P3-08 - Velopack guncelleme guvenligi, SHA-256 butunluk ve geri alma plani"
+   git commit -m "feat(privacy): P3-09 - Sentry kisisel veri filtresi ve kullanici profil yollari maskelemesi (Faz 3 tamamlandi)"
    ```
-2. **P3-09:** Sentry ve Serilog için `SensitiveDataMasker` entegrasyonunu kontrol et ve kişisel veri filtreleme kurallarını uygula.
+2. **P4-01:** `TorrentService` içinde dosya önceliklendirme (`Priority.DoNotDownload`, `Priority.Normal`, `Priority.High`) ve UI dosya seçim entegrasyonu testlerini uygula.
 
 ---
 

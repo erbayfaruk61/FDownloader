@@ -39,5 +39,23 @@ public class SensitiveDataMaskerTests
         Assert.Contains("api_key=[REDACTED]", masked);
         Assert.Contains("file=video.mp4", masked); // Zararsız parametre korunur
     }
+
+    [Fact]
+    public void MaskMessage_MasksUserDirectoryPaths()
+    {
+        var windowsInput = @"Error saving file to C:\Users\FarukErbay\Downloads\secret.pdf or D:\Users\JohnDoe\AppData\Local\Temp";
+        var maskedWin = SensitiveDataMasker.MaskMessage(windowsInput);
+
+        Assert.DoesNotContain("FarukErbay", maskedWin);
+        Assert.DoesNotContain("JohnDoe", maskedWin);
+        Assert.Contains(@"C:\Users\[USER]\Downloads\secret.pdf", maskedWin);
+        Assert.Contains(@"D:\Users\[USER]\AppData\Local\Temp", maskedWin);
+
+        var unixInput = "Failed reading /home/faruk/config/settings.json";
+        var maskedUnix = SensitiveDataMasker.MaskMessage(unixInput);
+
+        Assert.DoesNotContain("/home/faruk/", maskedUnix);
+        Assert.Contains("/home/[USER]/config/settings.json", maskedUnix);
+    }
 }
 

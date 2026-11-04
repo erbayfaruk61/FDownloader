@@ -64,6 +64,23 @@ sealed class Program
                 o.Dsn = sentryDsn;
                 o.TracesSampleRate = 1.0;
                 o.Release = "fdownloader@1.5.6";
+                // P3-09: Kişisel Veri & Gizlilik Filtresi (BeforeSend)
+                o.SetBeforeSend((sentryEvent, hint) =>
+                {
+                    if (sentryEvent.Message?.Message != null)
+                    {
+                        sentryEvent.Message = new SentryMessage(
+                            Core.Logging.SensitiveDataMasker.MaskMessage(sentryEvent.Message.Message),
+                            sentryEvent.Message.Formatted);
+                    }
+                    if (sentryEvent.User != null)
+                    {
+                        sentryEvent.User.Username = null;
+                        sentryEvent.User.IpAddress = null;
+                        sentryEvent.User.Email = null;
+                    }
+                    return sentryEvent;
+                });
             }) 
             : null;
 

@@ -25,8 +25,17 @@ public static partial class SensitiveDataMasker
         @"([?&](?:token|access_token|api_key|apikey|secret|password|pwd|auth|sig)=)[^&\s]+",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
+    // Windows kullanıcı klasör yolu: C:\Users\<Username>\ veya /home/<username>/
+    private static readonly Regex WindowsUserPathRegex = new(
+        @"([A-Za-z]:\\Users\\)[^\\]+(\\)",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    private static readonly Regex UnixUserPathRegex = new(
+        @"(/home/)[^/]+(/)",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
     /// <summary>
-    /// Verilen log metnini tarayarak hassas kısımları maskeler.
+    /// Verilen log veya hata metnini tarayarak hassas kısımları (şifreler, çerezler, token'lar ve kullanıcı profil yolları) maskeler.
     /// </summary>
     public static string MaskMessage(string? message)
     {
@@ -35,6 +44,8 @@ public static partial class SensitiveDataMasker
         var result = AuthHeaderRegex.Replace(message, $"${{1}}{Mask}");
         result = CookieRegex.Replace(result, $"${{1}}{Mask}");
         result = UrlTokenRegex.Replace(result, $"${{1}}{Mask}");
+        result = WindowsUserPathRegex.Replace(result, $"${{1}}[USER]${{2}}");
+        result = UnixUserPathRegex.Replace(result, $"${{1}}[USER]${{2}}");
 
         return result;
     }
