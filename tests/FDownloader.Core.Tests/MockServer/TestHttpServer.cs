@@ -22,6 +22,12 @@ public sealed class TestHttpServer : IDisposable
 
     public static readonly byte[] LargeChunkPattern = Encoding.ASCII.GetBytes("0123456789ABCDEF"); // 16 bytes pattern
 
+    // HLS Test verileri
+    public static readonly byte[] HlsSegment0 = Encoding.UTF8.GetBytes("---HLS_SEGMENT_0_DATA---");
+    public static readonly byte[] HlsSegment1 = Encoding.UTF8.GetBytes("---HLS_SEGMENT_1_DATA---");
+    public static readonly byte[] HlsSegment2 = Encoding.UTF8.GetBytes("---HLS_SEGMENT_2_DATA---");
+    public static readonly byte[] HlsExpectedCombined = Encoding.UTF8.GetBytes("---HLS_SEGMENT_0_DATA------HLS_SEGMENT_1_DATA------HLS_SEGMENT_2_DATA---");
+
     public string DynamicEtag { get; set; } = "\"v1\"";
     public string DynamicContent { get; set; } = "Content Version 1";
     public int AbortRemainingCount { get; set; } = int.MaxValue;
@@ -269,6 +275,55 @@ public sealed class TestHttpServer : IDisposable
                             sent += toSend;
                         }
                     }
+                    break;
+
+                // 14. HLS Master ve Media Playlist
+                case "/hls/master.m3u8":
+                    res.StatusCode = 200;
+                    res.ContentType = "application/vnd.apple.mpegurl";
+                    var masterM3u8 = "#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1280000,RESOLUTION=1280x720\nstream.m3u8";
+                    var masterBytes = Encoding.UTF8.GetBytes(masterM3u8);
+                    res.ContentLength64 = masterBytes.Length;
+                    await res.OutputStream.WriteAsync(masterBytes);
+                    break;
+
+                case "/hls/stream.m3u8":
+                    res.StatusCode = 200;
+                    res.ContentType = "application/vnd.apple.mpegurl";
+                    var mediaM3u8 = "#EXTM3U\n#EXT-X-TARGETDURATION:10\n#EXT-X-VERSION:3\n#EXTINF:9.0,\nseg0.ts\n#EXTINF:9.0,\nseg1.ts\n#EXTINF:9.0,\nseg2.ts\n#EXT-X-ENDLIST";
+                    var mediaBytes = Encoding.UTF8.GetBytes(mediaM3u8);
+                    res.ContentLength64 = mediaBytes.Length;
+                    await res.OutputStream.WriteAsync(mediaBytes);
+                    break;
+
+                case "/hls/drm.m3u8":
+                    res.StatusCode = 200;
+                    res.ContentType = "application/vnd.apple.mpegurl";
+                    var drmM3u8 = "#EXTM3U\n#EXT-X-KEY:METHOD=SAMPLE-AES,URI=\"skd://drm.example.com\",KEYFORMAT=\"com.widevine\"\n#EXTINF:10.0,\nseg0.ts\n#EXT-X-ENDLIST";
+                    var drmBytes = Encoding.UTF8.GetBytes(drmM3u8);
+                    res.ContentLength64 = drmBytes.Length;
+                    await res.OutputStream.WriteAsync(drmBytes);
+                    break;
+
+                case "/hls/seg0.ts":
+                    res.StatusCode = 200;
+                    res.ContentType = "video/MP2T";
+                    res.ContentLength64 = HlsSegment0.Length;
+                    await res.OutputStream.WriteAsync(HlsSegment0);
+                    break;
+
+                case "/hls/seg1.ts":
+                    res.StatusCode = 200;
+                    res.ContentType = "video/MP2T";
+                    res.ContentLength64 = HlsSegment1.Length;
+                    await res.OutputStream.WriteAsync(HlsSegment1);
+                    break;
+
+                case "/hls/seg2.ts":
+                    res.StatusCode = 200;
+                    res.ContentType = "video/MP2T";
+                    res.ContentLength64 = HlsSegment2.Length;
+                    await res.OutputStream.WriteAsync(HlsSegment2);
                     break;
 
                 default:

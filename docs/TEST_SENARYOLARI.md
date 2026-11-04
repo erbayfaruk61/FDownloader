@@ -124,6 +124,21 @@ Bu belge, FDownloader indirme motoru ve disk/dosya sistemi için hem otomatik he
   1. Yaş kısıtlamalı veya gizli bir video bağlantısı girin.
   2. Hatanın anlaşılır Türkçe mesaj olarak ("Bu video yaş kısıtlamalıdır...", "Video yayından kaldırılmış...") ekranda göründüğünü doğrulayın.
 
+### 3.4 HLS (.m3u8) Paralel İndirme ve Sıralı Birleştirme (P5-02)
+- **Amaç:** Master veya media playlist'ten parçaların paralel (eşzamanlı) indirilmesi ve byte sıralaması bozulmadan tek dosyada birleştirilmesi.
+- **Otomatik Test:** `HlsStreamDownloaderTests.DownloadHlsAsync_DownloadsSegmentsInParallelAndMergesSequentially`.
+- **Elle Test:**
+  1. Bir `.m3u8` video akış bağlantısını FDownloader'a ekleyin.
+  2. Parçaların eşzamanlı (paralel) indiğini ve ilerleme çubuğunun doğru ilerlediğini gözlemleyin.
+  3. İndirme bittiğinde oluşturulan `.ts` veya `.mp4` dosyasını medya oynatıcıda (VLC vb.) açıp takılma olmadan baştan sona oynatılabildiğini doğrulayın.
+
+### 3.5 HLS DRM Algılama ve Koruma (P5-02)
+- **Amaç:** Şifreli/DRM korumalı HLS akışlarında (`#EXT-X-KEY` SAMPLE-AES vb.) indirme başlatılmayıp kullanıcının bilgilendirilmesi.
+- **Otomatik Test:** `HlsStreamDownloaderTests.ParsePlaylistAsync_DrmProtectedStream_ThrowsDrmProtectedDownloadException`.
+- **Elle Test:**
+  1. Korumalı bir HLS akış URL'si girildiğinde uygulamanın `Bu HLS akışı DRM ile şifrelenmiştir ve indirilemez.` uyarısı verdiğini doğrulayın.
+
+
 
 
 

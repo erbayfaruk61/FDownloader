@@ -84,8 +84,8 @@
 
 | ID | Görev | Zorluk | Durum | Commit | Not |
 |---|---|---|---|---|---|
-| P5-01 | yt-dlp entegrasyonu sağlamlığı | 🟡 | ✅ Bitti | — | Sürüm güncelleme (yt-dlp -U & GitHub), anlaşılır Türkçe hata çevirisi, yetim süreç temizliği (tree kill + Dispose) ve format/çözünürlük modeli eklendi (301/301 test yeşil) |
-| P5-02 | HLS/DASH ve birleştirme | 🟡 | ⬜ Bekliyor | — | Parçaları paralel indir, sırayla birleştir, ses/video akışlarını konteynere (mp4) dönüştür |
+| P5-01 | yt-dlp entegrasyonu sağlamlığı | 🟡 | ✅ Bitti | `e337dd9` | Sürüm güncelleme (yt-dlp -U & GitHub), anlaşılır Türkçe hata çevirisi, yetim süreç temizliği (tree kill + Dispose) ve format/çözünürlük modeli eklendi (301/301 test yeşil) |
+| P5-02 | HLS/DASH ve birleştirme | 🟡 | ✅ Bitti | — | HlsStreamDownloader eklendi; paralel parça indirme, master/media playlist ayrıştırma, DRM koruma tespiti, sıralı TS birleştirme ve ffmpeg MP4 konteyner dönüşümü TestHttpServer ile doğrulandı (312/312 test yeşil) |
 | P5-03 | Torrent sağlamlığı | 🟡 | ⬜ Bekliyor | — | Magnet & torrent dosya seçimi, sıralı indirme, hash kontrolü, seed yönetimi |
 | P5-04 | Site/galeri yakalayıcı | 🟡 | ⬜ Bekliyor | — | Tarama derinliği, hız limiti, sonuçları filtreleme |
 | P5-05 | Proxy ve kimlik doğrulama | 🟡 | ⬜ Bekliyor | — | HTTP/HTTPS/SOCKS5 proxy, sistem proxy, site giriş bilgileri yöneticisi |
