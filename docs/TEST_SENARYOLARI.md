@@ -328,3 +328,36 @@ Bu belge, FDownloader indirme motoru ve disk/dosya sistemi için hem otomatik he
   1. 404 dönen veya silinmiş bir bağlantı indirmeyi deneyin.
   2. Görev üzerinde veya detay bölmesinde `[ERR_HTTP_404]` kodunun, "Dosya sunucuda bulunamadı", silinme nedeni ve "Taze bir link alıp indirmeyi yenileyin" çözüm önerisinin görüntülendiğini doğrulayın.
   3. `docs/HATA_KODLARI.md` rehberinde tüm hata kodlarının eksiksiz yer aldığını teyit edin.
+
+---
+
+## 11. Arayüz İyileştirmeleri ve Ergonomi Senaryoları (P6-04)
+
+### 11.1 Sanallaştırma ve Akıcılık (VirtualizingStackPanel)
+- **Amaç:** 5000+ görevlik büyük indirme listelerinde bellek tüketiminin fırlamaması ve arayüzün kilitlenmeden 60 FPS kaydırılabilmesi.
+- **Elle Test:**
+  1. Toplu indirme ile listeye 1000+ görev ekleyin.
+  2. İndirme listesini fare tekerleğiyle hızlıca aşağı-yukarı kaydırın; UI'ın donmadığını ve gecikme yaşanmadığını doğrulayın.
+
+### 11.2 Klavye Kısayolları (Shortcuts)
+- **Amaç:** Fareye ihtiyaç duymadan temel işlemlerin klavye kombinasyonlarıyla tetiklenebilmesi.
+- **Kısayollar:**
+  - `Ctrl+N`: Yeni indirme ekleme penceresi
+  - `Ctrl+O`: Ayarlar penceresi
+  - `Ctrl+S`: Tüm bekleyenleri başlat
+  - `Ctrl+P`: Tümünü duraklat
+  - `F1`: Kurulum sihirbazını aç
+  - `Boşluk (Space)`: Seçili görevi başlat / duraklat
+  - `Ctrl+A`: Listedeki tüm görevleri seç
+  - `Delete`: Görevi listeden kaldır (onay diyaloğu)
+  - `Shift+Delete`: Görevi ve dosyasını diskten kalıcı olarak sil
+- **Elle Test:**
+  1. Ana pencerede `Ctrl+N` tuşlarına basın; Yeni İndirme penceresinin açıldığını görün.
+  2. Bir görevi seçip `Boşluk` tuşuna basın; durumun indirmeden duraklatıldıya (veya tersine) geçtiğini doğrulayın.
+  3. `Ctrl+S` ve `Ctrl+P` ile tüm indirmelerin başlayıp duraklatıldığını test edin.
+
+### 11.3 Sürükle-Bırak (Drag & Drop)
+- **Amaç:** Masaüstünden veya tarayıcıdan dosya (.torrent) ya da URL metinlerinin doğrudan ana pencereye sürüklenip bırakılabilmesi.
+- **Elle Test:**
+  1. Masaüstündeki bir `.torrent` dosyasını sürükleyip FDownloader penceresine bırakın; Torrent ekleme penceresinin otomatik açıldığını görün.
+  2. Tarayıcıdaki bir indirme linkini fareyle sürükleyip pencereye bırakın; İndirme Ekle penceresine linkin aktarıldığını doğrulayın.

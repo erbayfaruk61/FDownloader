@@ -14,6 +14,14 @@
         DragDrop.AllowDrop="True"
         Background="{Binding ThemeWindowBg}">
 
+    <Window.KeyBindings>
+        <KeyBinding Gesture="Ctrl+N" Command="{Binding OpenAddDownloadDialogCommand}" />
+        <KeyBinding Gesture="Ctrl+O" Command="{Binding OpenSettingsDialogCommand}" />
+        <KeyBinding Gesture="Ctrl+S" Command="{Binding StartAllCommand}" />
+        <KeyBinding Gesture="Ctrl+P" Command="{Binding PauseAllCommand}" />
+        <KeyBinding Gesture="F1" Command="{Binding OpenFirstRunWizardCommand}" />
+    </Window.KeyBindings>
+
     <Window.Styles>
         <Style Selector="Thumb.colResizer">
             <Setter Property="Width" Value="10" />

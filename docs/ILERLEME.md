@@ -99,9 +99,9 @@
 |---|---|---|---|---|---|
 | P6-01 | İlk açılış sihirbazı | 🟡 | ✅ Bitti | — | 3 adımlı karşılama sihirbazı (hoş geldiniz & tema seçimi, kayıt klasörü & Windows başlangıç entegrasyonu, tarayıcı eklentisi 3 adımlı rehberi) tamamlandı |
 | P6-02 | Çoklu dil altyapısı | 🟡 | ✅ Bitti | — | Türkçe ve İngilizce dil tabloları, sistem dilini otomatik algılama, reaktif INotifyPropertyChanged indeksleyici ile dinamik dil değiştirme (355/355 test yeşil) |
-| P6-03 | Hata mesajları | 🟡 | ✅ Bitti | — | Ne oldu / Neden oldu / Ne yapılabilir üçlü formatı, UserFriendlyErrorExplainer ve docs/HATA_KODLARI.md (361/361 test yeşil) |
-| P6-04 | Arayüz iyileştirmeleri | 🟡 | 🔄 Devam | — | Detay ekranı parça haritası, hız grafiği, klavye kısayolları, sürükle-bırak |
-| P6-05 | Erişilebilirlik ve ekran uyumu | 🟡 | ⬜ Bekliyor | — | AutomationProperties, yüksek kontrast, %100-%200 DPI ölçekleme |
+| P6-03 | Hata mesajları | 🟡 | ✅ Bitti | — | Anlaşılır hata açıklamaları (ne oldu/neden/ne yapılabilir), docs/HATA_KODLARI.md (361/361 test yeşil) |
+| P6-04 | Arayüz iyileştirmeleri | 🟡 | ✅ Bitti | — | VirtualizingStackPanel sanallaştırma, global klavye kısayolları (Ctrl+N, Ctrl+O, Ctrl+S, Ctrl+P, F1, Space, Del, Shift+Del), sürükle-bırak desteği ve sistem tepsisi menüsü (361/361 test yeşil) |
+| P6-05 | Erişilebilirlik ve ekran uyumu | 🟡 | 🔄 Devam | — | AutomationProperties, yüksek kontrast, %100-%200 DPI ölçekleme |
 
 ---
 

@@ -304,6 +304,14 @@ public partial class MainWindow : Window
                 e.Handled = true;
             }
         }
+        else if (e.Key == Key.Space)
+        {
+            if (DataContext is MainViewModel vm && vm.ToggleStartPauseSelectedCommand.CanExecute(null))
+            {
+                vm.ToggleStartPauseSelectedCommand.Execute(null);
+                e.Handled = true;
+            }
+        }
     }
 
     private void OnDownloadsListBoxPointerPressed(object? sender, PointerPressedEventArgs e)
