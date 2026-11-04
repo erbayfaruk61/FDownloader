@@ -2,41 +2,43 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** P6-01 — İlk Açılış Sihirbazı (Faz 6 — Kullanıcı Deneyimi)  
+**ID:** P6-02 — Çoklu Dil Altyapısı (Faz 6 — Kullanıcı Deneyimi)  
 **Durum:** ✅ Bitti
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
+- `src/FDownloader.Core/Localization/LocalizationService.cs`:
+  - Singleton `LocalizationService` reaktif dil servisi oluşturuldu.
+  - `INotifyPropertyChanged` ve `Item[]` indeksleyicisi ile XAML bağlamlarının (`{Binding Loc[Anahtar]}`) dil değiştiğinde tüm UI'da anında yenilenmesi sağlandı.
+  - İşletim sistemi kültürünü (`CultureInfo.CurrentUICulture`) okuyarak Türkçe veya İngilizceyi otomatik algılama (`DetectSystemLanguage`).
+  - Türkçe ve İngilizce kapsamlı yerelleştirme sözlükleri (Genel, Toolbar, Kategoriler, Tablo Sütunları, Sihirbaz ve Ayarlar metinleri) tanımlandı.
 - `src/FDownloader.App/ViewModels/MainViewModel.cs`:
-  - `IsFirstRunWizardOpen`, `FirstRunWizardStep` (1: Hoş Geldiniz & Tema, 2: Klasör & Başlangıç, 3: Tarayıcı Eklentisi) ve `IsFirstRunWizardCompleted` durum özellikleri eklendi.
-  - `SettingKeyFirstRunCompleted` ("App.FirstRunCompleted") ve `SettingKeyDefaultSaveDirectory` ("Download.DefaultSaveDirectory") kalıcı SQLite ayar anahtarları tanımlandı.
-  - `BrowseSettingsDefaultSaveDirectoryCommand` komutu eklendi (kullanıcının klasör seçicisiyle indirme dizinini belirleyebilmesi için).
-  - `NextFirstRunWizardStepCommand`, `PreviousFirstRunWizardStepCommand`, `CompleteFirstRunWizardCommand` ve `SkipFirstRunWizardCommand` navigasyon ve tamamlama mekanizmaları kuruldu.
-  - Uygulama ilk kez açıldığında (`App.FirstRunCompleted` ayarı yoksa) sihirbazın otomatik açılması, tamamlandığında kalıcı olarak kaydedilmesi ve hoş geldiniz toast bildirimi gösterilmesi sağlandı.
+  - `Loc` özelliği, `IsLanguageTurkish`, `IsLanguageEnglish` ve `SetAppLanguage(langCode)` metotları eklendi.
+  - SQLite kalıcı ayar anahtarı `SettingKeyLanguage` ("Ui.Language") tanımlandı ve açılışta yüklenmesi sağlandı.
 - `src/FDownloader.App/Views/MainWindow.axaml`:
-  - 12. Modal Diyaloğu olarak "FDownloader Kurulum Sihirbazı" arayüzü tasarlandı.
-  - Adım 1: Hoş geldiniz metni, 4 farklı renk teması seçimi (Okyanus Mavisi, Siber Mor, Platin Gri, Sade Aydınlık) ve anında tema önizlemesi.
-  - Adım 2: Varsayılan indirme klasörü seçimi ("Gözat..." butonu ile) ve Windows başlangıç entegrasyonu (otomatik başlama, sistem tepsisine küçültme, kapatmada simge durumuna geçme).
-  - Adım 3: Tarayıcı yakalayıcı eklentisi (Chrome, Edge, Brave, Opera, Firefox) için 3 adımlı kurulum rehberi, tek tıkla eklenti klasörünü açma ve yolunu panoya kopyalama butonları.
-  - Ayarlar > Depolama sekmesindeki kayıt klasörü alanına da "Gözat..." butonu eklendi.
+  - Ayarlar > Görünüm sekmesine "🌐 Uygulama Dili (Language)" radyo butonları (🇹🇷 Türkçe, 🇬🇧 English) eklendi.
+  - İlk Açılış Sihirbazı başlığına bayraklı hızlı dil seçim butonları ve yerelleştirilmiş metin bağlamları entegre edildi.
+- `tests/FDownloader.Core.Tests/LocalizationTests.cs`:
+  - 4 adet birim testi eklendi (Varsayılan dil doğrulaması, çalışma zamanında dinamik dil değişimi, eksik anahtar fallback davranışı ve sistem dili tespiti).
+  - Test sayısı 351'den **355'e** yükseldi. **355/355 test yeşil**.
 - `docs/TEST_SENARYOLARI.md`:
-  - Senaryo 8 (İlk Açılış Sihirbazı: İlk Kurulum Tespiti, Tema Seçimi, Klasör & Başlangıç Tercihleri ve Eklenti Rehberi) eklendi.
+  - Senaryo 9 (Çoklu Dil / i18n: Sistem Dili Tespiti ve Dinamik Dil Değiştirme) eklendi.
 - `docs/ILERLEME.md`:
-  - `P6-01` tamamlandı olarak güncellendi.
+  - `P6-02` tamamlandı olarak güncellendi.
 - **Doğrulama:**
   - `dotnet build src/FDownloader.App/FDownloader.App.csproj` -> 0 Hata
-  - `dotnet test` -> 351/351 test yeşil.
+  - `dotnet test` -> 355/355 test yeşil.
 
 ---
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** P6-01 bitti. Sıradaki görev: **P6-02 — Çoklu Dil Altyapısı (Localization / i18n)**.
-  - Türkçe ve İngilizce dil kaynakları (`Resources/Strings.tr-TR.axaml` & `Strings.en-US.axaml` veya `.resx` / JSON localization), sistem diline göre otomatik seçim ve ayarlardan dinamik dil değiştirme altyapısı.
+- **Tam olarak nerede kaldım:** P6-02 bitti. Sıradaki görev: **P6-03 — Hata Mesajları ve docs/HATA_KODLARI.md**.
+  - P2-05 hata sınıflandırma sistemindeki tüm durumlar için (404, 403, 401, 429, disk dolu, zaman aşımı, SSL hatası, dosya bozulması) kullanıcı dostu "ne oldu / neden olmuş olabilir / ne yapabilirsin" açıklamaları ve `docs/HATA_KODLARI.md` rehberinin oluşturulması.
 - **Derleme durumu:** ✅ Başarılı (0 hata)
-- **Test durumu:** 351/351 geçiyor
+- **Test durumu:** 355/355 geçiyor
 
 ---
 
@@ -45,6 +47,6 @@
 1. Değişiklikleri commit et:
    ```bash
    git add src/ tests/ docs/
-   git commit -m "feat(ui): P6-01 - Ilk acilis sihirbazi, tema secimi, varsayilan klasor ve eklenti rehberi (351 test yesil)"
+   git commit -m "feat(i18n): P6-02 - Coklu dil altyapisi (Turkce/Ingilizce), reaktif dil degisimi ve sistem dili tespiti (355 test yesil)"
    ```
-2. **P6-02:** Çoklu Dil Altyapısını (`LocalizationService`, Türkçe/İngilizce dil tabloları ve dinamik UI bağlama mekanizması) kurmak.
+2. **P6-03:** Hata mesajlarını kullanıcı dostu üçlü formatta yapılandırmak ve `docs/HATA_KODLARI.md` belgesini hazırlamak.

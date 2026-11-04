@@ -295,3 +295,24 @@ Bu belge, FDownloader indirme motoru ve disk/dosya sistemi için hem otomatik he
   3. "Klasör Yolunu Kopyala" butonuna tıklayın; panoya eklenti klasör yolunun kopyalandığını doğrulayın.
   4. "Tamamla" butonuna basın; sihirbazın kapandığını, hoş geldiniz bildiriminin çıktığını ve `App.FirstRunCompleted = True` olarak kaydedildiğini doğrulayın.
   5. Uygulamayı kapatıp tekrar açın; sihirbazın bir daha otomatik açılmadığını teyit edin.
+
+---
+
+## 9. Çoklu Dil (Localization / i18n) Senaryoları (P6-02)
+
+### 9.1 Sistem Dili Algılama ve Varsayılan Dil
+- **Amaç:** Uygulama ilk açıldığında Windows işletim sistemi kültürüne göre (Türkçe ise `tr-TR`, diğer tüm dillerde `en-US`) uygun dilin seçilmesi.
+- **Otomatik Test:** `LocalizationTests.LocalizationService_DetectSystemLanguage_ReturnsValidCode`, `LocalizationTests.LocalizationService_DefaultLanguage_IsTurkish`.
+- **Elle Test:**
+  1. Türkçe Windows'ta uygulama başlatıldığında tüm başlıkların, menülerin ve butonların Türkçe açıldığını doğrulayın.
+  2. İngilizce yerel ayarlı bir sistemde uygulamanın varsayılan olarak İngilizce açıldığını teyit edin.
+
+### 9.2 Ayarlardan Dinamik Dil Değiştirme (Türkçe ↔ English)
+- **Amaç:** Uygulamayı yeniden başlatmaya gerek kalmadan Ayarlar > Görünüm veya Sihirbaz üzerinden dil seçildiğinde tüm arayüz metinlerinin anında güncellenmesi.
+- **Otomatik Test:** `LocalizationTests.LocalizationService_SwitchToEnglish_SwitchesStringsDynamically`.
+- **Elle Test:**
+  1. Ayarlar > Görünüm sekmesine gidin.
+  2. "Uygulama Dili (Language)" bölümünden "🇬🇧 English" seçeneğini işaretleyin.
+  3. Butonların ("➕ New Download", "Settings", "File Name" vb.) ve sihirbaz metinlerinin anında İngilizceye dönüştüğünü görün.
+  4. "🇹🇷 Türkçe" seçeneğine geri dönün; arayüzün anında Türkçeye güncellendiğini doğrulayın.
+  5. Uygulamayı yeniden başlatın; SQLite veritabanındaki `Ui.Language` ayarının hatırlandığını teyit edin.

@@ -570,6 +570,42 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
     }
 
+    // ─── Çoklu Dil Desteği (P6-02: Localization) ──────────────────────────
+    public FDownloader.Core.Localization.LocalizationService Loc => FDownloader.Core.Localization.LocalizationService.Instance;
+
+    public bool IsLanguageTurkish
+    {
+        get => Loc.IsTurkish;
+        set
+        {
+            if (value)
+            {
+                SetAppLanguage(FDownloader.Core.Localization.LocalizationService.DefaultLanguage);
+            }
+        }
+    }
+
+    public bool IsLanguageEnglish
+    {
+        get => Loc.IsEnglish;
+        set
+        {
+            if (value)
+            {
+                SetAppLanguage(FDownloader.Core.Localization.LocalizationService.EnglishLanguage);
+            }
+        }
+    }
+
+    public void SetAppLanguage(string langCode)
+    {
+        Loc.CurrentLanguage = langCode;
+        _downloadManager.SetSetting(SettingKeyLanguage, langCode);
+        OnPropertyChanged(nameof(IsLanguageTurkish));
+        OnPropertyChanged(nameof(IsLanguageEnglish));
+        OnPropertyChanged(nameof(Loc));
+    }
+
     // ─── Tamamlanma Zil Sesi Seçenekleri ────────────────────────────────────
 
     private CompletionSound _currentCompletionSound = CompletionSound.Notify;
@@ -657,6 +693,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     private const string SettingKeyShowTrayIcon = "System.ShowTrayIcon";
     private const string SettingKeyDefaultSaveDirectory = "Download.DefaultSaveDirectory";
     private const string SettingKeyFirstRunCompleted = "App.FirstRunCompleted";
+    private const string SettingKeyLanguage = "Ui.Language";
     private const string SettingKeyGlobalDownloadLimitKiB = "Network.GlobalDownloadLimitKiB";
     private const string SettingKeyGlobalUploadLimitKiB = "Network.GlobalUploadLimitKiB";
     private const string SettingKeyAltDownloadLimitKiB = "Network.AltDownloadLimitKiB";
@@ -1480,6 +1517,17 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         InitializeScheduler();
 
         var defaultDownloads = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+
+        var savedLang = _downloadManager.GetSetting(SettingKeyLanguage);
+        if (!string.IsNullOrWhiteSpace(savedLang))
+        {
+            Loc.CurrentLanguage = savedLang;
+        }
+        else
+        {
+            // İlk açılışta sistem dilini otomatik algıla
+            Loc.CurrentLanguage = FDownloader.Core.Localization.LocalizationService.DetectSystemLanguage();
+        }
 
         var savedSaveDir = _downloadManager.GetSetting(SettingKeyDefaultSaveDirectory);
         if (!string.IsNullOrWhiteSpace(savedSaveDir) && Directory.Exists(savedSaveDir))
