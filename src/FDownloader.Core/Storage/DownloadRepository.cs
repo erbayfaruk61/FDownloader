@@ -11,11 +11,13 @@ public sealed class DownloadRepository
 {
     private readonly Database _db;
     private readonly ILogger<DownloadRepository> _logger;
+    private readonly Security.IDataProtectionService _dataProtector;
 
-    public DownloadRepository(Database db, ILogger<DownloadRepository> logger)
+    public DownloadRepository(Database db, ILogger<DownloadRepository> logger, Security.IDataProtectionService? dataProtector = null)
     {
         _db = db;
         _logger = logger;
+        _dataProtector = dataProtector ?? new Security.SecureDataProtector();
     }
 
     // ─── Görev İşlemleri ─────────────────────────────────────────────────
@@ -208,8 +210,11 @@ public sealed class DownloadRepository
 
     // ─── Mapper Yardımcıları ──────────────────────────────────────────────
 
-    private static DownloadTask ReadTask(SqliteDataReader r)
+    private DownloadTask ReadTask(SqliteDataReader r)
     {
+        var rawCookies = r.IsDBNull(r.GetOrdinal("Cookies")) ? null : r.GetString(r.GetOrdinal("Cookies"));
+        var decryptedCookies = !string.IsNullOrEmpty(rawCookies) ? _dataProtector.Unprotect(rawCookies) : null;
+
         return new DownloadTask
         {
             Id = r.GetInt64(r.GetOrdinal("Id")),
@@ -233,7 +238,7 @@ public sealed class DownloadRepository
             LastModified = r.IsDBNull(r.GetOrdinal("LastModified")) ? null : r.GetString(r.GetOrdinal("LastModified")),
             Referer = r.IsDBNull(r.GetOrdinal("Referer")) ? null : r.GetString(r.GetOrdinal("Referer")),
             UserAgent = r.IsDBNull(r.GetOrdinal("UserAgent")) ? null : r.GetString(r.GetOrdinal("UserAgent")),
-            Cookies = r.IsDBNull(r.GetOrdinal("Cookies")) ? null : r.GetString(r.GetOrdinal("Cookies")),
+            Cookies = decryptedCookies,
             CreatedAt = DateTimeOffset.Parse(r.GetString(r.GetOrdinal("CreatedAt")))
         };
     }
@@ -253,8 +258,12 @@ public sealed class DownloadRepository
         };
     }
 
-    private static void BindTask(SqliteCommand cmd, DownloadTask task)
+    private void BindTask(SqliteCommand cmd, DownloadTask task)
     {
+        string? protectedCookies = !string.IsNullOrEmpty(task.Cookies)
+            ? _dataProtector.Protect(task.Cookies)
+            : null;
+
         cmd.Parameters.AddWithValue("@Name", task.Name);
         cmd.Parameters.AddWithValue("@OriginalUrl", task.OriginalUrl);
         cmd.Parameters.AddWithValue("@FinalUrl", task.FinalUrl);
@@ -274,7 +283,7 @@ public sealed class DownloadRepository
         cmd.Parameters.AddWithValue("@LastModified", (object?)task.LastModified ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@Referer", (object?)task.Referer ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@UserAgent", (object?)task.UserAgent ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("@Cookies", (object?)task.Cookies ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@Cookies", (object?)protectedCookies ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@CreatedAt", task.CreatedAt.ToString("O"));
     }
 
@@ -283,16 +292,41 @@ public sealed class DownloadRepository
         using var cmd = _db.CreateCommand();
         cmd.CommandText = "SELECT Value FROM Settings WHERE Key = @Key;";
         cmd.Parameters.AddWithValue("@Key", key);
-        var result = cmd.ExecuteScalar();
-        return result?.ToString();
+        var result = cmd.ExecuteScalar()?.ToString();
+        if (result == null) return null;
+
+        // Eğer hassas bir ayar ise (Proxy şifresi, API anahtarı vb.) çöz
+        if (IsSensitiveSettingKey(key))
+        {
+            return _dataProtector.Unprotect(result);
+        }
+
+        return result;
     }
 
     public void SetSetting(string key, string value)
     {
+        string storeValue = value;
+        if (IsSensitiveSettingKey(key))
+        {
+            storeValue = _dataProtector.Protect(value);
+        }
+
         using var cmd = _db.CreateCommand();
         cmd.CommandText = "INSERT INTO Settings (Key, Value) VALUES (@Key, @Value) ON CONFLICT(Key) DO UPDATE SET Value = excluded.Value;";
         cmd.Parameters.AddWithValue("@Key", key);
-        cmd.Parameters.AddWithValue("@Value", value);
+        cmd.Parameters.AddWithValue("@Value", storeValue);
         cmd.ExecuteNonQuery();
+    }
+
+    private static bool IsSensitiveSettingKey(string key)
+    {
+        if (string.IsNullOrEmpty(key)) return false;
+        return key.Contains("Password", StringComparison.OrdinalIgnoreCase) ||
+               key.Contains("Secret", StringComparison.OrdinalIgnoreCase) ||
+               key.Contains("Token", StringComparison.OrdinalIgnoreCase) ||
+               key.Contains("ApiKey", StringComparison.OrdinalIgnoreCase) ||
+               key.Contains("Credential", StringComparison.OrdinalIgnoreCase) ||
+               key.StartsWith("Proxy.Password", StringComparison.OrdinalIgnoreCase);
     }
 }

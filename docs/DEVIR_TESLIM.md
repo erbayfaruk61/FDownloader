@@ -2,33 +2,31 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** P3-02 — Arşiv Çıkarma Güvenliği (Zip Slip / Zip Bomb Koruması)
+**ID:** P3-04 — Hassas Verilerin Saklanması
 **Durum:** ✅ Bitti
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
-- `src/FDownloader.Core/Utilities/ArchiveExtractorService.cs`:
-  - Zip-Slip engeli sertleştirildi: Çıkartılacak dosyanın tam hedef dizin sınırı içinde (`fullFinalDir`) kaldığı garanti altına alındı, dışarı taşma girişimleri engellendi ve uyarı günlüğü basıldı.
-  - Zip-Bomb savunması eklendi:
-    - `maxExtractedFilesCount` (Varsayılan 50.000 adet) aşıldığında indirme güvenli şekilde durdurulup Türkçe hata mesajı üretiliyor.
-    - `maxTotalExtractedBytes` (Varsayılan 20 GB) aşıldığında işlem durdurulup disk taşması engelleniyor.
-    - `maxCompressionRatio` (Varsayılan 100x): Aşırı sıkıştırma oranına sahip şüpheli arşivler tespit edilip durduruluyor.
-    - Hem SharpCompress doğrudan çıkartma hem de 7-Zip harici süreç çıkartma senaryolarında temizleme (`Directory.Delete`) ve güvenlik sınırları entegre edildi.
-- `tests/FDownloader.Core.Tests/ArchiveExtractorServiceTests.cs`:
-  - 3 yeni birim testi yazıldı: Zip-Slip dizin dışına taşma engeli, Zip-Bomb dosya sayısı sınırı aşımı ve Zip-Bomb açılma boyutu aşımı test edildi.
-- Toplam test sayısı 211'den **214'e** yükseldi. **214/214 test yeşil**.
+- `src/FDownloader.Core/Security/SecureDataProtector.cs`:
+  - `IDataProtectionService` ve `SecureDataProtector` uygulandı. Windows ortamında `ProtectedData` (DPAPI - CurrentUser scope) kullanılırken, diğer platformlar için PBKDF2 makine türevi + AES-GCM şifreleme sağlandı.
+  - Şifrelenmiş metinler için `ENC::v1::` ön eki tanımlandı; eski şifresiz düz metin kayıtların bozulmadan okunması (geriye dönük uyumluluk) garanti edildi.
+- `src/FDownloader.Core/Storage/DownloadRepository.cs`:
+  - `DownloadTasks` tablosuna yazılan ve okunan oturum çerezleri (`Cookies`) otomatik şifrelenip çözülüyor.
+  - `Settings` tablosuna kaydedilen hassas konfigürasyonlar (Proxy şifresi, API anahtarı, Token vb.) otomatik olarak şifreli kaydediliyor.
+- `tests/FDownloader.Core.Tests/SensitiveDataStorageTests.cs`:
+  - 4 yeni birim testi yazıldı: simetrik şifreleme/çözme doğruluğu, geriye dönük düz metin uyumluluğu, ham SQLite tablosunda çerezlerin şifreli olduğu (`ENC::v1::`) ve ham SQLite ayarlarında hassas parolaların gizlendiği doğrulandı.
+- Toplam test sayısı 214'ten **218'e** yükseldi. **218/218 test yeşil**.
 
 ---
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** P3-02 (Arşiv Çıkarma Güvenliği) tamamlandı.
-- **Sıradaki Görev:** **P3-04 — Hassas Veri Saklama (Kullanıcı kimlik bilgileri ve proxy şifreleme)**.
-  - `DataProtectionProvider` / DPAPI ile SQLite'daki parola, token, proxy kimlik bilgilerinin şifrelenerek saklanması.
+- **Tam olarak nerede kaldım:** P3-04 (Hassas Veri Saklama) tamamlandı.
+- **Sıradaki Görev:** **P3-05 — Ağ Güvenliği (TLS doğrulama, yönlendirmede kimlik sızıntısını engelleme, HTTPS->HTTP düşürme uyarıları)**.
 - **Derleme durumu:** ✅ Başarılı (0 hata)
-- **Test durumu:** 214/214 geçiyor
+- **Test durumu:** 218/218 geçiyor
 
 ---
 
@@ -37,9 +35,9 @@
 1. Değişiklikleri commit et:
    ```
    git add src/ tests/ docs/
-   git commit -m "feat(security): P3-02 - Arsiv cikarma guvenligi, Zip-Slip ve Zip-Bomb savunmasi"
+   git commit -m "feat(security): P3-04 - Hassas veri saklama, DPAPI ve SQLite sifreleme korumasi"
    ```
-2. **P3-04:** DPAPI / Windows Data Protection tabanlı hassas veri şifreleme altyapısını ve testlerini hazırla.
+2. **P3-05:** `DownloadProber` ve `HttpDownloader` içinde alan adı değişen yönlendirmelerde (cross-domain redirect) hassas çerez ve kimlik bilgilerinin sızmasını engelleyen güvenlik kurallarını ve testlerini uygula.
 
 ---
 

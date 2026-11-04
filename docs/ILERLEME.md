@@ -58,7 +58,7 @@
 | P3-01 | Eklenti köprüsü güvenliği | 🔴 | ✅ Bitti | — | Origin + Host kontrolü, sınırlı akış ve şema doğrulaması eklendi |
 | P3-02 | Arşiv çıkarma güvenliği | 🔴 | ✅ Bitti | — | Zip-Slip (dizin dışına çıkma engeli) ve Zip-Bomb (maks dosya sayısı, maks bayt ve aşırı sıkıştırma oranı denetimi) 7z & SharpCompress için uygulandı (214/214 test yeşil) |
 | P3-03 | Dış süreç güvenliği | 🔴 | ✅ Bitti | — | YtDlpMediaService ArgumentList kullanımı ve URL doğrulama ile parametre enjeksiyonu önlendi |
-| P3-04 | Hassas veri saklama | 🟡 | ⬜ Bekliyor | — | |
+| P3-04 | Hassas veri saklama | 🟡 | ✅ Bitti | — | Windows DPAPI ve PBKDF2/AES-GCM çapraz platform koruması (SecureDataProtector) eklendi. DownloadTasks Cookies ve Settings hassas değerleri (parola/token vb.) veritabanında şifreli saklanıyor (218/218 test yeşil) |
 | P3-05 | Ağ güvenliği | 🟡 | ⬜ Bekliyor | — | |
 | P3-06 | İndirilen dosya güvenliği | 🟡 | ⬜ Bekliyor | — | Zone.Identifier eksik |
 | P3-07 | Torrent güvenliği/kill-switch | 🟡 | ⬜ Bekliyor | — | |
