@@ -155,6 +155,8 @@ public sealed class DownloadProber
     {
         string currentUrl = startUrl;
         var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var initialUri = new Uri(startUrl);
+        string? activeCookies = cookies;
 
         for (int redirectCount = 0; redirectCount <= MaxRedirects; redirectCount++)
         {
@@ -163,7 +165,24 @@ public sealed class DownloadProber
                 return (null, currentUrl, $"Yönlendirme döngüsü tespit edildi: {currentUrl}");
             }
 
-            HttpRequestMessage request = BuildRequest(method, currentUrl, referer, cookies, userAgent);
+            // Cross-domain veya HTTPS->HTTP yönlendirmede çerez sızıntısını engelle (P3-05)
+            var currentUri = new Uri(currentUrl);
+            if (!Network.NetworkSecurityPolicy.ShouldPreserveSensitiveHeaders(initialUri, currentUri))
+            {
+                if (!string.IsNullOrEmpty(activeCookies))
+                {
+                    _logger.LogWarning("Cross-domain veya protokol düşürme yönlendirmesi tespit edildi ({Original} -> {Target}), çerezler temizleniyor",
+                        initialUri.Host, currentUri.Host);
+                    activeCookies = null;
+                }
+            }
+
+            if (Network.NetworkSecurityPolicy.IsHttpsDowngrade(initialUri, currentUri))
+            {
+                _logger.LogWarning("HTTPS -> HTTP protokol düşürme (downgrade) yönlendirmesi tespit edildi: {Target}", currentUrl);
+            }
+
+            HttpRequestMessage request = BuildRequest(method, currentUrl, referer, activeCookies, userAgent);
             if (isRangeProbe)
             {
                 request.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(0, 0);

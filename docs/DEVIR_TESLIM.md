@@ -2,31 +2,35 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** P3-04 — Hassas Verilerin Saklanması
+**ID:** P3-05 — Ağ Güvenliği
 **Durum:** ✅ Bitti
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
-- `src/FDownloader.Core/Security/SecureDataProtector.cs`:
-  - `IDataProtectionService` ve `SecureDataProtector` uygulandı. Windows ortamında `ProtectedData` (DPAPI - CurrentUser scope) kullanılırken, diğer platformlar için PBKDF2 makine türevi + AES-GCM şifreleme sağlandı.
-  - Şifrelenmiş metinler için `ENC::v1::` ön eki tanımlandı; eski şifresiz düz metin kayıtların bozulmadan okunması (geriye dönük uyumluluk) garanti edildi.
-- `src/FDownloader.Core/Storage/DownloadRepository.cs`:
-  - `DownloadTasks` tablosuna yazılan ve okunan oturum çerezleri (`Cookies`) otomatik şifrelenip çözülüyor.
-  - `Settings` tablosuna kaydedilen hassas konfigürasyonlar (Proxy şifresi, API anahtarı, Token vb.) otomatik olarak şifreli kaydediliyor.
-- `tests/FDownloader.Core.Tests/SensitiveDataStorageTests.cs`:
-  - 4 yeni birim testi yazıldı: simetrik şifreleme/çözme doğruluğu, geriye dönük düz metin uyumluluğu, ham SQLite tablosunda çerezlerin şifreli olduğu (`ENC::v1::`) ve ham SQLite ayarlarında hassas parolaların gizlendiği doğrulandı.
-- Toplam test sayısı 214'ten **218'e** yükseldi. **218/218 test yeşil**.
+- `src/FDownloader.Core/Network/NetworkSecurityPolicy.cs`:
+  - `NetworkSecurityPolicy` sınıfı eklendi.
+  - Cross-domain yönlendirmelerde (`ShouldPreserveSensitiveHeaders`) ve HTTPS'ten HTTP'ye düşürme (`IsHttpsDowngrade`) senaryolarında çerezlerin ve oturum kimliklerinin yabancı etki alanlarına sızması engellendi.
+  - Güvensiz ve yerel kod çalıştırma riski taşıyan URL şemaları (`file://`, `javascript://`, `data://`) `IsSafeUrlScheme` ile engellendi.
+- `src/FDownloader.Core/Engine/Probe/DownloadProber.cs`:
+  - `DownloadProber` yönlendirme döngüsünde cross-domain veya downgrade tespit edildiğinde `activeCookies` sıfırlanarak hedef sunucuya oturum çerezinin gitmesi önlendi.
+- `src/FDownloader.Core/Engine/Worker/SegmentWorker.cs`:
+  - İndirme worker'larında referer ile hedef domain uyuşmadığında güvenlik uyarısı verilerek çerez başlığı kaldırıldı.
+- `tests/FDownloader.Core.Tests/NetworkSecurityTests.cs`:
+  - 16 teori ve birim testi eklendi: host kuralları, HTTPS düşürme tespiti, güvenli şema doğrulama ve mock sunucu ile cross-domain yönlendirmede çerez sızıntısı olmaması test edildi.
+- Toplam test sayısı 218'den **234'e** yükseldi. **234/234 test yeşil**.
 
 ---
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** P3-04 (Hassas Veri Saklama) tamamlandı.
-- **Sıradaki Görev:** **P3-05 — Ağ Güvenliği (TLS doğrulama, yönlendirmede kimlik sızıntısını engelleme, HTTPS->HTTP düşürme uyarıları)**.
+- **Tam olarak nerede kaldım:** P3-05 tamamlandı.
+- **Sıradaki Görev:** **P3-06 — İndirilen Dosya Güvenliği (Zone.Identifier ve tehlikeli dosya uzantıları koruması)**.
+  - İndirilen dosyalara NTFS Alternate Data Stream `Zone.Identifier` (ZoneId=3, Web) eklenmesi.
+  - `.exe`, `.bat`, `.cmd`, `.scr`, `.js`, `.vbs`, `.ps1`, `.msi` vb. dosyalar için çalıştırma uyarısı.
 - **Derleme durumu:** ✅ Başarılı (0 hata)
-- **Test durumu:** 218/218 geçiyor
+- **Test durumu:** 234/234 geçiyor
 
 ---
 
@@ -35,9 +39,9 @@
 1. Değişiklikleri commit et:
    ```
    git add src/ tests/ docs/
-   git commit -m "feat(security): P3-04 - Hassas veri saklama, DPAPI ve SQLite sifreleme korumasi"
+   git commit -m "feat(security): P3-05 - Ag guvenligi, cross-domain yonlendirme ve cerez sizinti korumasi"
    ```
-2. **P3-05:** `DownloadProber` ve `HttpDownloader` içinde alan adı değişen yönlendirmelerde (cross-domain redirect) hassas çerez ve kimlik bilgilerinin sızmasını engelleyen güvenlik kurallarını ve testlerini uygula.
+2. **P3-06:** `ZoneIdentifierHelper` (Zone.Identifier NTFS ADS) ve tehlikeli dosya uzantı listesi doğrulamasını uygula ve test et.
 
 ---
 

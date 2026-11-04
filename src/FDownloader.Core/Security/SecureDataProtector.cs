@@ -174,3 +174,4 @@ public class SecureDataProtector : IDataProtectionService
         return kdf.GetBytes(32); // 256-bit AES anahtarı
     }
 }
+

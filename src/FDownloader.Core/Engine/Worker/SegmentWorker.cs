@@ -253,8 +253,27 @@ public sealed class SegmentWorker
         request.Headers.TryAddWithoutValidation("User-Agent", userAgent);
         if (!string.IsNullOrEmpty(_referer))
             request.Headers.TryAddWithoutValidation("Referer", _referer);
+
         if (!string.IsNullOrEmpty(_cookies))
-            request.Headers.TryAddWithoutValidation("Cookie", _cookies);
+        {
+            // Cross-domain veya HTTPS->HTTP kontrolü: Eğer referer varsa ve hedef farklı bir domain ise çerezleri gönderme
+            bool allowCookies = true;
+            if (!string.IsNullOrEmpty(_referer) &&
+                Uri.TryCreate(_referer, UriKind.Absolute, out var refUri) &&
+                Uri.TryCreate(_url, UriKind.Absolute, out var targetUri))
+            {
+                allowCookies = Network.NetworkSecurityPolicy.ShouldPreserveSensitiveHeaders(refUri, targetUri);
+            }
+
+            if (allowCookies)
+            {
+                request.Headers.TryAddWithoutValidation("Cookie", _cookies);
+            }
+            else
+            {
+                _logger.LogWarning("Segment {Index}: Farklı hedef domaine istek atılıyor, çerezler güvenlik nedeniyle çıkarıldı.", _segment.Index);
+            }
+        }
 
         // Sıkıştırma isteme
         request.Headers.TryAddWithoutValidation("Accept-Encoding", "identity");

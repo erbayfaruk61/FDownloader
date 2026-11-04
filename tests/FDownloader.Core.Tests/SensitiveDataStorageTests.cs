@@ -118,3 +118,4 @@ public class SensitiveDataStorageTests : IDisposable
         Assert.DoesNotContain("SuperSecretProxyPassword#2026", rawDbValue);
     }
 }
+
