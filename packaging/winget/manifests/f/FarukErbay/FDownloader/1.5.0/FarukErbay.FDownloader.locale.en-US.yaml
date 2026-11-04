@@ -1,0 +1,30 @@
+PackageIdentifier: FarukErbay.FDownloader
+PackageVersion: 1.5.0
+PackageLocale: en-US
+Publisher: Faruk Erbay
+PublisherUrl: https://github.com/erbayfaruk61/FDownloader
+PublisherSupportUrl: https://github.com/erbayfaruk61/FDownloader/issues
+Author: Faruk Erbay
+PackageName: FDownloader
+PackageUrl: https://github.com/erbayfaruk61/FDownloader
+License: MIT
+LicenseUrl: https://github.com/erbayfaruk61/FDownloader/blob/main/LICENSE
+Copyright: Copyright (c) 2026 Faruk Erbay
+ShortDescription: Modern, blazing-fast multi-part desktop download manager built with .NET 9 and Avalonia UI.
+Description: |
+  FDownloader is a next-generation desktop download manager featuring multi-part segmented
+  HTTP/HTTPS downloading, smart stream grabbing (yt-dlp), BitTorrent client, automatic archive extraction
+  (7-Zip & SharpCompress), and browser integration.
+Moniker: fdownloader
+Tags:
+  - download-manager
+  - downloader
+  - torrent
+  - bittorrent
+  - yt-dlp
+  - idm-alternative
+  - avalonia
+  - dotnet
+ManifestType: locale
+ManifestVersion: 1.6.0
+

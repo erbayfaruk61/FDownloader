@@ -1,0 +1,30 @@
+PackageIdentifier: FarukErbay.FDownloader
+PackageVersion: 1.5.0
+PackageLocale: tr-TR
+Publisher: Faruk Erbay
+PublisherUrl: https://github.com/erbayfaruk61/FDownloader
+PublisherSupportUrl: https://github.com/erbayfaruk61/FDownloader/issues
+Author: Faruk Erbay
+PackageName: FDownloader
+PackageUrl: https://github.com/erbayfaruk61/FDownloader
+License: MIT
+LicenseUrl: https://github.com/erbayfaruk61/FDownloader/blob/main/LICENSE
+Copyright: Copyright (c) 2026 Faruk Erbay
+ShortDescription: .NET 9 & Avalonia UI ile geliştirilmiş modern, hızlı ve çok parçalı masaüstü indirme yöneticisi.
+Description: |
+  FDownloader, yüksek hızlı parçalı HTTP/HTTPS indirme, akıllı medya yakalayıcı (yt-dlp),
+  BitTorrent istemcisi, otomatik arşiv açma (7-Zip & SharpCompress) ve Chromium tabanlı
+  tarayıcı entegrasyonu sunan yeni nesil bir masaüstü indirme yöneticisidir.
+Moniker: fdownloader
+Tags:
+  - download-manager
+  - downloader
+  - torrent
+  - bittorrent
+  - yt-dlp
+  - idm-alternative
+  - avalonia
+  - dotnet
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0
+

@@ -1430,17 +1430,6 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     public event Action? RequestCloseWindow;
     public event Action? RequestHideToTray;
 
-
-    [ObservableProperty] private bool _preventSleepWhileDownloading = true;
-
-    [ObservableProperty] private bool _warnOnExitWithActiveDownloads = true;
-
-    [ObservableProperty] private bool _isExitConfirmDialogOpen = false;
-
-    [ObservableProperty] private string _exitConfirmMessage = string.Empty;
-
-    public event Action? RequestCloseWindow;
-
     // ─── Ağ Adaptörü & VPN Kill-Switch ─────────────────────────────────────
 
     [ObservableProperty] private ObservableCollection<NetworkInterfaceInfo> _networkInterfaces = new();
@@ -2650,15 +2639,6 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
         UpdateHybridState();
 
-        // P6-07: Aktif indirme durumuna göre Windows uyku modunu yönet
-        if (PreventSleepWhileDownloading && active.Count > 0)
-        {
-            Services.PowerManagementService.PreventSleep();
-        }
-        else
-        {
-            Services.PowerManagementService.AllowSleep();
-        }
     }
 
     /// <summary>
@@ -2735,15 +2715,6 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
         UpdateHybridState();
 
-        // P6-07: Aktif indirme durumuna göre Windows uyku modunu yönet
-        if (PreventSleepWhileDownloading && active.Count > 0)
-        {
-            Services.PowerManagementService.PreventSleep();
-        }
-        else
-        {
-            Services.PowerManagementService.AllowSleep();
-        }
     }
 
     [RelayCommand]
@@ -3577,15 +3548,6 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
         UpdateHybridState();
 
-        // P6-07: Aktif indirme durumuna göre Windows uyku modunu yönet
-        if (PreventSleepWhileDownloading && active.Count > 0)
-        {
-            Services.PowerManagementService.PreventSleep();
-        }
-        else
-        {
-            Services.PowerManagementService.AllowSleep();
-        }
     }
 
     [RelayCommand]
@@ -3670,15 +3632,6 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
         UpdateHybridState();
 
-        // P6-07: Aktif indirme durumuna göre Windows uyku modunu yönet
-        if (PreventSleepWhileDownloading && active.Count > 0)
-        {
-            Services.PowerManagementService.PreventSleep();
-        }
-        else
-        {
-            Services.PowerManagementService.AllowSleep();
-        }
     }
 
     public void AdjustColumnWidth(string columnName, double deltaX)
@@ -3941,15 +3894,6 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
         UpdateHybridState();
 
-        // P6-07: Aktif indirme durumuna göre Windows uyku modunu yönet
-        if (PreventSleepWhileDownloading && active.Count > 0)
-        {
-            Services.PowerManagementService.PreventSleep();
-        }
-        else
-        {
-            Services.PowerManagementService.AllowSleep();
-        }
     }
 
     private static void DeleteLocalFilesForDownload(DownloadItemViewModel target)
@@ -4596,10 +4540,6 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
         _downloadManager.SetSetting(SettingKeyShowTrayIcon, ShowTrayIcon.ToString());
         _downloadManager.SetSetting(SettingKeyPreventSleepWhileDownloading, PreventSleepWhileDownloading.ToString());
-        _downloadManager.SetSetting(SettingKeyWarnOnExitWithActiveDownloads, WarnOnExitWithActiveDownloads.ToString());
-
-        _downloadManager.SetSetting(SettingKeyPreventSleepWhileDownloading, PreventSleepWhileDownloading.ToString());
-
         _downloadManager.SetSetting(SettingKeyWarnOnExitWithActiveDownloads, WarnOnExitWithActiveDownloads.ToString());
 
         if (!string.IsNullOrWhiteSpace(SettingsDefaultSaveDirectory))
@@ -7223,16 +7163,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         UpdateHybridState();
 
         // P6-07: Aktif indirme durumuna gore Windows uyku modunu yonet
-        if (PreventSleepWhileDownloading && active.Count > 0)
-        {
-            Services.PowerManagementService.PreventSleep();
-        }
-        else
-        {
-            Services.PowerManagementService.AllowSleep();
-        }
-        // P6-07: Aktif indirme durumuna göre Windows uyku modunu yönet
-        if (PreventSleepWhileDownloading && active.Count > 0)
+        if (PreventSleepWhileDownloading && Downloads.Any(d => d.IsActive))
         {
             Services.PowerManagementService.PreventSleep();
         }

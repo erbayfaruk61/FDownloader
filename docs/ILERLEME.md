@@ -107,11 +107,24 @@
 
 ---
 
-## Faz 7–9
+## Faz 7 — Dağıtım ve Güven
+
+| ID | Görev | Zorluk | Durum | Commit | Not |
+|---|---|---|---|---|---|
+| P7-01 | Kod imzalama stratejisi | 🧑 | ✅ Bitti | — | docs/KOD_IMZALAMA.md rehberi (Azure Trusted Signing, SignPath.io, Velopack vpk entegrasyonu) |
+| P7-02 | CI/CD sürüm hattı | 🟡 | ✅ Bitti | — | .github/workflows/release.yml (etiket atılınca build, vpk pack, browser-extension, SHA256SUMS ve GitHub Release) |
+| P7-03 | Güven artırıcılar | 🟢 | ✅ Bitti | — | SHA256SUMS.txt otomatik üretimi ve docs/YANLIS_POZITIF.md itiraz kılavuzu |
+| P7-04 | Paket yöneticileri | 🟡 | ✅ Bitti | — | packaging/winget/ (FarukErbay.FDownloader manifestleri tr-TR, en-US, installer, version) |
+| P7-05 | Güncelleme deneyimi | 🟡 | ✅ Bitti | — | Velopack UpdateService, Ayarlar/Hakkında sekmesinde güncelleme denetimi & kurulumu |
+| P7-06 | Çapraz platform mimarisi | 🟡 | ✅ Bitti | — | Windows'a özel bileşenlerin soyutlama ve OSPlatform koruması altına alınması |
+
+---
+
+## Faz 8 — Hukuk, Belgeler, Topluluk
 
 | ID | Görev | Zorluk | Durum |
 |---|---|---|---|
-| P7-01 → P9-05 | (Tüm görevler) | — | ⬜ Bekliyor |
+| P8-01 → P8-04 | (Tüm görevler) | — | ⬜ Bekliyor |
 
 ---
 

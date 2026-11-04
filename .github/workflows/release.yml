@@ -78,6 +78,14 @@ jobs:
             powershell -ExecutionPolicy Bypass -File tools/browser-extension/package.ps1 -OutputDir ./Releases
           }
 
+      - name: SHA-256 Sağlama Listesi Üret (SHA256SUMS.txt)
+        shell: pwsh
+        run: |
+          Get-ChildItem -Path ./Releases -File | ForEach-Object {
+            $hash = (Get-FileHash -Path $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $($_.Name)"
+          } | Out-File -FilePath ./Releases/SHA256SUMS.txt -Encoding ascii
+
       - name: GitHub Release Oluştur ve Paketleri Yükle
         uses: softprops/action-gh-release@v2
         with:

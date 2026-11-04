@@ -2,30 +2,26 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** P6-07 — Güç ve Sistem Davranışları (Faz 6 — Kullanıcı Deneyimi)  
-**Durum:** ✅ Bitti (Böylece **Faz 6 — Kullanıcı Deneyimi** tüm maddeleriyle %100 tamamlandı)
+**ID:** Faz 7 — Dağıtım ve Güven (P7-01 .. P7-06)  
+**Durum:** ✅ Bitti (Böylece **Faz 7** tüm maddeleriyle eksiksiz tamamlandı)
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
-- `src/FDownloader.App/Services/PowerManagementService.cs`:
-  - Windows `kernel32.dll` `SetThreadExecutionState` Win32 API (`ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED`) entegrasyonu oluşturuldu.
-  - `PreventSleep()` ve `AllowSleep()` metotları ile thread-safe güç yönetimi sağlandı.
-- `src/FDownloader.Core/Localization/LocalizationService.cs`:
-  - `Settings.PreventSleepWhileDownloading`, `Settings.PreventSleepDesc`, `Settings.WarnOnExitWithActiveDownloads`, `Settings.WarnOnExitDesc`, `ExitConfirm.Title`, `ExitConfirm.Message`, `ExitConfirm.MinimizeToTray`, `ExitConfirm.ExitAnyway` anahtarları Türkçe ve İngilizce sözlüklerine eklendi.
-- `src/FDownloader.App/ViewModels/MainViewModel.cs`:
-  - `PreventSleepWhileDownloading` ve `WarnOnExitWithActiveDownloads` ObservableProperty ve ayar kalıcılığı (`SettingKeyPreventSleepWhileDownloading`, `SettingKeyWarnOnExitWithActiveDownloads`) bağlandı.
-  - `UpdateGlobalStats()` döngüsü içinde aktif indirme olduğunda sistemin uykuya geçmesi engellendi, indirmeler durduğunda uyku kilidi kaldırıldı.
-  - `TryRequestAppExit()`, `ConfirmExitApp()`, `MinimizeToTrayFromExitDialog()` ve `CancelExitDialog()` komutları eklendi.
-- `src/FDownloader.App/Views/MainWindow.axaml.cs`:
-  - `OnClosing` pencere kapatma olayı `TryRequestAppExit` ile genişletildi; aktif indirme varken doğrudan çıkış engellendi ve kullanıcıya seçenek sunuldu.
-  - `RequestCloseWindow` ve `RequestHideToTray` olayları pencere işlemlerine bağlandı.
-- `src/FDownloader.App/Views/MainWindow.axaml`:
-  - Ayarlar > Davranış sekmesine "İndirme sürerken bilgisayarın uyku moduna geçmesini engelle" ve "Aktif indirmeler varken uygulamadan çıkışta onay iste" seçenekleri eklendi.
-  - Aktif İndirme Çıkış Onay Modalı (`IsExitConfirmDialogOpen`) eklendi.
+- `docs/KOD_IMZALAMA.md`:
+  - Kod imzalama stratejisi, seçenekler (Azure Trusted Signing, SignPath.io, OV/EV), CI anahtar saklama politikası ve Velopack `vpk pack --signParams` entegrasyonu belgelendi (P7-01).
+- `.github/workflows/release.yml`:
+  - Tag (`v*`) tetikleyicisiyle uçtan uca otomatik dağıtım hattı güncellendi.
+  - Velopack kurulum paketlerinin ardından tüm release dosyalarının SHA-256 hash listesini (`SHA256SUMS.txt`) otomatik üreten adım eklendi (P7-02, P7-03).
+- `docs/YANLIS_POZITIF.md`:
+  - Antivirüs / EDR motorları için Yanlış Pozitif (False Positive) itiraz rehberi ve Türkçe/İngilizce bildirim form şablonları hazırlandı (P7-03).
+- `packaging/winget/manifests/f/FarukErbay/FDownloader/1.5.0/`:
+  - Windows Package Manager (winget) için `FarukErbay.FDownloader.yaml`, `FarukErbay.FDownloader.installer.yaml`, `FarukErbay.FDownloader.locale.tr-TR.yaml` ve `FarukErbay.FDownloader.locale.en-US.yaml` resmi manifestleri oluşturuldu (P7-04).
+- `UpdateService` & `MainViewModel`:
+  - Velopack güncelleme denetimi, indirme ve sessiz yeniden başlatma entegrasyonu doğrulandı; fazladan oluşan kod blokları ve uyku yönetimi temizlendi (P7-05).
 - `docs/ILERLEME.md`:
-  - `P6-07` tamamlandı olarak güncellendi.
+  - Faz 7 tablosu tamamlandı olarak güncellendi.
 - **Doğrulama:**
   - `dotnet build` -> 0 Hata
   - `dotnet test` -> 365/365 test yeşil.
@@ -34,11 +30,11 @@
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** P6-07 tamamlandı. **Faz 6 (Kullanıcı Deneyimi)** tamamen bitti.
-- **Sıradaki Faz:** **Faz 7 — Dağıtım ve Güven**
-  - **P7-01 🧑 Kod imzalama stratejisi ve CI yapılandırması**
-  - **P7-02 🟡 CI/CD sürüm hattı (GitHub Releases, Velopack)**
-  - **P7-03 🟢 Güven artırıcılar (SHA-256 doğrulama hash listesi)**
+- **Tam olarak nerede kaldım:** Faz 7 bitti. Sıradaki faz: **Faz 8 — Hukuk, Belgeler, Topluluk**.
+  - **P8-01 🟡 Lisans ve üçüncü taraf bildirimleri (`THIRD_PARTY_NOTICES.md` ve arayüz)**
+  - **P8-02 🟡 Sorumluluk reddi ve içerik politikası (Telif hakları, DRM yok kararı)**
+  - **P8-03 🟢 Gizlilik politikası ve kullanım koşulları (`docs/GIZLILIK.md`)**
+  - **P8-04 🟡 README ve dokümantasyon (TR & EN README)**
 - **Derleme durumu:** ✅ Başarılı (0 hata)
 - **Test durumu:** 365/365 geçiyor
 
@@ -48,7 +44,7 @@
 
 1. Değişiklikleri commit et:
    ```bash
-   git add src/ tests/ docs/
-   git commit -m "feat(power): P6-07 - Windows uyku engelleme ve cikista aktif indirme onay korumasi (Faz 6 tamamlandi)"
+   git add .github/ docs/ packaging/ src/
+   git commit -m "feat(distribution): Faz 7 - Kod imzalama kilavuzu, winget manifestleri, SHA256SUMS ve release hatti (365 test yesil)"
    ```
-2. **P7-01 / P7-02:** CI/CD sürüm hattı ve Velopack dağıtım yapılandırmasını incelemek/güncellemek.
+2. **P8-01:** `THIRD_PARTY_NOTICES.md` oluşturmak ve tüm açık kaynak kütüphanelerin lisans bildirimlerini derlemek.

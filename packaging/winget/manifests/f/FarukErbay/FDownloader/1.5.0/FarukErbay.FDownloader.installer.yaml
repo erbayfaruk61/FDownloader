@@ -1,0 +1,13 @@
+PackageIdentifier: FarukErbay.FDownloader
+PackageVersion: 1.5.0
+Installers:
+  - Architecture: x64
+    InstallerType: exe
+    InstallerUrl: https://github.com/erbayfaruk61/FDownloader/releases/download/v1.5.0/FDownloader-Setup.exe
+    InstallerSha256: 0000000000000000000000000000000000000000000000000000000000000000 # Release oluştuktan sonra güncellenir
+    InstallerSwitches:
+      Silent: --silent
+      SilentWithProgress: --silent
+ManifestType: installer
+ManifestVersion: 1.6.0
+
