@@ -265,7 +265,23 @@ public sealed class DownloadManager : IAsyncDisposable
     }
 
     /// <summary>
+    /// Verilen URL'e sahip mevcut aktif veya bekleyen bir görev olup olmadığını arar.
+    /// </summary>
+    public DownloadTask? FindDuplicateTask(string url)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return null;
+        var cleanUrl = url.Trim();
+        lock (_lock)
+        {
+            return _tasks.FirstOrDefault(t =>
+                string.Equals(t.OriginalUrl?.Trim(), cleanUrl, StringComparison.OrdinalIgnoreCase) ||
+                (!string.IsNullOrEmpty(t.FinalUrl) && string.Equals(t.FinalUrl.Trim(), cleanUrl, StringComparison.OrdinalIgnoreCase)));
+        }
+    }
+
+    /// <summary>
     /// Yeni bir HTTP/HTTPS indirme görevi ekler ve başlatır.
+    /// allowDuplicate false ise ve aynı URL mevcutsa, var olan görevi döner.
     /// </summary>
     public Task<DownloadTask> AddHttpDownloadAsync(
         string url,
@@ -276,8 +292,19 @@ public sealed class DownloadManager : IAsyncDisposable
         string? referer = null,
         string? cookies = null,
         string? userAgent = null,
-        bool startImmediately = true)
+        bool startImmediately = true,
+        bool allowDuplicate = true)
     {
+        if (!allowDuplicate)
+        {
+            var existing = FindDuplicateTask(url);
+            if (existing != null)
+            {
+                _logger.LogInformation("Tekrar eden URL tespit edildi, mevcut görev döndürülüyor: Task #{Id} ({Url})", existing.Id, url);
+                return System.Threading.Tasks.Task.FromResult(existing);
+            }
+        }
+
         saveDirectory ??= Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
 
         if (category == DownloadCategory.Other)

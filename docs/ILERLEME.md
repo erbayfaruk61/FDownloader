@@ -47,7 +47,7 @@
 | P2-10 | Hız/ETA/ilerleme | 🟡 | ✅ Bitti | — | SpeedCalculator hareketli ortalama, akış durduğunda hızın sıfıra düşmesi, doğru ETA hesaplaması ve 400ms (saniyede 2.5 kez) UI event sınırlaması doğrulandı (172/172 test yeşil) |
 | P2-11 | Kuyruk/limit/zamanlayıcı | 🟡 | ✅ Bitti | — | SpeedLimiter (dinamik hız sınırlama), DownloadScheduler (belirli saatte başla/dur, bitince kapat/uyku), NetworkWatcher (bağlantı kopunca duraklat, gelince sürdür) ve MaxConcurrentDownloads kuyruk öncelik yönetimi tamamlandı (177/177 test yeşil) |
 | P2-12 | Durum makinesi | 🟡 | ✅ Bitti | — | DownloadStateMachine eklendi. Geçersiz durum geçişleri engellendi (Örn: Queued/Paused -> Completed doğrudan geçişi engellendi, 207/207 test yeşil) |
-| P2-13 | Tekrar eden URL/silme | 🟢 | ⬜ Bekliyor | — | |
+| P2-13 | Tekrar eden URL/silme | 🟢 | ✅ Bitti | — | FindDuplicateTask ve allowDuplicate parametresi eklendi. Diskten silme (.fdown, .part, .tmp) ve veritabanından silme ayrımı doğrulandı (211/211 test yeşil) |
 
 ---
 

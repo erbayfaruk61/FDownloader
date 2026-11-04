@@ -2,32 +2,31 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** P2-12 — Görev Durum Makinesi
-**Durum:** ✅ Bitti
+**ID:** P2-13 — Tekrar Eden URL ve Silme Politikası
+**Durum:** ✅ Bitti (Faz 2 Tamamlandı!)
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
-- `src/FDownloader.Core/Domain/DownloadStateMachine.cs`:
-  - `DownloadStateMachine` sınıfı oluşturuldu. `DownloadStatus` yaşam döngüsündeki tüm geçerli ve geçersiz durum geçişleri (Queued, Connecting, Downloading, Paused, Merging, Verifying, Retrying, Failed, Completed, Cancelled) kurallara bağlandı.
-- `src/FDownloader.Core/Domain/DownloadTask.cs`:
-  - `Status` property'sine durum makinesi doğrulaması (`DownloadStateMachine.ValidateTransition`) entegre edildi. Geçersiz durumlara geçilmek istendiğinde `InvalidOperationException` fırlatılıyor.
-  - Veritabanı okuma veya ham atamalar için `SetStatusDirect` metodu eklendi.
-- `tests/FDownloader.Core.Tests/DownloadStateMachineTests.cs`:
-  - Kapsamlı teori ve birim testleri (30 test) yazıldı. Hem izin verilen döngüler hem de geçersiz geçişlerin (ör. Queued -> Completed, Paused -> Completed) engellendiği doğrulandı.
-- Toplam test sayısı 177'den **207'ye** yükseldi. **207/207 test yeşil**.
+- `src/FDownloader.Core/Manager/DownloadManager.cs`:
+  - `FindDuplicateTask(url)` metodu eklendi. Orijinal veya nihai URL üzerinden eşleşen mevcut görevlerin tespiti sağlandı.
+  - `AddHttpDownloadAsync` metoduna `allowDuplicate` (varsayılan true) parametresi eklendi. Tekrar eklenmek istendiğinde ve izin verilmediğinde var olan görev döndürülerek çift indirme engellendi.
+  - `RemoveTaskAsync(taskId, deleteFile)` mantığı doğrulandı: Görev veritabanından ve aktif kuyruktan silinirken `deleteFile: false` durumunda indirilen dosyalar korunuyor, `deleteFile: true` durumunda hedef dosya ve tüm geçici dosyalar (`.fdown`, `.part`, `.tmp`) güvenli şekilde temizleniyor.
+- `tests/FDownloader.Core.Tests/DuplicateAndDeletionTests.cs`:
+  - 4 yeni birim testi yazıldı: duplicate engelleme, duplicate izin verme, disk dosyalarını koruyarak silme ve disk dosyalarını tamamen temizleyerek silme senaryoları doğrulandı.
+- Toplam test sayısı 207'den **211'e** yükseldi. **211/211 test yeşil**.
 
 ---
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** P2-12 başarıyla tamamlandı ve test edildi.
-- **Sıradaki Görev:** **P2-13 — Tekrar Eden URL ve Silme Politikası**.
-  - Aynı URL tekrar eklendiğinde tespit etme / mevcut göreve yönlendirme politikası.
-  - Diskten dosya silme / veritabanından silme ayrımı (`RemoveTaskAsync(taskId, deleteFile)`).
+- **Tam olarak nerede kaldım:** **FAZ 2 (İndirme Motorunu Sağlamlaştırma) EKSİKSİZ TAMAMLANDI!** (P2-01'den P2-13'e kadar tüm görevler bitti).
+- **Sıradaki Görev:** **Faz 3 — Güvenlik Sertleştirme**.
+  - P3-01 (Eklenti köprüsü güvenliği) ve P3-03 (Dış süreç güvenliği) önceden tamamlanmıştı.
+  - Sıradaki güvenlik görevi: **P3-02 — Arşiv Çıkarma Güvenliği (Zip Slip / Zip Bomb koruması)** (`ArchiveExtractorService.cs`).
 - **Derleme durumu:** ✅ Başarılı (0 hata)
-- **Test durumu:** 207/207 geçiyor
+- **Test durumu:** 211/211 geçiyor
 
 ---
 
@@ -36,9 +35,9 @@
 1. Değişiklikleri commit et:
    ```
    git add src/ tests/ docs/
-   git commit -m "feat(engine): P2-12 - Gorev durum makinesi ve gecersiz gecis engelleme"
+   git commit -m "feat(engine): P2-13 - Tekrar eden URL kontrolu ve diskten silme politikalari (Faz 2 tamamlandi)"
    ```
-2. **P2-13:** Tekrar eden URL kontrolü ve diskten/veritabanından güvenli silme politikalarını uygula ve test et.
+2. **P3-02:** `ArchiveExtractorService.cs` Zip Slip path traversal ve Zip Bomb (sıkıştırma oranı / aşırı açılma boyutu) güvenlik kontrolleri ve testlerini uygula.
 
 ---
 
