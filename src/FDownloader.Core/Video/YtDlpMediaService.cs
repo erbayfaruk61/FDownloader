@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using FDownloader.Core.Domain;
+using FDownloader.Core.Engine.Exceptions;
 using FDownloader.Core.Events;
 using Microsoft.Extensions.Logging;
 
@@ -633,7 +634,10 @@ public sealed class YtDlpMediaService
                     return;
                 }
                 var err = await proc.StandardError.ReadToEndAsync(cancellationToken);
-                _eventBus.Publish(new TaskFailedEvent(taskId, $"yt-dlp hata kodu: {proc.ExitCode}. {err}", false));
+                var userMessage = DownloadErrorClassifier.IsDrmProtectedMessage(err)
+                    ? "Bu içerik DRM (Dijital Hak Yönetimi) ile korunmaktadır ve indirilemez."
+                    : $"yt-dlp hata kodu: {proc.ExitCode}. {err}";
+                _eventBus.Publish(new TaskFailedEvent(taskId, userMessage, false));
             }
         }
         catch (OperationCanceledException)

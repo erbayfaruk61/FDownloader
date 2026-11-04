@@ -10,7 +10,8 @@ public enum DownloadErrorKind
     PermanentNotFound,    // 404, 410 -> Yeniden deneme, direkt başarısız
     PermanentAuth,        // 401, 403 -> Kimlik hatası, süresi dolmuş URL
     DiskFullOrPermission, // Disk dolu veya erişim engeli -> Duraklat
-    RangeNotSupported     // 416 veya beklenmeyen 200 -> Range desteklenmiyor
+    RangeNotSupported,    // 416 veya beklenmeyen 200 -> Range desteklenmiyor
+    DrmProtected          // DRM / Dijital Hak Yönetimi ile şifrelenmiş içerik -> İndirme denenmez
 }
 
 public sealed class DownloadException : Exception
@@ -106,9 +107,27 @@ public static class DownloadErrorClassifier
         }
     }
 
+    public static bool IsDrmProtectedMessage(string? message)
+    {
+        if (string.IsNullOrWhiteSpace(message)) return false;
+        return message.Contains("DRM", StringComparison.OrdinalIgnoreCase) ||
+               message.Contains("Widevine", StringComparison.OrdinalIgnoreCase) ||
+               message.Contains("PlayReady", StringComparison.OrdinalIgnoreCase) ||
+               message.Contains("FairPlay", StringComparison.OrdinalIgnoreCase) ||
+               (message.Contains("protected", StringComparison.OrdinalIgnoreCase) && message.Contains("stream", StringComparison.OrdinalIgnoreCase));
+    }
+
     public static DownloadException ClassifyException(Exception ex)
     {
         if (ex is DownloadException de) return de;
+
+        if (IsDrmProtectedMessage(ex.Message))
+        {
+            return new DownloadException(
+                DownloadErrorKind.DrmProtected,
+                "Bu içerik DRM (Dijital Hak Yönetimi) ile korunmaktadır ve indirilemez.",
+                inner: ex);
+        }
 
         if (ex is UnauthorizedAccessException)
         {

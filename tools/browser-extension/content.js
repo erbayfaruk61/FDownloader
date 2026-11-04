@@ -297,7 +297,32 @@
     } catch (err) { }
   }
 
+  function isVideoDrmProtected(video) {
+    if (!video) return false;
+    if (video._fdownloader_has_drm === true) return true;
+    if (video.mediaKeys != null) return true;
+    return false;
+  }
+
+  function findManifestUrlInPage() {
+    try {
+      const resources = performance.getEntriesByType("resource");
+      for (let i = resources.length - 1; i >= 0; i--) {
+        const name = resources[i].name || "";
+        const cleanUrl = name.split(/[?#]/)[0].toLowerCase();
+        if (cleanUrl.endsWith(".m3u8") || cleanUrl.endsWith(".mpd")) {
+          return name;
+        }
+      }
+    } catch (e) { }
+    return null;
+  }
+
   function resolveVideoTarget(video) {
+    if (isVideoDrmProtected(video)) {
+      return { isDrm: true, url: null, filename: null };
+    }
+
     const isYouTube = window.location.hostname.includes("youtube.com") || window.location.hostname.includes("youtu.be");
     if (isYouTube) {
       return {
@@ -314,11 +339,42 @@
         candidateName = u.pathname.split("/").pop() || "";
       } catch (e) { }
 
+      const cleanLower = src.split(/[?#]/)[0].toLowerCase();
+      const isStream = cleanLower.endsWith(".m3u8") || cleanLower.endsWith(".mpd");
+      const ext = isStream ? ".mp4" : "";
+
       return {
         url: src,
-        filename: candidateName || (document.title ? document.title.trim() + ".mp4" : "Video.mp4")
+        filename: candidateName || (document.title ? document.title.trim() + (ext || ".mp4") : "Video" + (ext || ".mp4")),
+        isStream: isStream
       };
     }
+
+    // Blob tabanlı akış ise sayfada yüklenen HLS (.m3u8) veya DASH (.mpd) manifestini bul
+    if (src.startsWith("blob:")) {
+      const manifestUrl = findManifestUrlInPage();
+      if (manifestUrl) {
+        return {
+          url: manifestUrl,
+          filename: document.title ? document.title.trim() + ".mp4" : "Stream.mp4",
+          isStream: true
+        };
+      }
+    }
+
+    // <source> çocuklarını kontrol et
+    try {
+      const sources = video.querySelectorAll("source");
+      for (const s of sources) {
+        const sSrc = s.src || "";
+        if (sSrc && !sSrc.startsWith("blob:") && !sSrc.startsWith("data:")) {
+          return {
+            url: sSrc,
+            filename: document.title ? document.title.trim() + ".mp4" : "Video.mp4"
+          };
+        }
+      }
+    } catch (e) { }
 
     return {
       url: window.location.href,
@@ -333,6 +389,14 @@
     if (!isExtensionValid() || !currentActiveVideo || !buttonEl) return;
 
     const target = resolveVideoTarget(currentActiveVideo);
+    if (target.isDrm) {
+      const label = buttonEl.querySelector(".fdown-label");
+      if (label) label.textContent = "🔒 Korumalı İçerik (DRM İndirilemez)";
+      setTimeout(() => {
+        if (label) label.textContent = "Bu Videoyu İndir";
+      }, 3000);
+      return;
+    }
     if (!target.url) return;
 
     const label = buttonEl.querySelector(".fdown-label");
@@ -478,6 +542,9 @@
     if (!video || video._fdownloader_attached) return;
     video._fdownloader_attached = true;
 
+    video.addEventListener("encrypted", () => {
+      video._fdownloader_has_drm = true;
+    });
     video.addEventListener("mouseenter", () => onVideoMouseMove(video));
     video.addEventListener("mousemove", () => onVideoMouseMove(video));
     video.addEventListener("mouseleave", () => onVideoMouseLeave());

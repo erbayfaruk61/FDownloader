@@ -73,7 +73,7 @@
 |---|---|---|---|---|---|
 | P4-01 | Eklenti denetimi ve temizliği | 🟡 | ✅ Bitti | — | Manifest V3 izinleri asgariye indirildi (scripting ve polling heartbeat kaldırıldı), docs/EKLENTI.md ve docs/GIZLILIK.md hazırlandı |
 | P4-02 | Yakalama doğruluğu | 🔴 | ✅ Bitti | — | Tarayıcı indirmesini iptal edip uygulamaya devretme, Alt tuşu ile atlama, hariç tutulan siteler/minimum boyut kuralları, uygulama kapalıyken normal devam (265/265 test yeşil) |
-| P4-03 | Medya algılama | 🟡 | ⬜ Bekliyor | — | Doğrudan video, HLS/DASH algılama ve DRM korumalı içerik uyarısı |
+| P4-03 | Medya algılama | 🟡 | ✅ Bitti | — | Doğrudan video, HLS/DASH manifest tespiti, DRM koruma tespiti ve engellemesi, KARARLAR.md belgelendi (271/271 test yeşil) |
 | P4-04 | Firefox desteği | 🟡 | ⬜ Bekliyor | — | Firefox uyarlaması, webextension polyfill/manifest |
 | P4-05 | Eklenti paketleme otomasyonu | 🟢 | ⬜ Bekliyor | — | CI üzerinden otomatik eklenti ZIP üretimi |
 | P4-06 | Mağaza yayını hazırlığı | 🧑 | ⬜ Bekliyor | — | Mağaza tanıtım metinleri, ekran görüntüleri ve form taslakları |

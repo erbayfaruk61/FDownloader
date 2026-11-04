@@ -80,4 +80,21 @@ Bu belge, FDownloader indirme motoru ve disk/dosya sistemi için hem otomatik he
   2. 200 KB boyutunda bir PDF veya küçük zip indirin.
   3. Dosyanın doğrudan tarayıcı tarafından indirildiğini doğrulayın.
 
+### 2.6 HLS / DASH Akış Tespiti (P4-03)
+- **Amaç:** Sayfada oynatılan `.m3u8` (HLS) veya `.mpd` (DASH) akış manifestlerinin sayfa kaynaklarından ve `<video>` etiketlerinden otomatik algılanması.
+- **Otomatik Test:** `ErrorClassificationTests` ve `content.js:resolveVideoTarget`.
+- **Elle Test:**
+  1. HLS akışı oynatan bir video sayfasına gidin (örn. test HLS player).
+  2. Video üzerine fareyi getirin; FDownloader video yakalama butonunun belirdiğini doğrulayın.
+  3. Butona tıklandığında stream URL'sinin (`.m3u8` / `.mpd`) FDownloader'a aktarıldığını doğrulayın.
+
+### 2.7 DRM Korumalı İçerik Tespiti ve Engellemesi (P4-03)
+- **Amaç:** DRM (Widevine, PlayReady, FairPlay) ile şifrelenmiş içeriklerde indirme başlatılmaması; kullanıcının anlaşılır şekilde uyarılması.
+- **Otomatik Test:** `ClassifyException_DrmProtectedMessage_ReturnsDrmProtectedKind`, `IsDrmProtectedMessage_IdentifiesDrmSignaturesCorrectly`.
+- **Elle Test:**
+  1. DRM korumalı bir video oynatıcı sayfasına girin (örn. Shaka Player DRM test sayfası).
+  2. `<video>` üzerinde DRM algılandığında eklenti butonunun `🔒 Korumalı İçerik (DRM İndirilemez)` uyarısına geçtiğini doğrulayın.
+  3. Butona tıklandığında indirme isteği atılmadığını, koruma uyarısı verildiğini doğrulayın.
+
+
 

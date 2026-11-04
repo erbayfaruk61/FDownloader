@@ -186,5 +186,28 @@ public sealed class ErrorClassificationTests : IDisposable
         Assert.Equal(DownloadErrorKind.Transient, ex.Kind);
         Assert.True(segment.RetryCount >= 1); // En az 1 kez yeniden denemiş olmalı!
     }
+
+    [Fact]
+    public void ClassifyException_DrmProtectedMessage_ReturnsDrmProtectedKind()
+    {
+        var drmEx = new Exception("ERROR: This video is DRM protected and cannot be downloaded (Widevine L3)");
+        var classified = DownloadErrorClassifier.ClassifyException(drmEx);
+
+        Assert.Equal(DownloadErrorKind.DrmProtected, classified.Kind);
+        Assert.Contains("DRM", classified.Message);
+        Assert.Contains("indirilemez", classified.Message);
+    }
+
+    [Theory]
+    [InlineData("DRM protected stream detected", true)]
+    [InlineData("Widevine license request failed", true)]
+    [InlineData("PlayReady encrypted content", true)]
+    [InlineData("FairPlay streaming error", true)]
+    [InlineData("Standard HTTP 500 error", false)]
+    public void IsDrmProtectedMessage_IdentifiesDrmSignaturesCorrectly(string errorMessage, bool expectedIsDrm)
+    {
+        var result = DownloadErrorClassifier.IsDrmProtectedMessage(errorMessage);
+        Assert.Equal(expectedIsDrm, result);
+    }
 }
 
