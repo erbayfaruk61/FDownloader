@@ -571,18 +571,33 @@ public sealed class TorrentService : IAsyncDisposable
 
         try
         {
-            if (newSequentialState)
+            var previousState = manager.State;
+            var wasRunning = previousState is TorrentState.Starting or TorrentState.Downloading or TorrentState.Seeding or TorrentState.Metadata;
+
+            if (manager.State != TorrentState.Stopped)
             {
-                await manager.ChangePickerAsync(new StreamingPieceRequester());
-                _sequentialTasks[taskId] = true;
-                _logger.LogInformation("Torrent #{TaskId} için sıralı indirme (Streaming/Sequential) etkinleştirildi.", taskId);
+                await manager.StopAsync(TimeSpan.FromSeconds(3));
+                var waitCount = 0;
+                while (manager.State != TorrentState.Stopped && waitCount < 20)
+                {
+                    await Task.Delay(50);
+                    waitCount++;
+                }
             }
-            else
+
+            IPieceRequester requester = newSequentialState
+                ? new StreamingPieceRequester()
+                : new StandardPieceRequester(new PieceRequesterSettings());
+
+            await manager.ChangePickerAsync(requester);
+            _sequentialTasks[taskId] = newSequentialState;
+
+            if (wasRunning)
             {
-                await manager.ChangePickerAsync(new StandardPieceRequester(new PieceRequesterSettings()));
-                _sequentialTasks[taskId] = false;
-                _logger.LogInformation("Torrent #{TaskId} için standart indirme moduna dönüldü.", taskId);
+                await manager.StartAsync();
             }
+
+            _logger.LogInformation("Torrent #{TaskId} için sıralı indirme (Streaming/Sequential): {State}", taskId, newSequentialState);
             return newSequentialState;
         }
         catch (Exception ex)

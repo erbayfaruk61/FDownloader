@@ -2,34 +2,45 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** P5-02 — HLS/DASH ve Birleştirme (Faz 5 — Medya, Torrent ve Ek Özellikler)  
+**ID:** P5-03 — Torrent Sağlamlığı (Faz 5 — Medya, Torrent ve Ek Özellikler)  
 **Durum:** ✅ Bitti
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
-- `src/FDownloader.Core/Video/HlsStreamDownloader.cs`:
-  - `HlsStreamDownloader` geliştirildi.
-  - `IsHlsUrl`: `.m3u8` URL'lerini sorgu parametreleriyle birlikte tanıma.
-  - `ParsePlaylistAsync`: Master ve media playlist ayrıştırma, bağıl URL'leri mutlak adrese çevirme, `#EXT-X-KEY` (SAMPLE-AES, Widevine vb.) DRM koruma tespiti ve erken durdurma.
-  - `DownloadHlsAsync`: Parçaları `SemaphoreSlim` ile eşzamanlı/paralel indirme, `ProgressUpdatedEvent` ile canlı ilerleme yayını, sıralı ikili MPEG-TS birleştirme ve ffmpeg mevcutsa kayıpsız MP4 konteynerine dönüştürme (`-c copy`).
+- `src/FDownloader.Core/Torrent/TorrentService.cs`:
+  - `ToggleSequentialDownloadAsync`: MonoTorrent kütüphanesinin gerektirdiği şekilde çalışan/başlatılan motorlarda önce güvenli `StopAsync(timeout)` beklemesi yapıp ardından `ChangePickerAsync` (StreamingPieceRequester / StandardPieceRequester) geçişi ve eski duruma göre `StartAsync()` akışı uygulandı.
 - `tests/FDownloader.Core.Tests/MockServer/TestHttpServer.cs`:
-  - `/hls/master.m3u8`, `/hls/stream.m3u8`, `/hls/drm.m3u8` ve parça uç noktaları (`/hls/seg0.ts`, `seg1.ts`, `seg2.ts`) eklendi.
-- `tests/FDownloader.Core.Tests/HlsStreamDownloaderTests.cs`:
-  - 6 adet uçtan uca test eklendi (HLS URL tespiti, master/media playlist çözümleme, DRM koruma istisnası, paralel indirme ve sıralı bütünlük doğrulaması, iptal temizliği).
-  - Test sayısı 301'den **312'ye** yükseldi. **312/312 test yeşil**.
+  - `CustomHandlers` mekanizması eklenerek testler sırasında dinamik endpoint ve uzak `.torrent` servis edebilme desteği sağlandı.
+- `tests/FDownloader.Core.Tests/TorrentServiceTests.cs`:
+  - 12 adet kapsamlı test eklendi:
+    - Motor ayarları dinamik güncelleme (`ApplySettingsAsync`),
+    - Yerel `.torrent` dosyasından meta verileri ve dosya listesini okuma (`InspectTorrentFilesAsync`),
+    - Uzak HTTP `.torrent` dosyasını indirip inceleme,
+    - Geçersiz kaynaklarda `ArgumentException` fırlatma,
+    - Yerel torrent başlatma ve `TorrentMetadataLoadedEvent` / `TaskStartedEvent` olay yayını,
+    - Dosya önceliklendirme ve seçimi (`Priority.High`, `Priority.DoNotDownload`, `Priority.Normal`, `SetAllFilesPriorityAsync`),
+    - Sıralı indirme (Streaming/Sequential) açıp kapatma ve parça picker geçişleri (`ToggleSequentialDownloadAsync`, `IsSequentialDownload`),
+    - Özel izleyici ekleme (`AddTrackersAsync`) ve duyuru tetikleme (`ForceReannounceAsync`),
+    - Diskten yeniden hash kontrolü (`ForceRecheckAsync`),
+    - Torrent yaşam döngüsü (Pause, Resume, Remove with file deletion),
+    - Magnet link ekleme ve otomatik fallback izleyiciler (`DefaultFallbackTrackers`) ile zenginleştirme,
+    - Uygulama yeniden başladığında torrent görevlerini geri yükleme (`RestoreTorrentTaskAsync`).
+  - Test sayısı 312'den **324'e** yükseldi. **324/324 test yeşil**.
 - `docs/TEST_SENARYOLARI.md`:
-  - Senaryo 3.4 (HLS paralel indirme ve birleştirme) ve Senaryo 3.5 (HLS DRM koruması) eklendi.
+  - Senaryo 4 (Torrent ve Eş Paylaşım: Dosya Seçimi, Sıralı İndirme, Yaşam Döngüsü ve Magnet/İzleyiciler) eklendi.
+- `docs/ILERLEME.md`:
+  - `P5-03` tamamlandı olarak işaretlendi.
 
 ---
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** P5-02 bitti. Sıradaki görev: **P5-03 — Torrent Sağlamlığı**.
-  - Magnet ve `.torrent` desteği, dosya seçimi ve önceliklendirme, sıralı indirme (sequential download), hash kontrolü ve seed kuralları.
+- **Tam olarak nerede kaldım:** P5-03 bitti. Sıradaki görev: **P5-04 — Site/Galeri Yakalayıcı**.
+  - Derinlik sınırı, alan adı kısıtı, robots.txt ve rate limit nezaketi, tür/boyut filtreleme ve önizleme.
 - **Derleme durumu:** ✅ Başarılı (0 hata)
-- **Test durumu:** 312/312 geçiyor
+- **Test durumu:** 324/324 geçiyor
 
 ---
 
@@ -38,6 +49,6 @@
 1. Değişiklikleri commit et:
    ```bash
    git add src/ tests/ docs/
-   git commit -m "feat(media): P5-02 - HLS/m3u8 paralel indirme, siralı birlestirme ve DRM algilama (312 test yesil)"
+   git commit -m "feat(torrent): P5-03 - Torrent dosya secimi, sirali indirme, hash kontrolu ve yasam dongusu (324 test yesil)"
    ```
-2. **P5-03:** Torrent sağlamlığı (dosya seçimi, sıralı parça önceliği, seed kotası/oranı ve yeniden hash kontrolü).
+2. **P5-04:** Site/galeri yakalayıcı (`SiteGrabberService`) geliştirme ve testleri.

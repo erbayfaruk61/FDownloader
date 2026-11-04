@@ -138,7 +138,38 @@ Bu belge, FDownloader indirme motoru ve disk/dosya sistemi için hem otomatik he
 - **Elle Test:**
   1. Korumalı bir HLS akış URL'si girildiğinde uygulamanın `Bu HLS akışı DRM ile şifrelenmiştir ve indirilemez.` uyarısı verdiğini doğrulayın.
 
+---
 
+## 4. Torrent ve Eş Paylaşım Senaryoları (P5-03)
 
+### 4.1 Dosya Önizleme ve Seçimi (File Selection & Priorities)
+- **Amaç:** Çok dosyalı bir torrent indirilmeden önce içindeki dosyaların listelenmesi, istenmeyen dosyaların (`DoNotDownload`) devre dışı bırakılması veya önceliklerinin (`High`, `Normal`) ayarlanabilmesi.
+- **Otomatik Test:** `TorrentServiceTests.InspectTorrentFilesAsync_FromLocalFile_ReturnsFileListCorrectly`, `TorrentServiceTests.FilePriorityManagement_AllowsSelectingAndIgnoringSpecificFiles`, `TorrentServiceTests.InspectTorrentFilesAsync_WithRemoteHttpTorrent_DownloadsAndListsFiles`.
+- **Elle Test:**
+  1. Çoklu dosya içeren bir `.torrent` dosyası veya magnet linki ekleyin.
+  2. Dosya listesi ekranında bazı dosyaların işaretini kaldırın (`İndirme`), bir dosyayı ise `Yüksek Öncelik` yapın.
+  3. İndirme bittiğinde işareti kaldırılan dosyaların diskte oluşturulmadığını veya indirilmediğini doğrulayın.
 
+### 4.2 Sıralı İndirme (Sequential / Streaming Download)
+- **Amaç:** Video dosyalarının parçalarının baştan sona sıralı indirilerek indirme bitmeden medya oynatıcıda (VLC vb.) izlenebilmesi.
+- **Otomatik Test:** `TorrentServiceTests.ToggleSequentialDownloadAsync_TogglesSequentialStreamingState`.
+- **Elle Test:**
+  1. Büyük bir video torrent'i indirmesi başlatın.
+  2. Görev üzerinde "Sıralı İndirme" (Streaming) seçeneğini aktif edin.
+  3. Parça haritasında parçaların baştan sona doğru sıra takip ederek indiğini ve ilk %5 indikten sonra dosyanın medya oynatıcıda açılıp izlenebildiğini doğrulayın.
 
+### 4.3 Görev Yaşam Döngüsü ve Yeniden Başlatma (Lifecycle & FastResume)
+- **Amaç:** Torrent görevlerinin duraklatılması, devam ettirilmesi, uygulama kapatılıp açıldığında kaldığı yerden devam etmesi (`RestoreTorrentTaskAsync`) ve diskten zorla yeniden doğrulanması (`ForceRecheckAsync`).
+- **Otomatik Test:** `TorrentServiceTests.PauseResumeAndRemoveLifecycle_TransitionsEventsProperly`, `TorrentServiceTests.RestoreTorrentTaskAsync_WhenCalled_RestoresManagerWithoutStartingUnlessRequested`, `TorrentServiceTests.ForceRecheckAsync_InitiatesHashCheckSuccessfully`.
+- **Elle Test:**
+  1. Aktif bir torrent indirmesi sırasında uygulamayı tamamen kapatın.
+  2. Uygulamayı yeniden açın.
+  3. Görevin diskteki dosyaları baştan indirmek yerine kaldığı yüzdeyi koruyarak sorunsuz devam ettiğini doğrulayın.
+  4. Sağ tıklayıp "Zorla Yeniden Doğrula" seçtiğinizde hash kontrolü yapıldığını gözlemleyin.
+
+### 4.4 Magnet Link ve Fallback İzleyiciler (Fallback Trackers & DHT)
+- **Amaç:** Tracker içermeyen magnet linklerine yüksek hızlı eş bulma amacıyla varsayılan açık izleyicilerin (`DefaultFallbackTrackers`) otomatik eklenmesi ve motorun DHT/UPnP yapılandırması.
+- **Otomatik Test:** `TorrentServiceTests.AddAndStartTorrentAsync_WithMagnetLink_EnrichesWithFallbackTrackers`, `TorrentServiceTests.AddTrackersAsync_And_ForceReannounce_AddCustomTrackers`.
+- **Elle Test:**
+  1. Yasal bir dağıtım magnet linki ekleyin (ör. Ubuntu ISO magnet linki).
+  2. FDownloader'ın izleyici listesine otomatik olarak açık tracker havuzunu eklediğini ve eşlerle bağlantı kurduğunu doğrulayın.

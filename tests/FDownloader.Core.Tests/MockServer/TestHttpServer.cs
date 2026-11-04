@@ -31,6 +31,7 @@ public sealed class TestHttpServer : IDisposable
     public string DynamicEtag { get; set; } = "\"v1\"";
     public string DynamicContent { get; set; } = "Content Version 1";
     public int AbortRemainingCount { get; set; } = int.MaxValue;
+    public Dictionary<string, Func<HttpListenerRequest, HttpListenerResponse, Task>> CustomHandlers { get; } = new();
 
     public TestHttpServer(int port = 0)
     {
@@ -76,6 +77,13 @@ public sealed class TestHttpServer : IDisposable
 
         try
         {
+            if (CustomHandlers.TryGetValue(path, out var customHandler))
+            {
+                await customHandler(req, res);
+                res.Close();
+                return;
+            }
+
             switch (path)
             {
                 // 1. Normal dosya (Range destekli, 206)
