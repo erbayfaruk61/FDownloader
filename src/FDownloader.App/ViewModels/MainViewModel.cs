@@ -4591,6 +4591,218 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
     }
 
+    /// <summary>
+    /// Tüm ayarları fabrika varsayılanlarına sıfırlar.
+    /// </summary>
+    [RelayCommand]
+    public void ResetSettingsToDefaults()
+    {
+        _downloadManager.ClearAllSettings();
+
+        // Varsayılan değerleri yeniden yükle
+        var defaultDownloads = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+        SettingsDefaultSaveDirectory = defaultDownloads;
+        AddDialogSavePath = defaultDownloads;
+        SettingsMaxConcurrentDownloads = 4;
+        SettingsDefaultSegments = 8;
+        _downloadManager.MaxConcurrentDownloads = 4;
+
+        GlobalDownloadLimitKiB = 0;
+        GlobalUploadLimitKiB = 0;
+        AltDownloadLimitKiB = 0;
+        AltUploadLimitKiB = 0;
+        IsAltRateLimitActive = false;
+
+        AutoExtractArchives = false;
+        ExtractArchivesToSubfolder = true;
+        DeleteArchiveAfterExtract = false;
+        EnableSuggestions = true;
+        IsSuggestionBannerVisible = true;
+
+        StartWithWindows = false;
+        StartMinimizedToTray = false;
+        MinimizeToTrayOnClose = true;
+        ShowTrayIcon = true;
+
+        if (OperatingSystem.IsWindows())
+        {
+            try { Services.WindowsStartupService.ConfigureStartup(false, false); } catch { }
+        }
+
+        SetThemeMode(AppThemeMode.OceanBlue);
+        _savedThemeMode = AppThemeMode.OceanBlue;
+        ApplyThemeMode(AppThemeMode.OceanBlue);
+
+        SetCompletionSound(CompletionSound.Notify);
+        SetProgressBarStyle(ProgressBarStyleKey.Klasik);
+
+        // Dil varsayılanı: Sistem dili
+        var sysLang = FDownloader.Core.Localization.LocalizationService.DetectSystemLanguage();
+        SetAppLanguage(sysLang);
+
+        // BitTorrent varsayılanları
+        TorrentListeningPort = 55123;
+        TorrentEnableUpnp = true;
+        TorrentEnableDht = true;
+        TorrentEnablePex = true;
+        TorrentEnableLsd = true;
+        TorrentEncryptionMode = 0;
+        TorrentMaxConnectionsTotal = 200;
+        TorrentMaxConnectionsPerTorrent = 50;
+        TorrentEnableAutoSequential = true;
+        TorrentSeedRatioLimit = 1.0;
+        TorrentStopSeedingWhenRatioReached = false;
+
+        // Proxy varsayılanı: Sistem proxy'si
+        _downloadManager.SaveProxyConfig(new FDownloader.Core.Network.ProxyConfig { Mode = FDownloader.Core.Network.ProxyMode.System });
+
+        UpdateLimitDisplays();
+        UpdateDiskSpace();
+
+        ShowNotification(
+            Loc["Settings.ResetConfirmTitle"],
+            "Tüm ayarlar fabrika varsayılanlarına başarıyla sıfırlandı.",
+            null,
+            "🔄",
+            CompletionSound.Notify);
+    }
+
+    /// <summary>
+    /// Kayıtlı ayarları bir JSON dosyasına dışa aktarır.
+    /// </summary>
+    [RelayCommand]
+    public async Task ExportSettings()
+    {
+        if (RequestSaveSettingsFile == null) return;
+
+        try
+        {
+            var filePath = await RequestSaveSettingsFile();
+            if (string.IsNullOrWhiteSpace(filePath)) return;
+
+            var settingsDict = _downloadManager.GetAllSettings();
+            var json = System.Text.Json.JsonSerializer.Serialize(settingsDict, new System.Text.Json.JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+
+            await File.WriteAllTextAsync(filePath, json, System.Text.Encoding.UTF8);
+
+            ShowNotification(
+                Loc["Common.Settings"],
+                $"{Loc["Settings.ExportSuccess"]} ({Path.GetFileName(filePath)})",
+                filePath,
+                "📤",
+                CompletionSound.Notify);
+        }
+        catch (Exception ex)
+        {
+            ShowNotification("Hata", $"Ayarlar dışa aktarılamadı: {ex.Message}", null, "⚠️", CompletionSound.Notify);
+        }
+    }
+
+    /// <summary>
+    /// Önceden yedeklenmiş bir JSON ayar dosyasını içe aktarır ve uygular.
+    /// </summary>
+    [RelayCommand]
+    public async Task ImportSettings()
+    {
+        if (RequestOpenSettingsFile == null) return;
+
+        try
+        {
+            var filePath = await RequestOpenSettingsFile();
+            if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath)) return;
+
+            var json = await File.ReadAllTextAsync(filePath, System.Text.Encoding.UTF8);
+            var settingsDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+
+            if (settingsDict == null || settingsDict.Count == 0)
+            {
+                ShowNotification("Hata", Loc["Settings.ImportFailed"], null, "⚠️", CompletionSound.Notify);
+                return;
+            }
+
+            _downloadManager.ImportSettings(settingsDict);
+
+            // Ayarları UI değişkenlerine yeniden yükle
+            if (settingsDict.TryGetValue(SettingKeyLanguage, out var lang))
+            {
+                SetAppLanguage(lang);
+            }
+
+            if (settingsDict.TryGetValue(SettingKeyDefaultSaveDirectory, out var dir) && Directory.Exists(dir))
+            {
+                SettingsDefaultSaveDirectory = dir;
+                AddDialogSavePath = dir;
+            }
+
+            if (settingsDict.TryGetValue(SettingKeyThemeMode, out var themeStr) &&
+                int.TryParse(themeStr, out var themeInt) && Enum.IsDefined(typeof(AppThemeMode), themeInt))
+            {
+                SetThemeMode((AppThemeMode)themeInt);
+                _savedThemeMode = (AppThemeMode)themeInt;
+                ApplyThemeMode((AppThemeMode)themeInt);
+            }
+
+            if (settingsDict.TryGetValue(SettingKeyCompletionSound, out var soundStr) &&
+                int.TryParse(soundStr, out var soundInt) && Enum.IsDefined(typeof(CompletionSound), soundInt))
+            {
+                SetCompletionSound((CompletionSound)soundInt);
+            }
+
+            if (settingsDict.TryGetValue(SettingKeyProgressBarStyle, out var styleStr) &&
+                int.TryParse(styleStr, out var styleInt) && Enum.IsDefined(typeof(ProgressBarStyleKey), styleInt))
+            {
+                SetProgressBarStyle((ProgressBarStyleKey)styleInt);
+            }
+
+            if (settingsDict.TryGetValue(SettingKeyAutoExtractArchives, out var autoExt) && bool.TryParse(autoExt, out var bAutoExt))
+                AutoExtractArchives = bAutoExt;
+
+            if (settingsDict.TryGetValue(SettingKeyExtractArchivesToSubfolder, out var subf) && bool.TryParse(subf, out var bSubf))
+                ExtractArchivesToSubfolder = bSubf;
+
+            if (settingsDict.TryGetValue(SettingKeyDeleteArchiveAfterExtract, out var delArch) && bool.TryParse(delArch, out var bDelArch))
+                DeleteArchiveAfterExtract = bDelArch;
+
+            if (settingsDict.TryGetValue(SettingKeyShowSuggestions, out var showSug) && bool.TryParse(showSug, out var bShowSug))
+            {
+                EnableSuggestions = bShowSug;
+                IsSuggestionBannerVisible = bShowSug;
+            }
+
+            if (settingsDict.TryGetValue(SettingKeyGlobalDownloadLimitKiB, out var gdl) && int.TryParse(gdl, out var igdl))
+                GlobalDownloadLimitKiB = igdl;
+
+            if (settingsDict.TryGetValue(SettingKeyGlobalUploadLimitKiB, out var gul) && int.TryParse(gul, out var igul))
+                GlobalUploadLimitKiB = igul;
+
+            if (settingsDict.TryGetValue(SettingKeyAltDownloadLimitKiB, out var adl) && int.TryParse(adl, out var iadl))
+                AltDownloadLimitKiB = iadl;
+
+            if (settingsDict.TryGetValue(SettingKeyAltUploadLimitKiB, out var aul) && int.TryParse(aul, out var iaul))
+                AltUploadLimitKiB = iaul;
+
+            if (settingsDict.TryGetValue(SettingKeyIsAltRateLimitActive, out var arl) && bool.TryParse(arl, out var bArl))
+                IsAltRateLimitActive = bArl;
+
+            UpdateLimitDisplays();
+            UpdateDiskSpace();
+
+            ShowNotification(
+                Loc["Common.Settings"],
+                $"{Loc["Settings.ImportSuccess"]} ({Path.GetFileName(filePath)})",
+                filePath,
+                "📥",
+                CompletionSound.Notify);
+        }
+        catch (Exception ex)
+        {
+            ShowNotification("Hata", $"{Loc["Settings.ImportFailed"]}: {ex.Message}", null, "⚠️", CompletionSound.Notify);
+        }
+    }
+
     [RelayCommand]
 
     public void CancelSettings()
@@ -4906,6 +5118,10 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     public Func<Task<string?>>? RequestBrowseTorrentFile { get; set; }
 
     public Func<Task<string?>>? RequestBrowseFolder { get; set; }
+
+    public Func<Task<string?>>? RequestSaveSettingsFile { get; set; }
+
+    public Func<Task<string?>>? RequestOpenSettingsFile { get; set; }
 
     [RelayCommand]
     public async Task BrowseSettingsDefaultSaveDirectory()

@@ -25,6 +25,8 @@ public partial class MainWindow : Window
             {
                 vm.RequestBrowseTorrentFile = BrowseTorrentFileAsync;
                 vm.RequestBrowseFolder = BrowseFolderAsync;
+                vm.RequestSaveSettingsFile = SaveSettingsFileAsync;
+                vm.RequestOpenSettingsFile = OpenSettingsFileAsync;
             }
         };
     }
@@ -62,6 +64,62 @@ public partial class MainWindow : Window
                 new FilePickerFileType("BitTorrent Dosyaları (*.torrent)")
                 {
                     Patterns = new[] { "*.torrent" }
+                },
+                new FilePickerFileType("Tüm Dosyalar (*.*)")
+                {
+                    Patterns = new[] { "*.*" }
+                }
+            }
+        });
+
+        if (files != null && files.Count > 0)
+        {
+            return files[0].Path.LocalPath;
+        }
+
+        return null;
+    }
+
+    private async Task<string?> SaveSettingsFileAsync()
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel == null) return null;
+
+        var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Ayarları Dışa Aktar (.json)",
+            DefaultExtension = "json",
+            SuggestedFileName = $"fdownloader_settings_{DateTime.Now:yyyyMMdd_HHmm}.json",
+            FileTypeChoices = new[]
+            {
+                new FilePickerFileType("JSON Ayar Dosyası (*.json)")
+                {
+                    Patterns = new[] { "*.json" }
+                },
+                new FilePickerFileType("Tüm Dosyalar (*.*)")
+                {
+                    Patterns = new[] { "*.*" }
+                }
+            }
+        });
+
+        return file?.Path.LocalPath;
+    }
+
+    private async Task<string?> OpenSettingsFileAsync()
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel == null) return null;
+
+        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Ayar Dosyasını İçe Aktar (.json)",
+            AllowMultiple = false,
+            FileTypeFilter = new[]
+            {
+                new FilePickerFileType("JSON Ayar Dosyası (*.json)")
+                {
+                    Patterns = new[] { "*.json" }
                 },
                 new FilePickerFileType("Tüm Dosyalar (*.*)")
                 {

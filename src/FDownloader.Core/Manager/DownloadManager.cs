@@ -40,6 +40,9 @@ public sealed class DownloadManager : IAsyncDisposable
 
     public string? GetSetting(string key) => _repository.GetSetting(key);
     public void SetSetting(string key, string value) => _repository.SetSetting(key, value);
+    public Dictionary<string, string> GetAllSettings() => _repository.GetAllSettings();
+    public void ClearAllSettings() => _repository.ClearAllSettings();
+    public void ImportSettings(IDictionary<string, string> settings) => _repository.ImportSettings(settings);
 
     public DownloadManager(
         DownloadRepository repository,

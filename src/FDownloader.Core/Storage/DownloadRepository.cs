@@ -319,6 +319,60 @@ public sealed class DownloadRepository
         cmd.ExecuteNonQuery();
     }
 
+    /// <summary>
+    /// Kayıtlı tüm ayarları bir sözlük olarak döndürür (hassas veriler çözülmüş olarak).
+    /// </summary>
+    public Dictionary<string, string> GetAllSettings()
+    {
+        var settings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        using var cmd = _db.CreateCommand();
+        cmd.CommandText = "SELECT Key, Value FROM Settings;";
+        using var reader = cmd.ExecuteReader();
+        while (reader.Read())
+        {
+            var key = reader.GetString(0);
+            var val = reader.GetString(1);
+            if (IsSensitiveSettingKey(key))
+            {
+                try
+                {
+                    val = _dataProtector.Unprotect(val);
+                }
+                catch
+                {
+                    // Şifre çözülemezse ham bırak
+                }
+            }
+            settings[key] = val;
+        }
+        return settings;
+    }
+
+    /// <summary>
+    /// Ayarlar tablosundaki tüm verileri temizler (varsayılana sıfırlama için).
+    /// </summary>
+    public void ClearAllSettings()
+    {
+        using var cmd = _db.CreateCommand();
+        cmd.CommandText = "DELETE FROM Settings;";
+        cmd.ExecuteNonQuery();
+    }
+
+    /// <summary>
+    /// Birden fazla ayarı tek seferde kaydeder veya günceller.
+    /// </summary>
+    public void ImportSettings(IDictionary<string, string> settings)
+    {
+        if (settings == null) return;
+        foreach (var kvp in settings)
+        {
+            if (!string.IsNullOrWhiteSpace(kvp.Key))
+            {
+                SetSetting(kvp.Key, kvp.Value ?? string.Empty);
+            }
+        }
+    }
+
     private static bool IsSensitiveSettingKey(string key)
     {
         if (string.IsNullOrEmpty(key)) return false;

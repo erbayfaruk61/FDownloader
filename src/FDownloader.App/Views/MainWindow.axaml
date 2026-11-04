@@ -2200,11 +2200,28 @@
 
                     </TabControl>
 
-                    <!-- Alt Butonlar -->
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,12,0,0">
-                        <Button Command="{Binding CancelSettingsCommand}" Content="Vazgeç" Width="85" Height="32" FontSize="12" />
-                        <Button Command="{Binding SaveSettingsCommand}" Content="Ayarları Kaydet" Background="{Binding ThemeAccentBg}" Foreground="{Binding ThemeAccentFg}" FontWeight="Bold" Width="120" Height="32" FontSize="12" />
-                    </StackPanel>
+                    <!-- Alt Butonlar: Sol tarafta Yedekleme & Sıfırlama, Sağ tarafta Kaydet & Vazgeç -->
+                    <Grid Grid.Row="2" ColumnDefinitions="Auto, *, Auto" Margin="0,12,0,0">
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                            <Button Command="{Binding ResetSettingsToDefaultsCommand}"
+                                    Content="{Binding Loc[Settings.ResetDefaults]}"
+                                    ToolTip.Tip="{Binding Loc[Settings.ResetDefaultsTooltip]}"
+                                    Height="32" FontSize="11" />
+                            <Button Command="{Binding ExportSettingsCommand}"
+                                    Content="{Binding Loc[Settings.Export]}"
+                                    ToolTip.Tip="{Binding Loc[Settings.ExportTooltip]}"
+                                    Height="32" FontSize="11" />
+                            <Button Command="{Binding ImportSettingsCommand}"
+                                    Content="{Binding Loc[Settings.Import]}"
+                                    ToolTip.Tip="{Binding Loc[Settings.ImportTooltip]}"
+                                    Height="32" FontSize="11" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10">
+                            <Button Command="{Binding CancelSettingsCommand}" Content="{Binding Loc[Common.Cancel]}" Width="85" Height="32" FontSize="12" />
+                            <Button Command="{Binding SaveSettingsCommand}" Content="{Binding Loc[Common.Save]}" Background="{Binding ThemeAccentBg}" Foreground="{Binding ThemeAccentFg}" FontWeight="Bold" Width="120" Height="32" FontSize="12" />
+                        </StackPanel>
+                    </Grid>
                 </Grid>
             </Border>
         </Border>

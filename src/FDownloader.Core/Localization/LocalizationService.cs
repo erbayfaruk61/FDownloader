@@ -191,7 +191,20 @@ public sealed class LocalizationService : INotifyPropertyChanged
 
         // Ayarlar & Dil
         ["Settings.Language"] = "Uygulama Dili (Language):",
-        ["Settings.LanguageDesc"] = "Uygulama arayüzünün görüntüleneceği dili seçin (Türkçe / English)."
+        ["Settings.LanguageDesc"] = "Uygulama arayüzünün görüntüleneceği dili seçin (Türkçe / English).",
+
+        // P6-06 Ayarlar Düzeni, Sıfırlama ve Yedekleme
+        ["Settings.ResetDefaults"] = "🔄 Varsayılana Sıfırla",
+        ["Settings.ResetDefaultsTooltip"] = "Tüm ayarları fabrika ayarlarına geri döndürür.",
+        ["Settings.ResetConfirmTitle"] = "Ayarları Sıfırla",
+        ["Settings.ResetConfirmMessage"] = "Tüm uygulama ve indirme ayarları varsayılan fabrika değerlerine sıfırlanacak. Devam etmek istiyor musunuz?",
+        ["Settings.Export"] = "📤 Dışa Aktar",
+        ["Settings.ExportTooltip"] = "Mevcut ayarları JSON dosyası olarak dışa aktarır.",
+        ["Settings.Import"] = "📥 İçe Aktar",
+        ["Settings.ImportTooltip"] = "Daha önce yedeklenen JSON ayar dosyasını içe aktarır.",
+        ["Settings.ExportSuccess"] = "Ayarlar başarıyla dışa aktarıldı.",
+        ["Settings.ImportSuccess"] = "Ayarlar başarıyla içe aktarıldı ve uygulandı.",
+        ["Settings.ImportFailed"] = "Ayar dosyası okunamadı veya biçimi geçersiz."
     };
 
     // ─── İngilizce Çeviri Sözlüğü ──────────────────────────────────────────
@@ -272,7 +285,20 @@ public sealed class LocalizationService : INotifyPropertyChanged
 
         // Settings & Language
         ["Settings.Language"] = "Language:",
-        ["Settings.LanguageDesc"] = "Choose your preferred interface language (Türkçe / English)."
+        ["Settings.LanguageDesc"] = "Choose your preferred interface language (Türkçe / English).",
+
+        // P6-06 Settings Layout, Reset & Backup
+        ["Settings.ResetDefaults"] = "🔄 Reset to Defaults",
+        ["Settings.ResetDefaultsTooltip"] = "Reverts all settings to their original factory defaults.",
+        ["Settings.ResetConfirmTitle"] = "Reset Settings",
+        ["Settings.ResetConfirmMessage"] = "All application and download preferences will be reset to factory defaults. Do you wish to continue?",
+        ["Settings.Export"] = "📤 Export Settings",
+        ["Settings.ExportTooltip"] = "Exports current configuration to a JSON backup file.",
+        ["Settings.Import"] = "📥 Import Settings",
+        ["Settings.ImportTooltip"] = "Restores configuration from a previously exported JSON backup file.",
+        ["Settings.ExportSuccess"] = "Settings successfully exported.",
+        ["Settings.ImportSuccess"] = "Settings successfully restored and applied.",
+        ["Settings.ImportFailed"] = "Failed to import settings file or format is invalid."
     };
 }
 
