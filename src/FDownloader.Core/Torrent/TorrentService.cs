@@ -576,13 +576,7 @@ public sealed class TorrentService : IAsyncDisposable
 
             if (manager.State != TorrentState.Stopped)
             {
-                await manager.StopAsync(TimeSpan.FromSeconds(3));
-                var waitCount = 0;
-                while (manager.State != TorrentState.Stopped && waitCount < 20)
-                {
-                    await Task.Delay(50);
-                    waitCount++;
-                }
+                await manager.StopAsync();
             }
 
             IPieceRequester requester = newSequentialState

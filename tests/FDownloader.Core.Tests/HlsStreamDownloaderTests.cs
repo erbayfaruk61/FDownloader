@@ -133,3 +133,4 @@ public sealed class HlsStreamDownloaderTests : IDisposable
             _downloader.DownloadHlsAsync(taskId: 99, playlistUrl: url, outputFilePath: outputFile, cancellationToken: cts.Token));
     }
 }
+

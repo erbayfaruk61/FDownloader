@@ -72,7 +72,6 @@ public class TorrentServiceTests : IDisposable
         }
 
         var creator = new TorrentCreator();
-        creator.Announces.Add(new List<string> { "http://127.0.0.1:6969/announce" });
 
         var fileSource = new TorrentFileSource(dataDir);
         var bencoded = await creator.CreateAsync(fileSource);

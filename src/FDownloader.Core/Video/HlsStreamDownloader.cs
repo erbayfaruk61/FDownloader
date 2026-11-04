@@ -356,3 +356,4 @@ public sealed class HlsStreamDownloader
         }
     }
 }
+

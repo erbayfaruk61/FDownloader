@@ -173,3 +173,43 @@ Bu belge, FDownloader indirme motoru ve disk/dosya sistemi için hem otomatik he
 - **Elle Test:**
   1. Yasal bir dağıtım magnet linki ekleyin (ör. Ubuntu ISO magnet linki).
   2. FDownloader'ın izleyici listesine otomatik olarak açık tracker havuzunu eklediğini ve eşlerle bağlantı kurduğunu doğrulayın.
+
+---
+
+## 5. Site ve Galeri Yakalayıcı Senaryoları (P5-04)
+
+### 5.1 Tarama Derinliği ve Sayfa İçi Gezinme (Crawl Depth)
+- **Amaç:** Yalnızca tek sayfayı (`MaxDepth = 1`) veya sayfadaki iç bağlantıları sırayla gezerek (`MaxDepth >= 2`) alt sayfalardaki görsel, video ve belgeleri derleyebilme.
+- **Otomatik Test:** `SiteGrabberServiceTests.AnalyzePageAsync_Depth2_CrawlsInternalLinksAndCollectsNestedFiles`.
+- **Elle Test:**
+  1. Araçlar menüsünden Site Yakalayıcı'yı açın.
+  2. Bir galeri URL'si girin ve tarama derinliğini 2 yapın.
+  3. Alt sayfalardaki resim ve videoların da listeye eklendiğini, derinlik sütununda (Depth) 2 olarak belirtildiğini doğrulayın.
+
+### 5.2 Aynı Alan Adı Sınırı (Same Domain Only)
+- **Amaç:** Sayfa içindeki reklam, sayaç veya dış site linklerine sıçramayı engelleyerek yalnızca hedef alan adını taramak.
+- **Otomatik Test:** `SiteGrabberService.IsSameDomain`, `SiteGrabberServiceTests.AnalyzePageAsync_SinglePage_ExtractsMediaFilesAndCategorizesCorrectly`.
+- **Elle Test:**
+  1. Dış sitelere linkler içeren bir sayfayı taratın.
+  2. Yalnızca hedef domain'e ait medya dosyalarının listelendiğini doğrulayın.
+
+### 5.3 robots.txt Nezaketi ve Hız Sınırı (Rate Limiting)
+- **Amaç:** Sitenin `robots.txt` dosyasındaki `Disallow:` kurallarına uymak ve istekler arasına nezaket gecikmesi (`DelayBetweenRequestsMs`) koyarak sunucuyu boğmamak.
+- **Otomatik Test:** `SiteGrabberServiceTests.AnalyzePageAsync_RespectsRobotsTxt_SkipsDisallowedPaths`, `SiteGrabberServiceTests.RobotsTxtRules_ParseAndValidatePaths`.
+- **Elle Test:**
+  1. `Disallow: /admin/` kuralı olan bir siteyi tarayın.
+  2. Yasaklı klasör altındaki içeriklerin atlandığını doğrulayın.
+
+### 5.4 Aşırı Büyük Sayfalarda Donmama ve İptal (Resilience & Cancellation)
+- **Amaç:** Aşırı büyük HTML sayfalarında veya yavaş sunucularda arayüzün donmaması, kullanıcının istediği an taramayı iptal edebilmesi (`CancellationToken`).
+- **Otomatik Test:** `SiteGrabberServiceTests.AnalyzePageAsync_Cancellation_AbortsExecutionImmediately`.
+- **Elle Test:**
+  1. Büyük bir web sayfasını taratırken "İptal Et" butonuna tıklayın.
+  2. Taramayı yapan işlemin anında durduğunu ve arayüzün kilitlenmediğini doğrulayın.
+
+### 5.5 Kategori Filtreleme ve Boyut Ön Sorgulama (Category Filter & Probe)
+- **Amaç:** Sadece seçilen dosya türlerinin (Video, Resim, Arşiv vb.) listelenmesi ve HEAD istekleriyle dosyaların boyutlarının indirmeden önce öğrenilebilmesi.
+- **Otomatik Test:** `SiteGrabberServiceTests.AnalyzePageAsync_CategoryFilter_FiltersOutUnwantedCategories`, `SiteGrabberServiceTests.ProbeFileSizesAsync_FetchesContentLengthAndTypeViaHeadRequests`.
+- **Elle Test:**
+  1. Sadece "Video" kategorisini seçerek bir web sayfasını tarayın.
+  2. Yalnızca video dosyalarının listelendiğini ve dosya boyutlarının göründüğünü doğrulayın.

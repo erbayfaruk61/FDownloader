@@ -69,9 +69,7 @@ sealed class Program
                 {
                     if (sentryEvent.Message?.Message != null)
                     {
-                        sentryEvent.Message = new SentryMessage(
-                            Core.Logging.SensitiveDataMasker.MaskMessage(sentryEvent.Message.Message),
-                            sentryEvent.Message.Formatted);
+                        sentryEvent.Message = Core.Logging.SensitiveDataMasker.MaskMessage(sentryEvent.Message.Message);
                     }
                     if (sentryEvent.User != null)
                     {
