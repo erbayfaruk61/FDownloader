@@ -655,6 +655,8 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     private const string SettingKeyMinimizeToTrayOnClose = "System.MinimizeToTrayOnClose";
 
     private const string SettingKeyShowTrayIcon = "System.ShowTrayIcon";
+    private const string SettingKeyDefaultSaveDirectory = "Download.DefaultSaveDirectory";
+    private const string SettingKeyFirstRunCompleted = "App.FirstRunCompleted";
     private const string SettingKeyGlobalDownloadLimitKiB = "Network.GlobalDownloadLimitKiB";
     private const string SettingKeyGlobalUploadLimitKiB = "Network.GlobalUploadLimitKiB";
     private const string SettingKeyAltDownloadLimitKiB = "Network.AltDownloadLimitKiB";
@@ -1260,6 +1262,11 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
     [ObservableProperty] private bool _isSettingsDialogOpen;
 
+    // ─── İlk Açılış Sihirbazı (P6-01: First Run Wizard) ─────────────────
+    [ObservableProperty] private bool _isFirstRunWizardOpen;
+    [ObservableProperty] private int _firstRunWizardStep = 1; // 1: Karşılama, 2: Klasör & Başlangıç, 3: Tarayıcı Eklentisi
+    [ObservableProperty] private bool _isFirstRunWizardCompleted;
+
     [ObservableProperty] private int _settingsTabIndex = SettingsTabSpeedAndNetwork;
 
     [ObservableProperty] private string _settingsDefaultSaveDirectory = string.Empty;
@@ -1474,6 +1481,12 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
         var defaultDownloads = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
 
+        var savedSaveDir = _downloadManager.GetSetting(SettingKeyDefaultSaveDirectory);
+        if (!string.IsNullOrWhiteSpace(savedSaveDir) && Directory.Exists(savedSaveDir))
+        {
+            defaultDownloads = savedSaveDir;
+        }
+
         AddDialogSavePath = defaultDownloads;
 
         SettingsDefaultSaveDirectory = defaultDownloads;
@@ -1632,6 +1645,19 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
             ShowTrayIcon = true;
 
+        // P6-01: İlk Açılış Sihirbazı kontrolü
+        var firstRunCompletedStr = _downloadManager.GetSetting(SettingKeyFirstRunCompleted);
+        if (bool.TryParse(firstRunCompletedStr, out var frc) && frc)
+        {
+            IsFirstRunWizardCompleted = true;
+            IsFirstRunWizardOpen = false;
+        }
+        else
+        {
+            IsFirstRunWizardCompleted = false;
+            IsFirstRunWizardOpen = true;
+            FirstRunWizardStep = 1;
+        }
     }
 
     private void LoadNetworkInterfaces(string? savedId)
@@ -4386,6 +4412,12 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
         _downloadManager.SetSetting(SettingKeyShowTrayIcon, ShowTrayIcon.ToString());
 
+        if (!string.IsNullOrWhiteSpace(SettingsDefaultSaveDirectory))
+        {
+            _downloadManager.SetSetting(SettingKeyDefaultSaveDirectory, SettingsDefaultSaveDirectory);
+            AddDialogSavePath = SettingsDefaultSaveDirectory;
+        }
+
         _downloadManager.SetSetting(SettingKeyGlobalDownloadLimitKiB, GlobalDownloadLimitKiB.ToString());
         _downloadManager.SetSetting(SettingKeyGlobalUploadLimitKiB, GlobalUploadLimitKiB.ToString());
         _downloadManager.SetSetting(SettingKeyAltDownloadLimitKiB, AltDownloadLimitKiB.ToString());
@@ -4764,6 +4796,19 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     public Func<Task<string?>>? RequestBrowseTorrentFile { get; set; }
 
     public Func<Task<string?>>? RequestBrowseFolder { get; set; }
+
+    [RelayCommand]
+    public async Task BrowseSettingsDefaultSaveDirectory()
+    {
+        if (RequestBrowseFolder != null)
+        {
+            var folder = await RequestBrowseFolder();
+            if (!string.IsNullOrWhiteSpace(folder))
+            {
+                SettingsDefaultSaveDirectory = folder;
+            }
+        }
+    }
 
     [RelayCommand]
 
@@ -5243,6 +5288,61 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
         }
 
+    }
+
+    // ─── İlk Açılış Sihirbazı Komutları (P6-01) ───────────────────────────
+
+    [RelayCommand]
+    public void OpenFirstRunWizard()
+    {
+        FirstRunWizardStep = 1;
+        IsFirstRunWizardOpen = true;
+    }
+
+    [RelayCommand]
+    public void NextFirstRunWizardStep()
+    {
+        if (FirstRunWizardStep < 3)
+        {
+            FirstRunWizardStep++;
+        }
+        else
+        {
+            CompleteFirstRunWizard();
+        }
+    }
+
+    [RelayCommand]
+    public void PreviousFirstRunWizardStep()
+    {
+        if (FirstRunWizardStep > 1)
+        {
+            FirstRunWizardStep--;
+        }
+    }
+
+    [RelayCommand]
+    public void CompleteFirstRunWizard()
+    {
+        IsFirstRunWizardOpen = false;
+        IsFirstRunWizardCompleted = true;
+
+        // Ayarları kalıcı kaydet
+        _downloadManager.SetSetting(SettingKeyFirstRunCompleted, "True");
+        SaveSettings();
+
+        ShowNotification(
+            "🎉 Hoş Geldiniz!",
+            "FDownloader kurulum ve başlangıç ayarlarınız tamamlandı. Keyifli indirmeler dileriz!",
+            null,
+            "🚀",
+            CompletionSound.Notify);
+    }
+
+    [RelayCommand]
+    public void SkipFirstRunWizard()
+    {
+        CompleteFirstRunWizard();
     }
 
     [RelayCommand]

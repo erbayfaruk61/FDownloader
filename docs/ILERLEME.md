@@ -93,11 +93,23 @@
 
 ---
 
-## Faz 6–9
+## Faz 6 — Kullanıcı Deneyimi
+
+| ID | Görev | Zorluk | Durum | Commit | Not |
+|---|---|---|---|---|---|
+| P6-01 | İlk açılış sihirbazı | 🟡 | ✅ Bitti | — | 3 adımlı karşılama sihirbazı (hoş geldiniz & tema seçimi, kayıt klasörü & Windows başlangıç entegrasyonu, tarayıcı eklentisi 3 adımlı rehberi) tamamlandı |
+| P6-02 | Çoklu dil altyapısı | 🟡 | 🔄 Devam | — | Türkçe ve İngilizce dil kaynakları, dinamik dil değiştirme altyapısı |
+| P6-03 | Hata mesajları | 🟡 | ⬜ Bekliyor | — | Anlaşılır hata açıklamaları (ne oldu/neden/ne yapılabilir), docs/HATA_KODLARI.md |
+| P6-04 | Arayüz iyileştirmeleri | 🟡 | ⬜ Bekliyor | — | Detay ekranı parça haritası, hız grafiği, klavye kısayolları, sürükle-bırak |
+| P6-05 | Erişilebilirlik ve ekran uyumu | 🟡 | ⬜ Bekliyor | — | AutomationProperties, yüksek kontrast, %100-%200 DPI ölçekleme |
+
+---
+
+## Faz 7–9
 
 | ID | Görev | Zorluk | Durum |
 |---|---|---|---|
-| P6-01 → P9-05 | (Tüm görevler) | — | ⬜ Bekliyor |
+| P7-01 → P9-05 | (Tüm görevler) | — | ⬜ Bekliyor |
 
 ---
 

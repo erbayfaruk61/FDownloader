@@ -2,38 +2,39 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** P5-06 — Toplu İndirme (Faz 5 — Medya, Torrent ve Ek Özellikler)  
-**Durum:** ✅ Bitti (Faz 5 Eksiksiz Tamamlandı)
+**ID:** P6-01 — İlk Açılış Sihirbazı (Faz 6 — Kullanıcı Deneyimi)  
+**Durum:** ✅ Bitti
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
-- `src/FDownloader.Core/Batch/BatchDownloadItem.cs`:
-  - Ayrıştırma sonucu üretilen URL, önerilen dosya adı, hedef yol, indeks ve hata mesajı modeli oluşturuldu.
-- `src/FDownloader.Core/Batch/BatchDownloadOptions.cs`:
-  - Hedef klasör, tekilleştirme (`DeduplicateUrls`), azami öğe sınırı (`MaxGeneratedItems`), dosya adı şablonu (`FileNamePattern`) ve parça sayısı (`Segments`) seçenekleri tanımlandı.
-- `src/FDownloader.Core/Batch/BatchRangePattern.cs`:
-  - Sayısal sıfır dolgulu (`[01-20]`), adım miktarlı (`[1-100:2]`), azalan (`[10-1]`) ve alfabetik (`[a-z]`, `[A-Z]`) aralık desenlerini genişleten regex tabanlı motor geliştirildi.
-- `src/FDownloader.Core/Batch/BatchDownloadParser.cs`:
-  - Çok satırlı girdiyi, metin içindeki linkleri, panodan yapıştırılan URL'leri ve yorum satırlarını (`#`) ayrıştıran, dosya adlarını güvenli hale getiren (`FileNameSanitizer`) ve `{name}`, `{index}`, `{index:D2}` şablonlarını uygulayan servis kodlandı.
-- `src/FDownloader.Core/Manager/DownloadManager.cs`:
-  - `AddBatchDownloadsAsync` metodu eklenerek toplu URL girdisinin doğrudan DownloadTask kuyruğuna entegre edilmesi sağlandı.
-- `tests/FDownloader.Core.Tests/BatchDownloadTests.cs`:
-  - 7 adet birim ve entegrasyon testi eklendi (Aralık deseni doğrulaması, sıfır dolgusu, adım ve azalan yön, harf aralıkları, çok satırlı link ayıklama, dosya adı şablonları ve DownloadManager kuyruk entegrasyonu).
-  - Test sayısı 344'ten **351'e** yükseldi. **351/351 test yeşil**.
+- `src/FDownloader.App/ViewModels/MainViewModel.cs`:
+  - `IsFirstRunWizardOpen`, `FirstRunWizardStep` (1: Hoş Geldiniz & Tema, 2: Klasör & Başlangıç, 3: Tarayıcı Eklentisi) ve `IsFirstRunWizardCompleted` durum özellikleri eklendi.
+  - `SettingKeyFirstRunCompleted` ("App.FirstRunCompleted") ve `SettingKeyDefaultSaveDirectory` ("Download.DefaultSaveDirectory") kalıcı SQLite ayar anahtarları tanımlandı.
+  - `BrowseSettingsDefaultSaveDirectoryCommand` komutu eklendi (kullanıcının klasör seçicisiyle indirme dizinini belirleyebilmesi için).
+  - `NextFirstRunWizardStepCommand`, `PreviousFirstRunWizardStepCommand`, `CompleteFirstRunWizardCommand` ve `SkipFirstRunWizardCommand` navigasyon ve tamamlama mekanizmaları kuruldu.
+  - Uygulama ilk kez açıldığında (`App.FirstRunCompleted` ayarı yoksa) sihirbazın otomatik açılması, tamamlandığında kalıcı olarak kaydedilmesi ve hoş geldiniz toast bildirimi gösterilmesi sağlandı.
+- `src/FDownloader.App/Views/MainWindow.axaml`:
+  - 12. Modal Diyaloğu olarak "FDownloader Kurulum Sihirbazı" arayüzü tasarlandı.
+  - Adım 1: Hoş geldiniz metni, 4 farklı renk teması seçimi (Okyanus Mavisi, Siber Mor, Platin Gri, Sade Aydınlık) ve anında tema önizlemesi.
+  - Adım 2: Varsayılan indirme klasörü seçimi ("Gözat..." butonu ile) ve Windows başlangıç entegrasyonu (otomatik başlama, sistem tepsisine küçültme, kapatmada simge durumuna geçme).
+  - Adım 3: Tarayıcı yakalayıcı eklentisi (Chrome, Edge, Brave, Opera, Firefox) için 3 adımlı kurulum rehberi, tek tıkla eklenti klasörünü açma ve yolunu panoya kopyalama butonları.
+  - Ayarlar > Depolama sekmesindeki kayıt klasörü alanına da "Gözat..." butonu eklendi.
 - `docs/TEST_SENARYOLARI.md`:
-  - Senaryo 7 (Toplu İndirme: Link Listesi, Aralık Desenleri ve Dosya Adı Şablonları) eklendi.
+  - Senaryo 8 (İlk Açılış Sihirbazı: İlk Kurulum Tespiti, Tema Seçimi, Klasör & Başlangıç Tercihleri ve Eklenti Rehberi) eklendi.
 - `docs/ILERLEME.md`:
-  - `P5-06` tamamlandı olarak güncellendi ve Faz 5 tamamen bitti.
+  - `P6-01` tamamlandı olarak güncellendi.
+- **Doğrulama:**
+  - `dotnet build src/FDownloader.App/FDownloader.App.csproj` -> 0 Hata
+  - `dotnet test` -> 351/351 test yeşil.
 
 ---
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** Faz 5 (Medya, Torrent ve Ek Özellikler) tamamlandı. Sıradaki faz: **Faz 6 — Kullanıcı Deneyimi (UX & UI)**.
-  - İlk görev: **P6-01 — İlk Açılış Sihirbazı (First Run Wizard)**.
-    - İlk kurulumda kullanıcıyı karşılama, varsayılan indirme klasörü seçimi, başlangıçta çalışma / sistem tepsisi tercihleri, tarayıcı eklentisi yönlendirmesi.
+- **Tam olarak nerede kaldım:** P6-01 bitti. Sıradaki görev: **P6-02 — Çoklu Dil Altyapısı (Localization / i18n)**.
+  - Türkçe ve İngilizce dil kaynakları (`Resources/Strings.tr-TR.axaml` & `Strings.en-US.axaml` veya `.resx` / JSON localization), sistem diline göre otomatik seçim ve ayarlardan dinamik dil değiştirme altyapısı.
 - **Derleme durumu:** ✅ Başarılı (0 hata)
 - **Test durumu:** 351/351 geçiyor
 
@@ -44,6 +45,6 @@
 1. Değişiklikleri commit et:
    ```bash
    git add src/ tests/ docs/
-   git commit -m "feat(batch): P5-06 - Toplu indirme link ayiklayici, sayi ve harf aralik deseni (351 test yesil)"
+   git commit -m "feat(ui): P6-01 - Ilk acilis sihirbazi, tema secimi, varsayilan klasor ve eklenti rehberi (351 test yesil)"
    ```
-2. **P6-01:** İlk Açılış Sihirbazı (`FirstRunWizard`) model ve arayüz entegrasyonu.
+2. **P6-02:** Çoklu Dil Altyapısını (`LocalizationService`, Türkçe/İngilizce dil tabloları ve dinamik UI bağlama mekanizması) kurmak.

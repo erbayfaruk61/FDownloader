@@ -1417,15 +1417,16 @@
                                                 <TextBlock Text="Varsayılan Klasör ve Motor Parametreleri:" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
                                             </StackPanel>
 
-                                            <Grid ColumnDefinitions="140, *" RowDefinitions="Auto, Auto, Auto" Margin="6,4,0,0">
+                                            <Grid ColumnDefinitions="140, *, Auto" RowDefinitions="Auto, Auto, Auto" Margin="6,4,0,0">
                                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="Kayıt Klasörü:" VerticalAlignment="Center" FontSize="12" />
                                                 <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SettingsDefaultSaveDirectory}" Margin="0,4" Height="32" VerticalContentAlignment="Center" />
+                                                <Button Grid.Row="0" Grid.Column="2" Command="{Binding BrowseSettingsDefaultSaveDirectoryCommand}" Content="📁 Gözat..." Margin="6,4,0,4" Height="32" Padding="10,0" VerticalContentAlignment="Center" />
 
                                                 <TextBlock Grid.Row="1" Grid.Column="0" Text="Eşzamanlı İndirme:" VerticalAlignment="Center" FontSize="12" />
-                                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SettingsMaxConcurrentDownloads}" Margin="0,4" Width="70" HorizontalAlignment="Left" Height="30" VerticalContentAlignment="Center" />
+                                                <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding SettingsMaxConcurrentDownloads}" Margin="0,4" Width="70" HorizontalAlignment="Left" Height="30" VerticalContentAlignment="Center" />
 
                                                 <TextBlock Grid.Row="2" Grid.Column="0" Text="Segment (Parça):" VerticalAlignment="Center" FontSize="12" />
-                                                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SettingsDefaultSegments}" Margin="0,4" Width="70" HorizontalAlignment="Left" Height="30" VerticalContentAlignment="Center" />
+                                                <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding SettingsDefaultSegments}" Margin="0,4" Width="70" HorizontalAlignment="Left" Height="30" VerticalContentAlignment="Center" />
                                             </Grid>
                                         </StackPanel>
                                     </Border>
@@ -2600,6 +2601,153 @@
                         <Button Command="{Binding CancelChecksumDialogCommand}" Content="Kapat" Width="100" Height="36" />
                     </StackPanel>
                 </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- ─── 12. MODAL: 🚀 İLK AÇILIŞ SİHİRBAZI (FIRST RUN WIZARD - P6-01) ─── -->
+        <Border Background="#95000000" IsVisible="{Binding IsFirstRunWizardOpen}">
+            <Border Width="640"
+                    Background="{Binding ThemeCardBg}"
+                    BorderBrush="{Binding ThemeBorderColor}"
+                    BorderThickness="1"
+                    CornerRadius="14"
+                    Padding="28,24"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                <Grid RowDefinitions="Auto, *, Auto">
+                    <!-- Üst Başlık ve İlerleme Göstergesi -->
+                    <Grid Grid.Row="0" ColumnDefinitions="*, Auto" Margin="0,0,0,16">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="🚀" FontSize="20" VerticalAlignment="Center" />
+                                <TextBlock Text="FDownloader Kurulum Sihirbazı" FontSize="18" FontWeight="Bold" Foreground="{Binding ThemeForeground}" VerticalAlignment="Center" />
+                            </StackPanel>
+                            <TextBlock Text="Uygulama deneyiminizi kişiselleştirmek için birkaç hızlı adım." FontSize="12" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                        </StackPanel>
+                        <!-- Adım İndikatörü -->
+                        <Border Grid.Column="1" Background="{Binding ThemeSpeedGraphInnerBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="8" Padding="12,6" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding FirstRunWizardStep, StringFormat='Adım {0} / 3'}" FontWeight="Bold" FontSize="12" Foreground="{Binding ThemeAccentFg}" />
+                        </Border>
+                    </Grid>
+
+                    <!-- Adım İçerikleri -->
+                    <Grid Grid.Row="1" MinHeight="290">
+                        <!-- ADIM 1: Hoş Geldiniz & Tema / Görünüm Seçimi -->
+                        <StackPanel Spacing="16" IsVisible="{Binding FirstRunWizardStep, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=1}">
+                            <Border Background="{DynamicResource SystemChromeLowColor}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="10" Padding="16">
+                                <StackPanel Spacing="10">
+                                    <TextBlock Text="Hoş Geldiniz! 🌟" FontSize="15" FontWeight="Bold" Foreground="{Binding ThemeForeground}" />
+                                    <TextBlock Text="FDownloader; yüksek hızlı çok parçalı indirmeler, akıllı video yakalayıcı, torrent ve güvenli dosya yönetimi sunan modern indirme yöneticinizdir." FontSize="12" TextWrapping="Wrap" LineHeight="18" Foreground="{Binding ThemeForeground}" />
+                                    <TextBlock Text="Lütfen tercih ettiğiniz görsel temayı seçin:" FontSize="12" FontWeight="SemiBold" Margin="0,4,0,0" Foreground="{Binding ThemeForeground}" />
+
+                                    <!-- Tema Seçim Butonları -->
+                                    <UniformGrid Columns="2" Rows="2" Margin="0,6,0,0">
+                                        <RadioButton Content="🌊 Okyanus Mavisi (Koyu)" IsChecked="{Binding IsThemeOceanBlue}" Margin="4" FontWeight="SemiBold" FontSize="12" />
+                                        <RadioButton Content="🔮 Siber Mor (Koyu)" IsChecked="{Binding IsThemeCyberPurple}" Margin="4" FontWeight="SemiBold" FontSize="12" />
+                                        <RadioButton Content="🌪️ Platin Gri (Açık/Modern)" IsChecked="{Binding IsThemePlatinumGray}" Margin="4" FontWeight="SemiBold" FontSize="12" />
+                                        <RadioButton Content="☀️ Sade &amp; Aydınlık (Açık)" IsChecked="{Binding IsThemeLightClean}" Margin="4" FontWeight="SemiBold" FontSize="12" />
+                                    </UniformGrid>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Background="#1010B981" BorderBrush="#3010B981" BorderThickness="1" CornerRadius="8" Padding="12,10">
+                                <TextBlock Text="💡 İpucu: Seçtiğiniz temayı ve renkleri dilediğiniz zaman Ayarlar > Görünüm sekmesinden değiştirebilirsiniz." FontSize="11" Foreground="#10B981" TextWrapping="Wrap" />
+                            </Border>
+                        </StackPanel>
+
+                        <!-- ADIM 2: Klasör & Windows Başlangıç Tercihleri -->
+                        <StackPanel Spacing="14" IsVisible="{Binding FirstRunWizardStep, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=2}">
+                            <!-- Kayıt Klasörü -->
+                            <Border Background="{DynamicResource SystemChromeLowColor}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="10" Padding="14">
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="📁 Varsayılan İndirme Klasörü" FontSize="13" FontWeight="Bold" Foreground="{Binding ThemeForeground}" />
+                                    <TextBlock Text="İndirilen tüm dosyaların ve torrent verilerinin kaydedileceği ana dizin:" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                    <Grid ColumnDefinitions="*, Auto" Margin="0,4,0,0">
+                                        <TextBox Grid.Column="0" Text="{Binding SettingsDefaultSaveDirectory}" Height="34" VerticalContentAlignment="Center" FontSize="12" />
+                                        <Button Grid.Column="1" Command="{Binding BrowseSettingsDefaultSaveDirectoryCommand}" Content="📁 Değiştir..." Margin="8,0,0,0" Height="34" Padding="12,0" FontWeight="SemiBold" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Sistem & Başlangıç Tercihleri -->
+                            <Border Background="{DynamicResource SystemChromeLowColor}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="10" Padding="14">
+                                <StackPanel Spacing="10">
+                                    <TextBlock Text="🖥️ Windows Entegrasyonu" FontSize="13" FontWeight="Bold" Foreground="{Binding ThemeForeground}" />
+                                    
+                                    <CheckBox IsChecked="{Binding StartWithWindows}">
+                                        <StackPanel Spacing="2">
+                                            <TextBlock Text="Windows açıldığında FDownloader'ı otomatik başlat" FontWeight="SemiBold" FontSize="12" />
+                                            <TextBlock Text="Bilgisayarınız her açıldığında indirmeleriniz hemen hazır olur." FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                        </StackPanel>
+                                    </CheckBox>
+
+                                    <CheckBox IsChecked="{Binding StartMinimizedToTray}">
+                                        <StackPanel Spacing="2">
+                                            <TextBlock Text="Açılışta sistem tepsisinde (arkaplanda) sessizce başla" FontWeight="SemiBold" FontSize="12" />
+                                            <TextBlock Text="Masaüstünüzü kalabalıklaştırmadan görev çubuğu simgesinde bekler." FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                        </StackPanel>
+                                    </CheckBox>
+
+                                    <CheckBox IsChecked="{Binding MinimizeToTrayOnClose}">
+                                        <StackPanel Spacing="2">
+                                            <TextBlock Text="Kapat butonuna basıldığında simge durumuna küçült" FontWeight="SemiBold" FontSize="12" />
+                                            <TextBlock Text="Aktif indirmeler kesilmeden sistem tepsisinde devam eder." FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                        </StackPanel>
+                                    </CheckBox>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- ADIM 3: Tarayıcı Eklentisi Rehberi -->
+                        <StackPanel Spacing="14" IsVisible="{Binding FirstRunWizardStep, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=3}">
+                            <Border Background="{DynamicResource SystemChromeLowColor}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="10" Padding="14">
+                                <StackPanel Spacing="10">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <TextBlock Text="🧩" FontSize="16" VerticalAlignment="Center" />
+                                        <TextBlock Text="Tarayıcı Yakalayıcı Eklentisi (Chrome, Edge, Brave, Opera, Firefox)" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" Foreground="{Binding ThemeForeground}" />
+                                    </StackPanel>
+                                    <TextBlock Text="Web tarayıcınızda tıkladığınız video ve indirmelerin otomatik olarak FDownloader'a aktarılması için eklentiyi yükleyebilirsiniz." FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource SystemBaseMediumColor}" />
+
+                                    <!-- 3 Adımlı Rehber -->
+                                    <Border Background="{Binding ThemeSpeedGraphInnerBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="8" Padding="12">
+                                        <StackPanel Spacing="8">
+                                            <TextBlock Text="1️⃣ 'Eklenti Klasörünü Aç' butonuna tıklayın ve klasör yolunu kopyalayın." FontSize="11" Foreground="{Binding ThemeForeground}" />
+                                            <TextBlock Text="2️⃣ Tarayıcınızda 'chrome://extensions' adresini açıp 'Geliştirici modu'nu aktif edin." FontSize="11" Foreground="{Binding ThemeForeground}" />
+                                            <TextBlock Text="3️⃣ 'Paketlenmemiş öğe yükle' diyerek açılan klasörü seçin." FontSize="11" Foreground="{Binding ThemeForeground}" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Butonlar -->
+                                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+                                        <Button Command="{Binding OpenBrowserExtensionFolderCommand}" Content="📂 Eklenti Klasörünü Aç" Height="34" Padding="12,0" FontWeight="SemiBold" />
+                                        <Button Command="{Binding CopyBrowserExtensionPathCommand}" Content="📋 Klasör Yolunu Kopyala" Height="34" Padding="12,0" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Background="#1538BDF8" BorderBrush="#3038BDF8" BorderThickness="1" CornerRadius="8" Padding="12,10">
+                                <TextBlock Text="ℹ️ Eklentiyi daha sonra kurmak isterseniz bu adımı atlayabilir, dilediğiniz zaman Ayarlar > Tarayıcı sekmesinden kurabilirsiniz." FontSize="11" Foreground="#38BDF8" TextWrapping="Wrap" />
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Alt Butonlar Barı -->
+                    <Grid Grid.Row="2" ColumnDefinitions="Auto, *, Auto" Margin="0,16,0,0">
+                        <Button Grid.Column="0" Command="{Binding SkipFirstRunWizardCommand}" Content="Sihirbazı Atla" Background="Transparent" BorderThickness="0" FontSize="12" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                        
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                            <Button Command="{Binding PreviousFirstRunWizardStepCommand}" Content="◀ Geri" Width="85" Height="34" IsVisible="{Binding FirstRunWizardStep, Converter={x:Static ObjectConverters.NotEqual}, ConverterParameter=1}" />
+                            
+                            <Button Command="{Binding NextFirstRunWizardStepCommand}"
+                                    Content="{Binding FirstRunWizardStep, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=3, StringFormat='Tamamla 🚀'}"
+                                    Background="{Binding ThemeAccentBg}"
+                                    Foreground="{Binding ThemeAccentFg}"
+                                    FontWeight="Bold"
+                                    Width="120"
+                                    Height="34" />
+                        </StackPanel>
+                    </Grid>
+                </Grid>
             </Border>
         </Border>
 

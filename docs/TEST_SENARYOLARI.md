@@ -267,3 +267,31 @@ Bu belge, FDownloader indirme motoru ve disk/dosya sistemi için hem otomatik he
 - **Elle Test:**
   1. Toplu indirmede dosya adı şablonu olarak `Bolum_{index:D2}_{name}.{ext}` belirtin.
   2. Oluşturulan görevlerin adlarının `Bolum_01_dosya.mp4`, `Bolum_02_dosya.mp4` şeklinde biçimlendirildiğini doğrulayın.
+
+---
+
+## 8. İlk Açılış Sihirbazı Senaryoları (P6-01)
+
+### 8.1 İlk Kurulum Tespiti ve Karşılama Ekranı
+- **Amaç:** Uygulama temiz bir sistemde ilk kez açıldığında kullanıcının doğrudan karmaşık indirme listesiyle baş başa kalmayıp, 3 adımlı kurulum sihirbazıyla karşılanması.
+- **Elle Test:**
+  1. SQLite veritabanındaki `App.FirstRunCompleted` ayarını temizleyin veya uygulamayı ilk kez başlatın.
+  2. Açılışta doğrudan "FDownloader Kurulum Sihirbazı" modal penceresinin açıldığını ve 1. Adımda (Hoş Geldiniz & Tema Seçimi) olduğunu doğrulayın.
+  3. "Okyanus Mavisi", "Siber Mor", "Platin Gri" veya "Sade & Aydınlık" temalarından birine tıklandığında uygulamanın renk temasının dinamik olarak değiştiğini görün.
+
+### 8.2 Varsayılan Klasör ve Windows Başlangıç Tercihleri
+- **Amaç:** Kullanıcının dosyaların nereye indirileceğini seçmesi, Windows açılışında otomatik başlama ve sistem tepsisine küçülme tercihlerini belirleyebilmesi.
+- **Elle Test:**
+  1. Sihirbazda "İleri" butonuna basarak 2. Adıma (Klasör & Başlangıç Tercihleri) geçin.
+  2. "Gözat..." butonu ile özel bir indirme klasörü seçin (`D:\İndirmelerim`).
+  3. "Windows açıldığında FDownloader'ı otomatik başlat" ve "Sistem tepsisinde küçült" onay kutularını işaretleyin.
+  4. "Geri" butonuna basıldığında 1. Adıma dönülebildiğini, "İleri" ile tekrar 2. Adıma gelindiğinde yapılan seçimlerin korunduğunu doğrulayın.
+
+### 8.3 Tarayıcı Eklentisi Rehberi ve Kurulumu Tamamlama
+- **Amaç:** Kullanıcıya Chromium (Chrome/Edge/Brave/Opera) ve Firefox tarayıcı eklentisini nasıl yükleyeceğinin adım adım açıklanması, tek tıkla eklenti klasörünün açılması ve yolun panoya kopyalanması.
+- **Elle Test:**
+  1. 3. Adıma geçin (Tarayıcı Eklentisi Rehberi).
+  2. "Eklenti Klasörünü Aç" butonuna tıklayın; Windows Gezgini'nde `tools/browser-extension` klasörünün açıldığını görün.
+  3. "Klasör Yolunu Kopyala" butonuna tıklayın; panoya eklenti klasör yolunun kopyalandığını doğrulayın.
+  4. "Tamamla" butonuna basın; sihirbazın kapandığını, hoş geldiniz bildiriminin çıktığını ve `App.FirstRunCompleted = True` olarak kaydedildiğini doğrulayın.
+  5. Uygulamayı kapatıp tekrar açın; sihirbazın bir daha otomatik açılmadığını teyit edin.
