@@ -2,34 +2,33 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** P3-06 — İndirilen Dosya Güvenliği
+**ID:** P3-07 — Torrent Güvenliği ve VPN Kill-Switch
 **Durum:** ✅ Bitti
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
-- `src/FDownloader.Core/Security/DownloadFileSecurity.cs`:
-  - `DownloadFileSecurity` sınıfı oluşturuldu.
-  - Windows NTFS Zone.Identifier (Mark-of-the-Web: ZoneId=3, Web) Alternate Data Stream (ADS) yazma ve kontrol mantığı (`ApplyZoneIdentifier`, `HasZoneIdentifier`) uygulandı. ReferrerUrl ve HostUrl meta verileri de ADS içine yazılıyor.
-  - Tehlikeli dosya türleri tespiti (`IsDangerousFileType`): `.exe`, `.bat`, `.cmd`, `.scr`, `.js`, `.vbs`, `.ps1`, `.msi` vb. sistemde zararlı kod yürütebilecek 26 uzantı denetim altına alındı.
-- `src/FDownloader.Core/Engine/HttpDownloader.cs`:
-  - İndirme başarıyla tamamlanıp birleştirildiğinde (CommitAsync sonrası), otomatik olarak `ApplyZoneIdentifier` çağrılması sağlandı.
-- `tests/FDownloader.Core.Tests/DownloadFileSecurityTests.cs`:
-  - 15 teori ve birim testi eklendi: tehlikeli ve güvenli uzantı ayrımı, NTFS ADS Zone.Identifier yazımı ve doğrulaması test edildi.
-- Toplam test sayısı 234'ten **249'a** yükseldi. **249/249 test yeşil**.
+- `src/FDownloader.Core/Torrent/TorrentSecurityValidator.cs`:
+  - `TorrentSecurityValidator` statik güvenlik sınıfı oluşturuldu.
+  - Torrent içindeki dosyaların `ValidateTorrentFilePaths` ile hedef indirme dizini sınırları içinde kaldığı garanti altına alındı. `..`, mutlak kök yolları (`C:\...`, `/etc/...`) ve UNC paylaşımları engellenerek path traversal açıklarına set çekildi.
+  - `EvaluateNetworkBinding` ile ağ adaptörü bağlama ve VPN Kill-Switch kuralları standardize edildi: Seçili VPN adaptörü kapalı veya erişilemez olduğunda trafik Loopback (127.0.0.1) adresine kilitlenerek gerçek IP sızıntısı önleniyor.
+- `src/FDownloader.Core/Torrent/TorrentService.cs`:
+  - `NotifyMetadataLoaded` aşamasında gelen torrent dosyaları taranarak güvensiz dosya yolu tespit edilirse görev durdurulup kullanıcıya `TaskFailedEvent` ile güvenlik uyarısı veriliyor.
+  - Motor başlatılırken `TorrentSecurityValidator.EvaluateNetworkBinding` entegrasyonu sağlandı.
+- `tests/FDownloader.Core.Tests/TorrentSecurityTests.cs`:
+  - 11 teori ve birim testi eklendi: güvenli/güvensiz torrent dosya yolları, path traversal engeli, normal ağ bağlama ve VPN koptuğunda loopback kill-switch devreye girişi doğrulandı.
+- Toplam test sayısı 249'dan **260'a** yükseldi. **260/260 test yeşil**.
 
 ---
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** P3-06 tamamlandı.
-- **Sıradaki Görev:** **P3-07 — Torrent Güvenliği ve Kill-Switch**.
-  - Torrent dosya adları/yollarında path traversal (`..` ve mutlak yol) engeli.
-  - Varsayılan klasör dışına yazmama kontrolü.
-  - Ağ adaptörü kilidi (VPN kill-switch) ve ağ arayüzü bağlama test senaryoları.
+- **Tam olarak nerede kaldım:** P3-07 tamamlandı.
+- **Sıradaki Görev:** **P3-08 — Güncelleme Güvenliği**.
+  - Velopack güncelleme akışında HTTPS kanalı, SHA-256 paket bütünlüğü ve geri alma (rollback) planının `docs/GUNCELLEME.md` ile doğrulanması/belgelenmesi.
 - **Derleme durumu:** ✅ Başarılı (0 hata)
-- **Test durumu:** 249/249 geçiyor
+- **Test durumu:** 260/260 geçiyor
 
 ---
 
@@ -38,9 +37,9 @@
 1. Değişiklikleri commit et:
    ```
    git add src/ tests/ docs/
-   git commit -m "feat(security): P3-06 - Indirilen dosya guvenligi, Zone.Identifier Mark-of-the-Web ve tehlikeli uzanti korumasi"
+   git commit -m "feat(security): P3-07 - Torrent guvenligi, path traversal engeli ve VPN kill-switch korumasi"
    ```
-2. **P3-07:** `TorrentService` içinde path traversal denetimleri, VPN ağ arayüzü bağlama (kill-switch) mantığını ve testlerini uygula.
+2. **P3-08:** Güncelleme güvenliği (`docs/GUNCELLEME.md`, Velopack HTTPS/bütünlük kontrolleri) dokümantasyon ve güvenlik denetimini uygula.
 
 ---
 

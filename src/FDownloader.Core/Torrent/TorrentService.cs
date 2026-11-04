@@ -87,22 +87,10 @@ public sealed class TorrentService : IAsyncDisposable
         };
 
         // Ağ Adaptörü Bağlama & VPN Kill-Switch Mantığı
-        var bindIp = IPAddress.Any;
-        if (!string.IsNullOrWhiteSpace(settings.NetworkInterfaceId))
+        var (bindIp, isKillSwitchActive) = TorrentSecurityValidator.EvaluateNetworkBinding(settings.NetworkInterfaceId, _logger);
+        if (isKillSwitchActive)
         {
-            var ifaceIp = NetworkInterfaceHelper.GetInterfaceIPv4(settings.NetworkInterfaceId);
-            if (ifaceIp != null)
-            {
-                bindIp = ifaceIp;
-                _logger.LogInformation("VPN Adaptörü Bağlandı: BitTorrent trafiği {Ip} adresine kilitlendi.", ifaceIp);
-            }
-            else
-            {
-                // Kill-Switch DEVREDE: Seçilen VPN adaptörü kapalı veya yok.
-                // Gerçek IP sızıntısını engellemek için trafiği loopback'e kilitliyoruz.
-                bindIp = IPAddress.Loopback;
-                _logger.LogWarning("VPN Kill-Switch AKTİF: Seçili VPN adaptörü ({Id}) kapalı veya bulunamadı! Gerçek IP sızıntısını önlemek için trafik durduruldu.", settings.NetworkInterfaceId);
-            }
+            _logger.LogWarning("VPN Kill-Switch devreye alındı. Torrent trafiği Loopback arayüzüne kilitlendi.");
         }
 
         if (settings.ListeningPort > 0)
@@ -363,6 +351,19 @@ public sealed class TorrentService : IAsyncDisposable
 
     private void NotifyMetadataLoaded(long taskId, MonoTorrent.Torrent torrent, string localCachePath)
     {
+        // Torrent Path Traversal güvenlik denetimi (P3-07)
+        if (torrent.Files != null)
+        {
+            var relativePaths = torrent.Files.Select(f => f.Path);
+            if (!TorrentSecurityValidator.ValidateTorrentFilePaths(_downloadDirectory, relativePaths, out var unsafePath))
+            {
+                _logger.LogError("GÜVENLİK İHLALİ: Torrent içinde geçersiz veya dizin dışına taşan dosya yolu tespit edildi ({Path})! Görev #{TaskId} durduruluyor.", unsafePath, taskId);
+                _eventBus.Publish(new TaskFailedEvent(taskId, $"Güvenlik Uyarısı: Torrent içinde tehlikeli dosya yolu ({unsafePath}) engellendi.", false));
+                _ = PauseTorrentAsync(taskId);
+                return;
+            }
+        }
+
         _metadataNotifiedTasks.Add(taskId);
         _logger.LogInformation("Torrent meta verisi hazır: Task #{TaskId}, {Name}, {Size} Byte", taskId, torrent.Name, torrent.Size);
         _eventBus.Publish(new TorrentMetadataLoadedEvent(taskId, torrent.Name, torrent.Size, localCachePath));
