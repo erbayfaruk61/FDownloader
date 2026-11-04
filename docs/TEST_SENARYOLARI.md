@@ -316,3 +316,15 @@ Bu belge, FDownloader indirme motoru ve disk/dosya sistemi için hem otomatik he
   3. Butonların ("➕ New Download", "Settings", "File Name" vb.) ve sihirbaz metinlerinin anında İngilizceye dönüştüğünü görün.
   4. "🇹🇷 Türkçe" seçeneğine geri dönün; arayüzün anında Türkçeye güncellendiğini doğrulayın.
   5. Uygulamayı yeniden başlatın; SQLite veritabanındaki `Ui.Language` ayarının hatırlandığını teyit edin.
+
+---
+
+## 10. Hata Mesajları ve Çözüm Önerileri Senaryoları (P6-03)
+
+### 10.1 Ne Oldu / Neden Oldu / Ne Yapabilirsin Formatı
+- **Amaç:** Herhangi bir indirme hatası oluştuğunda kullanıcının paniklememesi ve tam olarak ne yapacağını bilmesi için standart üçlü formatta açıklama üretilmesi.
+- **Otomatik Test:** `UserFriendlyErrorTests.Explain_NotFound_Returns_404Details`, `UserFriendlyErrorTests.Explain_AuthError_Returns_401Or403Details`, `UserFriendlyErrorTests.Explain_RateLimit_Returns_429WithRetrySeconds`, `UserFriendlyErrorTests.Explain_DiskFull_Returns_DiskFullResolution`, `UserFriendlyErrorTests.Explain_DrmProtected_Returns_DrmDetails`, `UserFriendlyErrorTests.Explain_TransientNetwork_Returns_RetryDetails`.
+- **Elle Test:**
+  1. 404 dönen veya silinmiş bir bağlantı indirmeyi deneyin.
+  2. Görev üzerinde veya detay bölmesinde `[ERR_HTTP_404]` kodunun, "Dosya sunucuda bulunamadı", silinme nedeni ve "Taze bir link alıp indirmeyi yenileyin" çözüm önerisinin görüntülendiğini doğrulayın.
+  3. `docs/HATA_KODLARI.md` rehberinde tüm hata kodlarının eksiksiz yer aldığını teyit edin.

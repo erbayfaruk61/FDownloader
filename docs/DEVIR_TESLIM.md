@@ -2,43 +2,39 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** P6-02 — Çoklu Dil Altyapısı (Faz 6 — Kullanıcı Deneyimi)  
+**ID:** P6-03 — Hata Mesajları ve docs/HATA_KODLARI.md (Faz 6 — Kullanıcı Deneyimi)  
 **Durum:** ✅ Bitti
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
-- `src/FDownloader.Core/Localization/LocalizationService.cs`:
-  - Singleton `LocalizationService` reaktif dil servisi oluşturuldu.
-  - `INotifyPropertyChanged` ve `Item[]` indeksleyicisi ile XAML bağlamlarının (`{Binding Loc[Anahtar]}`) dil değiştiğinde tüm UI'da anında yenilenmesi sağlandı.
-  - İşletim sistemi kültürünü (`CultureInfo.CurrentUICulture`) okuyarak Türkçe veya İngilizceyi otomatik algılama (`DetectSystemLanguage`).
-  - Türkçe ve İngilizce kapsamlı yerelleştirme sözlükleri (Genel, Toolbar, Kategoriler, Tablo Sütunları, Sihirbaz ve Ayarlar metinleri) tanımlandı.
-- `src/FDownloader.App/ViewModels/MainViewModel.cs`:
-  - `Loc` özelliği, `IsLanguageTurkish`, `IsLanguageEnglish` ve `SetAppLanguage(langCode)` metotları eklendi.
-  - SQLite kalıcı ayar anahtarı `SettingKeyLanguage` ("Ui.Language") tanımlandı ve açılışta yüklenmesi sağlandı.
-- `src/FDownloader.App/Views/MainWindow.axaml`:
-  - Ayarlar > Görünüm sekmesine "🌐 Uygulama Dili (Language)" radyo butonları (🇹🇷 Türkçe, 🇬🇧 English) eklendi.
-  - İlk Açılış Sihirbazı başlığına bayraklı hızlı dil seçim butonları ve yerelleştirilmiş metin bağlamları entegre edildi.
-- `tests/FDownloader.Core.Tests/LocalizationTests.cs`:
-  - 4 adet birim testi eklendi (Varsayılan dil doğrulaması, çalışma zamanında dinamik dil değişimi, eksik anahtar fallback davranışı ve sistem dili tespiti).
-  - Test sayısı 351'den **355'e** yükseldi. **355/355 test yeşil**.
+- `src/FDownloader.Core/Engine/Exceptions/UserFriendlyError.cs`:
+  - `ErrorCode` (ERR_HTTP_404, ERR_DISK_FULL vb.), `WhatHappened` (Ne oldu), `PossibleReason` (Neden olmuş olabilir), `WhatYouCanDo` (Ne yapabilirsin) ve `TechnicalDetails` model yapısı oluşturuldu.
+- `src/FDownloader.Core/Engine/Exceptions/UserFriendlyErrorExplainer.cs`:
+  - `DownloadErrorKind` ve `Exception` türlerine göre (404, 401/403, 429 Retry-After, 416 Range, disk dolu, dosya izni, DRM koruması, geçici ağ kopmaları) standart kullanıcı dostu açıklamalar üreten servis geliştirildi.
+- `docs/HATA_KODLARI.md`:
+  - Kapsamlı hata kodları kılavuzu hazırlandı.
+- `tests/FDownloader.Core.Tests/UserFriendlyErrorTests.cs`:
+  - 6 adet birim testi eklendi (404 bulunamadı, 401/403 yetkisiz/yasak, 429 istek sınırı ve bekleme süresi, disk dolu, DRM koruması, geçici ağ hataları).
+  - Test sayısı 355'ten **361'e** yükseldi. **361/361 test yeşil**.
 - `docs/TEST_SENARYOLARI.md`:
-  - Senaryo 9 (Çoklu Dil / i18n: Sistem Dili Tespiti ve Dinamik Dil Değiştirme) eklendi.
+  - Senaryo 10 (Hata Mesajları ve Çözüm Önerileri: Ne Oldu / Neden Oldu / Ne Yapabilirsin) eklendi.
 - `docs/ILERLEME.md`:
-  - `P6-02` tamamlandı olarak güncellendi.
+  - `P6-03` tamamlandı olarak güncellendi.
 - **Doğrulama:**
-  - `dotnet build src/FDownloader.App/FDownloader.App.csproj` -> 0 Hata
-  - `dotnet test` -> 355/355 test yeşil.
+  - `dotnet build` -> 0 Hata
+  - `dotnet test` -> 361/361 test yeşil.
 
 ---
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** P6-02 bitti. Sıradaki görev: **P6-03 — Hata Mesajları ve docs/HATA_KODLARI.md**.
-  - P2-05 hata sınıflandırma sistemindeki tüm durumlar için (404, 403, 401, 429, disk dolu, zaman aşımı, SSL hatası, dosya bozulması) kullanıcı dostu "ne oldu / neden olmuş olabilir / ne yapabilirsin" açıklamaları ve `docs/HATA_KODLARI.md` rehberinin oluşturulması.
+- **Tam olarak nerede kaldım:** P6-03 bitti. Sıradaki görev: **P6-04 — Arayüz İyileştirmeleri (UI Enhancements)**.
+  - İndirme detay ekranı: parça haritası, hız grafiği, bağlantı bilgisi, görev logu.
+  - Büyük listelerde sanallaştırma, klavye kısayolları (Ctrl+N, Ctrl+V, Delete, Space), çoklu seçim, sürükle-bırak (URL ve dosya), sistem tepsisi menüsü zenginleştirmesi.
 - **Derleme durumu:** ✅ Başarılı (0 hata)
-- **Test durumu:** 355/355 geçiyor
+- **Test durumu:** 361/361 geçiyor
 
 ---
 
@@ -47,6 +43,6 @@
 1. Değişiklikleri commit et:
    ```bash
    git add src/ tests/ docs/
-   git commit -m "feat(i18n): P6-02 - Coklu dil altyapisi (Turkce/Ingilizce), reaktif dil degisimi ve sistem dili tespiti (355 test yesil)"
+   git commit -m "feat(errors): P6-03 - Kullanici dostu hata aciklamalari (ne/neden/cozum) ve docs/HATA_KODLARI.md (361 test yesil)"
    ```
-2. **P6-03:** Hata mesajlarını kullanıcı dostu üçlü formatta yapılandırmak ve `docs/HATA_KODLARI.md` belgesini hazırlamak.
+2. **P6-04:** Arayüz iyileştirmelerini (klavye kısayolları, sürükle-bırak desteği, detay paneli ve sistem tepsisi) doğrulamak ve geliştirmek.
