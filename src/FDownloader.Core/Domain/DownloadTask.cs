@@ -53,8 +53,24 @@ public class DownloadTask
 
     // ─── Durum ────────────────────────────────────────────────────────────
 
-    /// <summary>Görevin mevcut durumu.</summary>
-    public DownloadStatus Status { get; set; } = DownloadStatus.Queued;
+    private DownloadStatus _status = DownloadStatus.Queued;
+
+    /// <summary>Görevin mevcut durumu. Durum geçişleri DownloadStateMachine tarafından denetlenir.</summary>
+    public DownloadStatus Status
+    {
+        get => _status;
+        set
+        {
+            DownloadStateMachine.ValidateTransition(_status, value);
+            _status = value;
+        }
+    }
+
+    /// <summary>Durum makinesi kontrolü yapmadan durumu doğrudan ayarlar (veritabanından ilk yükleme vb.).</summary>
+    public void SetStatusDirect(DownloadStatus status)
+    {
+        _status = status;
+    }
 
     /// <summary>Toplam yeniden deneme sayısı.</summary>
     public int RetryCount { get; set; }

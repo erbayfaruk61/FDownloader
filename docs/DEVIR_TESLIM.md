@@ -2,36 +2,32 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** P2-11 — Kuyruk, Hız Sınırlayıcı ve Zamanlayıcı
+**ID:** P2-12 — Görev Durum Makinesi
 **Durum:** ✅ Bitti
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
-- `src/FDownloader.Core/Engine/SpeedLimiter.cs`:
-  - Token-bucket algoritması ile çalışan hız sınırlayıcı eklendi. İndirme sırasında dinamik limit güncelleme (LimitBytesPerSecond) desteklendi.
-- `src/FDownloader.Core/Manager/DownloadScheduler.cs`:
-  - Belirli saatte otomatik başlatma/durdurma ve tüm indirmeler tamamlandığında bilgisayarı kapatma/uykuya alma mantığı uygulandı.
-- `src/FDownloader.Core/Manager/NetworkWatcher.cs`:
-  - Ağ bağlantı durumu izleyicisi entegre edildi. İnternet koptuğunda aktif indirmeler güvenli şekilde duraklatılıyor, bağlantı sağlandığında otomatik sürdürülüyor.
-- `src/FDownloader.Core/Manager/DownloadManager.cs`:
-  - `MaxConcurrentDownloads` eşzamanlı indirme sınırı, `ProcessQueueAsync` kuyruk öncelik sırası (`Priority` ve `CreatedAt`), görev önceliğini değiştirme ve sürükle-bırak kuyruk sırası yönetimi entegre edildi.
-  - `DisposeAsync` içinde koleksiyon değişikliği hataları engellendi ve güvenli temizlik sağlandı.
-- `tests/FDownloader.Core.Tests/QueueAndSchedulerTests.cs`:
-  - 5 yeni birim testi yazıldı: dinamik hız sınırlama, eşzamanlı indirme kuyruk sınırı, öncelik sıralaması, zamanlayıcı tetikleyicisi ve ağ izleme olayları test edildi.
-- Toplam test sayısı 172'den **177'ye** yükseldi. **177/177 test yeşil**.
+- `src/FDownloader.Core/Domain/DownloadStateMachine.cs`:
+  - `DownloadStateMachine` sınıfı oluşturuldu. `DownloadStatus` yaşam döngüsündeki tüm geçerli ve geçersiz durum geçişleri (Queued, Connecting, Downloading, Paused, Merging, Verifying, Retrying, Failed, Completed, Cancelled) kurallara bağlandı.
+- `src/FDownloader.Core/Domain/DownloadTask.cs`:
+  - `Status` property'sine durum makinesi doğrulaması (`DownloadStateMachine.ValidateTransition`) entegre edildi. Geçersiz durumlara geçilmek istendiğinde `InvalidOperationException` fırlatılıyor.
+  - Veritabanı okuma veya ham atamalar için `SetStatusDirect` metodu eklendi.
+- `tests/FDownloader.Core.Tests/DownloadStateMachineTests.cs`:
+  - Kapsamlı teori ve birim testleri (30 test) yazıldı. Hem izin verilen döngüler hem de geçersiz geçişlerin (ör. Queued -> Completed, Paused -> Completed) engellendiği doğrulandı.
+- Toplam test sayısı 177'den **207'ye** yükseldi. **207/207 test yeşil**.
 
 ---
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** P2-11 başarıyla tamamlandı ve test edildi.
-- **Sıradaki Görev:** **P2-12 — Görev Durum Makinesi**.
-  - `docs/MIMARI.md`'deki durum geçiş tablosuna göre geçersiz durum geçişlerinin engellenmesi (`DownloadStatus` state transitions: Queued, Connecting, Downloading, Paused, Merging, Completed, Failed, Cancelled).
-  - Geçersiz geçişlerde exception fırlatılması veya koruma mekanizması ve testleri.
+- **Tam olarak nerede kaldım:** P2-12 başarıyla tamamlandı ve test edildi.
+- **Sıradaki Görev:** **P2-13 — Tekrar Eden URL ve Silme Politikası**.
+  - Aynı URL tekrar eklendiğinde tespit etme / mevcut göreve yönlendirme politikası.
+  - Diskten dosya silme / veritabanından silme ayrımı (`RemoveTaskAsync(taskId, deleteFile)`).
 - **Derleme durumu:** ✅ Başarılı (0 hata)
-- **Test durumu:** 177/177 geçiyor
+- **Test durumu:** 207/207 geçiyor
 
 ---
 
@@ -40,9 +36,9 @@
 1. Değişiklikleri commit et:
    ```
    git add src/ tests/ docs/
-   git commit -m "feat(engine): P2-11 - Kuyruk yonetimi, oncelik sirasi, hiz sinirlayici, zamanlayici ve ag izleyici"
+   git commit -m "feat(engine): P2-12 - Gorev durum makinesi ve gecersiz gecis engelleme"
    ```
-2. **P2-12:** `DownloadStateMachine.cs` (veya `DownloadTask` durum doğrulama kuralları) durum geçiş mantığını ve birim testlerini uygula.
+2. **P2-13:** Tekrar eden URL kontrolü ve diskten/veritabanından güvenli silme politikalarını uygula ve test et.
 
 ---
 

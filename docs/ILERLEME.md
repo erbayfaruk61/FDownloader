@@ -46,7 +46,7 @@
 | P2-09 | Dosya adı güvenliği | 🟡 | ✅ Bitti | — | Windows rezerve adları (_CON/_NUL), Unicode normalleştirme, IsSafePath ile path traversal koruması, 37 testlik kötü niyetli liste ve çakışma politikaları doğrulandı (170/170 test yeşil) |
 | P2-10 | Hız/ETA/ilerleme | 🟡 | ✅ Bitti | — | SpeedCalculator hareketli ortalama, akış durduğunda hızın sıfıra düşmesi, doğru ETA hesaplaması ve 400ms (saniyede 2.5 kez) UI event sınırlaması doğrulandı (172/172 test yeşil) |
 | P2-11 | Kuyruk/limit/zamanlayıcı | 🟡 | ✅ Bitti | — | SpeedLimiter (dinamik hız sınırlama), DownloadScheduler (belirli saatte başla/dur, bitince kapat/uyku), NetworkWatcher (bağlantı kopunca duraklat, gelince sürdür) ve MaxConcurrentDownloads kuyruk öncelik yönetimi tamamlandı (177/177 test yeşil) |
-| P2-12 | Durum makinesi | 🟡 | ⬜ Bekliyor | — | |
+| P2-12 | Durum makinesi | 🟡 | ✅ Bitti | — | DownloadStateMachine eklendi. Geçersiz durum geçişleri engellendi (Örn: Queued/Paused -> Completed doğrudan geçişi engellendi, 207/207 test yeşil) |
 | P2-13 | Tekrar eden URL/silme | 🟢 | ⬜ Bekliyor | — | |
 
 ---
