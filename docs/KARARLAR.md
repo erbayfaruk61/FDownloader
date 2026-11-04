@@ -35,3 +35,4 @@ Masaüstü uygulaması ve tarayıcı eklentisi, kullanıcının indirme bağlant
 
 ### Karar
 Her yeni indirme özelliği, SHA-256 hash bütünlüğü, parça birleştirme doğruluğu ve disk alanı güvenliği birim testleriyle doğrulanmadan yayınlanamaz.
+

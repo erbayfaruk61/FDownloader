@@ -80,11 +80,24 @@
 
 ---
 
-## Faz 5–9
+## Faz 5 — Medya, Torrent ve Ek Özellikler
+
+| ID | Görev | Zorluk | Durum | Commit | Not |
+|---|---|---|---|---|---|
+| P5-01 | yt-dlp entegrasyonu sağlamlığı | 🟡 | ✅ Bitti | — | Sürüm güncelleme (yt-dlp -U & GitHub), anlaşılır Türkçe hata çevirisi, yetim süreç temizliği (tree kill + Dispose) ve format/çözünürlük modeli eklendi (301/301 test yeşil) |
+| P5-02 | HLS/DASH ve birleştirme | 🟡 | ⬜ Bekliyor | — | Parçaları paralel indir, sırayla birleştir, ses/video akışlarını konteynere (mp4) dönüştür |
+| P5-03 | Torrent sağlamlığı | 🟡 | ⬜ Bekliyor | — | Magnet & torrent dosya seçimi, sıralı indirme, hash kontrolü, seed yönetimi |
+| P5-04 | Site/galeri yakalayıcı | 🟡 | ⬜ Bekliyor | — | Tarama derinliği, hız limiti, sonuçları filtreleme |
+| P5-05 | Proxy ve kimlik doğrulama | 🟡 | ⬜ Bekliyor | — | HTTP/HTTPS/SOCKS5 proxy, sistem proxy, site giriş bilgileri yöneticisi |
+| P5-06 | Toplu indirme | 🟢 | ⬜ Bekliyor | — | Link listesi yapıştırma, sayı aralığı deseni |
+
+---
+
+## Faz 6–9
 
 | ID | Görev | Zorluk | Durum |
 |---|---|---|---|
-| P5-01 → P9-05 | (Tüm görevler) | — | ⬜ Bekliyor |
+| P6-01 → P9-05 | (Tüm görevler) | — | ⬜ Bekliyor |
 
 ---
 

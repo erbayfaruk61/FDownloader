@@ -111,3 +111,4 @@ Mağaza panellerine yüklenecek görsellerin standart boyutları:
 1. `dist/FDownloader-Extension-Firefox.zip` dosyasını alın.
 2. [Firefox Add-ons Developer Hub](https://addons.mozilla.org/developers/) sayfasına gidin.
 3. ZIP paketini yükleyin ve doğrulamayı tamamlayıp yayınlayın.
+

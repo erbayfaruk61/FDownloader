@@ -67,3 +67,4 @@ Bu gizlilik politikasında yapılabilecek olası güncellemeler GitHub depomuzda
 
 - **Proje Deposu:** [GitHub / FDownloader](https://github.com/faruk/FDownloader)  
 - **Lisans:** Açık Kaynak
+

@@ -78,3 +78,4 @@ P4-01 görevi kapsamında eklenti kod tabanında aşağıdaki optimizasyonlar ve
 2. **Yalnızca Yerel İletişim (Localhost Loopback):** Eklenti yalnızca `127.0.0.1:9666` adresinde çalışan FDownloader yerel köprüsüne veri iletir.
 3. **Alt Tuşu ile Anında Baypas:** İndirme linkine tıklanırken `Alt` tuşuna basılı tutulursa (veya basıldıktan sonraki 5 saniye içinde) eklenti devreye girmez; indirme tarayıcının kendi indirme yöneticisine bırakılır.
 4. **Köprü Güvenlik Sertleştirmesi (P3-01 Entegrasyonu):** Masaüstü tarafındaki `BrowserBridgeService`, yalnızca izin verilen `chrome-extension://` veya `moz-extension://` Origin başlıklarına cevap vermektedir.
+

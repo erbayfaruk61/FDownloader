@@ -96,5 +96,34 @@ Bu belge, FDownloader indirme motoru ve disk/dosya sistemi için hem otomatik he
   2. `<video>` üzerinde DRM algılandığında eklenti butonunun `🔒 Korumalı İçerik (DRM İndirilemez)` uyarısına geçtiğini doğrulayın.
   3. Butona tıklandığında indirme isteği atılmadığını, koruma uyarısı verildiğini doğrulayın.
 
+---
+
+## 3. Medya ve yt-dlp Senaryoları (P5-01)
+
+### 3.1 yt-dlp Sürüm Güncelleme
+- **Amaç:** Video siteleri sık sık algoritma değiştirdiğinden, yt-dlp binary'sinin uygulamadan tek tıkla veya arka planda en güncel sürüme yükseltilebilmesi.
+- **Otomatik Test:** `YtDlpMediaService.GetInstalledVersionAsync`, `YtDlpMediaService.UpdateYtDlpAsync`.
+- **Elle Test:**
+  1. `tools/yt-dlp/yt-dlp.exe` dosyasını kontrol edin.
+  2. Uygulama içerisinden "yt-dlp Güncelle" seçeneğini tetikleyin.
+  3. Sürümün en son GitHub yayınına (`YYYY.MM.DD`) yükseldiğini doğrulayın.
+
+### 3.2 İptal ve Yetim Süreç (Orphan Process) Temizliği
+- **Amaç:** Medya indirmesi iptal edildiğinde veya uygulama kapatıldığında alt süreçlerin (`yt-dlp.exe` ve `ffmpeg.exe`) arkada çalışmaya devam etmesini (kaynak tüketimini) önlemek.
+- **Otomatik Test:** `YtDlpMediaServiceTests.StopDownload_WhenTaskNotRunning_DoesNotThrow`, `YtDlpMediaServiceTests.Dispose_WhenCalledMultipleTimes_CleansUpSafely`.
+- **Elle Test:**
+  1. Uzun bir YouTube videosu indirmesi başlatın.
+  2. Görev Yöneticisi'ni (Task Manager) açıp `yt-dlp.exe` ve `ffmpeg.exe` süreçlerinin çalıştığını görün.
+  3. FDownloader üzerinden indirmeyi "İptal Et" (Cancel) butonuna basın.
+  4. Görev Yöneticisi'nde `yt-dlp.exe` ve `ffmpeg.exe` süreçlerinin anında sonlandığını, yetim süreç kalmadığını doğrulayın.
+
+### 3.3 Hata Çıktısı Anlaşılırlığı ve Format Seçimi
+- **Amaç:** Video hatalarının (yaş kısıtlaması, özel video, bot doğrulaması, 403 vb.) anlaşılır Türkçe rehberlikle kullanıcıya iletilmesi ve çözünürlüklerin seçilebilmesi.
+- **Otomatik Test:** `YtDlpMediaServiceTests.FormatTurkishErrorMessage_TranslatesCommonErrorsAccurately`, `MediaMetadata_Formats_CanBeAddedAndOrderedByHeight`.
+- **Elle Test:**
+  1. Yaş kısıtlamalı veya gizli bir video bağlantısı girin.
+  2. Hatanın anlaşılır Türkçe mesaj olarak ("Bu video yaş kısıtlamalıdır...", "Video yayından kaldırılmış...") ekranda göründüğünü doğrulayın.
+
+
 
 
