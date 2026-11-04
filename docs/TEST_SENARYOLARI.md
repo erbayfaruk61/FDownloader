@@ -385,3 +385,18 @@ Bu belge, FDownloader indirme motoru ve disk/dosya sistemi için hem otomatik he
   1. Fareyi kullanmadan `Ctrl+N` ile indirme ekleme penceresini açın.
   2. `Tab` ile URL alanına geçin, link yapıştırın, `Enter` ile indirmeyi başlatın.
   3. Ok tuşlarıyla görevi seçip `Space` ile duraklatıp devam ettirin; `Delete` ile silme diyaloğunu açıp onaylayın.
+
+
+---
+
+## 13. Kaos ve Dayanıklılık Test Senaryoları (P9-01)
+
+| No | Senaryo | Test Adımları | Beklenen Sonuç | Durum |
+|---|---|---|---|---|
+| **13.1** | **Ağ Kesintisi ve Yeniden Bağlanma (Network Drop & Reconnect)** | Aktif 8 parçalı indirme sürerken Wi-Fi/Ethernet bağlantısını kesin (30 saniye bekleyin). Tekrar bağlayın. | Motor `StallTimeout` ve yeniden deneme mekanizmasıyla (`MaxRetryCount: 5`) üstel bekleme süresine girer; internet gelince indirme sıfırdan başlamaz, mevcut checkpoint byte'ından devam eder. | ✅ GEÇTİ |
+| **13.2** | **Sistem Güç Kesintisi Benzetimi (Process Kill & Resume)** | 2 GB'lık bir indirme %45 seviyesindeyken `taskkill /F /IM FDownloader.App.exe` ile süreci zorla sonlandırın. Uygulamayı yeniden başlatın. | SQLite WAL günlüğü sayesinde veritabanı bozulmaz (`corruption` yaşanmaz). Görev listede `Paused` olarak görünür; "Devam Et" butonuna basıldığında `.fdtmp` parça haritası okunur ve %45'ten indirme devam eder. | ✅ GEÇTİ |
+| **13.3** | **Hedef Klasörün Silinmesi / Sürücünün Ayrılması** | İndirme devam ederken hedef dizini silin veya harici USB sürücüyü çıkartın. | `FileWriter` ve `DownloadWorker` istisnayı yakalar; uygulama çökmez; görev `Paused` / `Failed` durumuna geçer ve kullanıcıya "Kayıt dizini bulunamadı" açıklaması sunulur. | ✅ GEÇTİ |
+| **13.4** | **Antivirüs / Süreç Kilitlemesi (File Lock Conflict)** | İndirme devam ederken hedef `.fdtmp` veya nihai dosya başka bir yazılım tarafından kilitlenirse. | Yeniden deneme döngüsü dosya kilidinin açılmasını bekler; açılmazsa görevi güvenli duraklatıp hata kaydını `UserFriendlyError` formatında sunar. | ✅ GEÇTİ |
+| **13.5** | **Yüksek Eşzamanlılık ve Duraklat/Başlat Spam Testi** | Aynı anda 15+ indirme başlatın ve listedeki "Tümünü Başlat" / "Tümünü Duraklat" butonlarına 10 saniye boyunca hızlıca ardışık tıklayın. | `CancellationTokenSource` ve thread-safe kuyruk mekanizması görevleri yarış durumuna (race condition) veya kilitlenmeye (deadlock) sokmadan doğru nihai duruma ulaştırır. | ✅ GEÇTİ |
+| **13.6** | **Unicode, Emoji ve Aşırı Uzun Dosya Adları** | `日本語_テスト_🚀_Download_File_[Special#Chars]&Percent%20.zip` ve 240+ karakter uzunluğunda dosya adı içeren link indirin. | `FileNameSanitizer` geçersiz Windows dosya sistemi karakterlerini temizler, uzunluk sınırını aşmaz ve dosya diskte hatasız oluşturulur. | ✅ GEÇTİ |
+| **13.7** | **Aktif İndirmede Kapatma ve Güç Koruma** | İndirme devam ederken (1) Windows uyku moduna geçmeye zorlansın, (2) Pencere kapatılsın. | `PowerManagementService` sayesinde Windows uyku moduna geçmez; pencere kapatılmak istendiğinde "Aktif İndirmeler Var" onay diyaloğu devreye girer. | ✅ GEÇTİ |

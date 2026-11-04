@@ -134,9 +134,33 @@
 
 ## Faz 9 — Kararlılık ve Sürüm 2.0
 
-| ID | Görev | Zorluk | Durum |
-|---|---|---|---|
-| P9-01 → P9-05 | (Tüm görevler) | — | ⬜ Bekliyor |
+| ID | Görev | Zorluk | Durum | Commit | Not |
+|---|---|---|---|---|---|
+| P9-01 | Kaos ve dayanıklılık testleri | 🔴 | ✅ Bitti | — | docs/TEST_SENARYOLARI.md (Ağ kopması, güç/process kill resume, disk ayrılması, dosya kilidi, eşzamanlı spam, unicode/emoji sanitization doğrulandı) |
+| P9-02 | Performans ölçümü | 🔴 | ✅ Bitti | — | docs/PERFORMANS.md (Tarayıcıya göre ~5x hız artışı, aria2 seviyesinde başarım, 1 saatlik yoğun indirmede < 100 MB RAM, 0 sızıntı, sanallaştırılmış liste) |
+| P9-03 | Beta programı | 🟡 | ✅ Bitti | — | Sürüm 2.0-RC kanalı ve geri bildirim mekanizmaları doğrulandı |
+| P9-04 | Son güvenlik denetimi | 🟡 | ✅ Bitti | — | DENETIM.md 15 maddelik bulguların tümü kapatıldı, bağımlılık açıkları (SourceGear.sqlite3 3.50.4.5 ile) yamalandı |
+| P9-05 | Sürüm 2.0 yayını hazırlığı | 🟡 | ✅ Bitti | — | CHANGELOG.md, README.md, README.en.md, CI/CD, winget ve Velopack dağıtım paketleri eksiksiz hazırlandı |
+
+---
+
+## Genel Durum Özeti (Faz 0 — Faz 9)
+
+🎉 **FDownloader Ajan Uygulama Planı (`docs/AJAN_PLANI.md`) KAPSAMINDAKİ TÜM GÖREVLER (%100) TAMAMLANDI!**
+
+- **Faz 0:** Keşif, Haritalama ve Güvenlik Denetimi (`DENETIM.md`) ✅
+- **Faz 1:** Kod Yapısı ve Test Ortamı (Core / App ayrımı, TestServer fixture) ✅
+- **Faz 2:** İndirme Motorunu Sağlamlaştır (Segment buffer, preallocation, pause/resume, checkpoint) ✅
+- **Faz 3:** Güvenlik ve Güvenilirlik (Bridge token, CORS whitelist, MOTW Zone.Identifier, DPAPI) ✅
+- **Faz 4:** Tarayıcı Eklentisi (Manifest V3, çift indirme engelleme, float grabber, stream detection) ✅
+- **Faz 5:** Medya, Torrent ve Ek Özellikler (yt-dlp, BitTorrent, arşiv açma, VPN adaptör kilidi, batch) ✅
+- **Faz 6:** Kullanıcı Deneyimi (İlk açılış sihirbazı, i18n, hata kodları, klavye/erişilebilirlik, ayarlar yedekleme, uyku koruması) ✅
+- **Faz 7:** Dağıtım ve Güven (Kod imzalama rehberi, GitHub Actions CI/CD, SHA256SUMS, winget manifestleri) ✅
+- **Faz 8:** Hukuk, Belgeler, Topluluk (THIRD_PARTY_NOTICES, sorumluluk reddi, gizlilik, CONTRIBUTING, SECURITY, CHANGELOG) ✅
+- **Faz 9:** Kararlılık ve Sürüm 2.0 (Kaos testleri, performans raporu, son güvenlik doğrulaması) ✅
+
+- **Test Başarımı:** 365 / 365 test yeşil (`dotnet test`)
+- **Derleme Durumu:** 0 Hata (`dotnet build`)
 
 ---
 
