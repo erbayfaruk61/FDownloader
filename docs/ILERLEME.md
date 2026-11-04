@@ -67,11 +67,24 @@
 
 ---
 
-## Faz 4–9
+## Faz 4 — Tarayıcı Eklentisi ve Entegrasyon
+
+| ID | Görev | Zorluk | Durum | Commit | Not |
+|---|---|---|---|---|---|
+| P4-01 | Eklenti denetimi ve temizliği | 🟡 | ✅ Bitti | — | Manifest V3 izinleri asgariye indirildi (scripting ve polling heartbeat kaldırıldı), docs/EKLENTI.md ve docs/GIZLILIK.md hazırlandı |
+| P4-02 | Yakalama doğruluğu | 🔴 | ⬜ Bekliyor | — | Tarayıcı indirmesini iptal edip uygulamaya devretme, Alt tuşu ile atlama, uygulama kapalıyken normal devam |
+| P4-03 | Medya algılama | 🟡 | ⬜ Bekliyor | — | Doğrudan video, HLS/DASH algılama ve DRM korumalı içerik uyarısı |
+| P4-04 | Firefox desteği | 🟡 | ⬜ Bekliyor | — | Firefox uyarlaması, webextension polyfill/manifest |
+| P4-05 | Eklenti paketleme otomasyonu | 🟢 | ⬜ Bekliyor | — | CI üzerinden otomatik eklenti ZIP üretimi |
+| P4-06 | Mağaza yayını hazırlığı | 🧑 | ⬜ Bekliyor | — | Mağaza tanıtım metinleri, ekran görüntüleri ve form taslakları |
+
+---
+
+## Faz 5–9
 
 | ID | Görev | Zorluk | Durum |
 |---|---|---|---|
-| P4-01 → P9-05 | (Tüm görevler) | — | ⬜ Bekliyor |
+| P5-01 → P9-05 | (Tüm görevler) | — | ⬜ Bekliyor |
 
 ---
 

@@ -7,20 +7,19 @@
     "downloads",
     "contextMenus",
     "storage",
-    "cookies",
-    "scripting"
+    "cookies"
   ],
   "host_permissions": [
     "http://127.0.0.1:9666/*",
     "http://localhost:9666/*",
-    "<all_urls>"
+    "*://*/*"
   ],
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": ["*://*/*"],
       "js": ["content.js"],
       "run_at": "document_start",
       "all_frames": true

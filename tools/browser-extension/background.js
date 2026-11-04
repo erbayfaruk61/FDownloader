@@ -146,70 +146,6 @@ function shouldCapture(downloadItem, allowedExtensions) {
   return false;
 }
 
-let isBridgeConnected = false;
-let heartbeatTimer = null;
-
-async function sendHeartbeatToFDownloader() {
-  let success = false;
-  try {
-    const manifest = chrome.runtime.getManifest();
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 1500);
-    const res = await fetch(`${BRIDGE_URL}/ping`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Extension-Version": manifest.version || "1.0.0"
-      },
-      body: JSON.stringify({
-        version: manifest.version || "1.0.0",
-        name: manifest.name || "FDownloader Entegrasyonu"
-      }),
-      signal: controller.signal
-    });
-    clearTimeout(timer);
-    success = res.ok;
-  } catch (e) {
-    success = false;
-  }
-
-  isBridgeConnected = success;
-
-  // Akıllı dinamik kontrol aralığı:
-  // Eğer bağlantı henüz yoksa FDownloader yeni başlatılıyor olabilir; 1.5 saniyede bir hızlı kontrol et.
-  // Bağlantı kurulduğunda ise sistemi yormamak için kontrol aralığını 12 saniyeye çıkar.
-  const nextInterval = isBridgeConnected ? 12000 : 1500;
-  clearTimeout(heartbeatTimer);
-  heartbeatTimer = setTimeout(sendHeartbeatToFDownloader, nextInterval);
-}
-
-// Service worker başlangıcında hemen çalıştır
-sendHeartbeatToFDownloader();
-
-if (chrome.alarms) {
-  try {
-    chrome.alarms.create("fdownloader_heartbeat", { periodInMinutes: 0.5 });
-    chrome.alarms.onAlarm.addListener((alarm) => {
-      if (alarm.name === "fdownloader_heartbeat") {
-        sendHeartbeatToFDownloader();
-      }
-    });
-  } catch (e) { }
-}
-
-try {
-  chrome.runtime.onInstalled?.addListener(() => sendHeartbeatToFDownloader());
-  chrome.runtime.onStartup?.addListener(() => sendHeartbeatToFDownloader());
-  chrome.tabs.onActivated?.addListener(() => {
-    if (!isBridgeConnected) sendHeartbeatToFDownloader();
-  });
-  chrome.windows.onFocusChanged?.addListener((winId) => {
-    if (winId !== chrome.windows.WINDOW_ID_NONE && !isBridgeConnected) {
-      sendHeartbeatToFDownloader();
-    }
-  });
-} catch (e) { }
-
 async function isBridgeAlive() {
   try {
     const manifest = chrome.runtime.getManifest();
@@ -412,22 +348,6 @@ chrome.downloads.onDeterminingFilename.addListener((downloadItem, suggest) => {
 // ─── 2. Sağ Tık Bağlam Menüsü (Context Menu) ────────────────────────────────
 
 chrome.runtime.onInstalled.addListener(() => {
-  // Mevcut açık HTTP/HTTPS sekmelerine content.js'i otomatik enjekte et (sayfa yenileme ihtiyacını kaldırır)
-  try {
-    chrome.tabs.query({ url: ["http://*/*", "https://*/*"] }, (tabs) => {
-      if (tabs && tabs.length > 0) {
-        for (const tab of tabs) {
-          if (tab.id) {
-            chrome.scripting.executeScript({
-              target: { tabId: tab.id, allFrames: true },
-              files: ["content.js"]
-            }).catch(() => { });
-          }
-        }
-      }
-    });
-  } catch (e) { }
-
   chrome.contextMenus.create({
     id: "fdownloader-capture-link",
     title: "⚡ FDownloader ile İndir",

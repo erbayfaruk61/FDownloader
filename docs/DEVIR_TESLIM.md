@@ -2,29 +2,32 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** P3-09 — Gizlilik ve Kişisel Veri Filtresi
-**Durum:** ✅ Bitti (Faz 3 Tamamlandı!)
+**ID:** P4-01 — Eklenti Denetimi ve Temizliği (Faz 4 — Tarayıcı Eklentisi ve Entegrasyon)  
+**Durum:** ✅ Bitti
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
-- `src/FDownloader.Core/Logging/SensitiveDataMasker.cs`:
-  - `WindowsUserPathRegex` (`C:\Users\<Username>\`) ve `UnixUserPathRegex` (`/home/<username>/`) eklendi. Log ve hata dökümlerinde yer alan yerel kullanıcı adı yolları otomatik olarak `[USER]` etiketiyle anonimleştirildi.
-- `src/FDownloader.App/Program.cs`:
-  - Sentry başlatma konfigürasyonuna `SetBeforeSend` kancası entegre edildi.
-  - Sentry'ye gönderilen olay başlıkları ve mesajlar `SensitiveDataMasker.MaskMessage` süzgecinden geçiriliyor; `User.Username`, `User.IpAddress` ve `User.Email` alanları `null` yapılarak telemetri gizliliği garanti altına alındı.
-- `tests/FDownloader.Core.Tests/SensitiveDataMaskerTests.cs`:
-  - Windows ve Unix yerel profil yollarının maskelenmesi testi eklendi.
-- Toplam test sayısı 260'tan **261'e** yükseldi. **261/261 test yeşil**.
+- `tools/browser-extension/manifest.json`:
+  - `scripting` izni kaldırıldı (Manifest V3 "en az ayrıcalık" ilkesi).
+  - `host_permissions` temizlendi (`*://*/*`, `http://127.0.0.1:9666/*`, `http://localhost:9666/*`).
+- `tools/browser-extension/background.js`:
+  - Servis çalışanını gereksiz uyandıran ve arka planda pil/CPU harcayan sonsuz `sendHeartbeatToFDownloader` ve alarmlar kaldırıldı; tam olay güdümlü (event-driven) mimariye geçildi.
+  - Kurulum anında çalışan `chrome.scripting.executeScript` bloğu kaldırıldı.
+- `tools/browser-extension/content.js`:
+  - Kullanılmayan 1.2 KB'lık `FDOWN_LOGO_DATA_URI` ölü kodu temizlendi (inline SVG kullanılmaktadır).
+- `docs/EKLENTI.md`:
+  - Eklenti mimarisi, her izin için "neden gerekli" gerekçe tablosu ve kaldırılan izinlerin gerekçesi detaylı olarak belgelendi.
+- `docs/GIZLILIK.md`:
+  - Resmi gizlilik politikası taslağı oluşturuldu; sıfır dış sunucu veri aktarımı, yerel döngüsel iletişim (127.0.0.1:9666), çerez güvenliği ve kullanıcı kontrolleri (Alt tuşu ile atlama) açıklandı.
+- Test durumu: **261/261 test yeşil**.
 
 ---
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** **FAZ 3 (Güvenlik Sertleştirme) EKSİKSİZ TAMAMLANDI!** (P3-01'den P3-09'a kadar tüm görevler bitti).
-- **Sıradaki Görev:** **Faz 4 — BitTorrent Sağlamlaştırma**.
-  - İlk görev: **P4-01 — Torrent Dosya Seçimi ve Önceliklendirme** (`SetFilePriority`, arayüz seçici, parça önceliği).
+- **Tam olarak nerede kaldım:** P4-01 bitti. Sıradaki görev: **P4-02 — Yakalama Doğruluğu**.
 - **Derleme durumu:** ✅ Başarılı (0 hata)
 - **Test durumu:** 261/261 geçiyor
 
@@ -33,39 +36,8 @@
 ## 4. Sıradaki adım (net ve küçük)
 
 1. Değişiklikleri commit et:
+   ```bash
+   git add tools/browser-extension/ docs/EKLENTI.md docs/GIZLILIK.md docs/ILERLEME.md docs/DEVIR_TESLIM.md
+   git commit -m "feat(extension): P4-01 - Eklenti denetimi, izinlerin asgariye indirilmesi ve gizlilik dokumantasyonu"
    ```
-   git add src/ tests/ docs/
-   git commit -m "feat(privacy): P3-09 - Sentry kisisel veri filtresi ve kullanici profil yollari maskelemesi (Faz 3 tamamlandi)"
-   ```
-2. **P4-01:** `TorrentService` içinde dosya önceliklendirme (`Priority.DoNotDownload`, `Priority.Normal`, `Priority.High`) ve UI dosya seçim entegrasyonu testlerini uygula.
-
----
-
-## 5. Bilmesi gerekenler
-
-### Mimari
-- **Core ↔ App ayrımı tamamen sağlanmış.** P1-01 atlandı.
-- `BrowserBridgeService` yerel HTTP sunucu açıyor — port ve kimlik doğrulama bilgisi DENETIM.md'de netleşecek.
-- Sürüm numarası tek yerden: `FDownloader.App.csproj → <Version>1.5.6</Version>`.
-
-### Güvenlik (doğrulanmamış — DENETIM.md'de yanıtlanacak)
-- `NetworkConstants.cs`'de port sabiti var — güvenlik açıklığı riski bilinmiyor.
-- Loglarda hassas veri maskeleme uygulanmamış (Serilog).
-- MD5/SHA1 kullanımı için CA5350/CA5351 uyarısı var (`HashCalculator.cs`).
-
-### Bağımlılıklar
-- NuGet güvenlik açığı: **sıfır**.
-- Güncel olmayan paketler var (Microsoft.*: 9→10, Serilog 4.2→4.4, Sinks.File 6→7, Avalonia 12.1.4→12.1.5).
-
-### CI/CD
-- yt-dlp `latest`'ten indiriliyor — sürüm sabitlenmemiş.
-- İmzalama yok (P7-01).
-
----
-
-## 6. Dokunulmaması gerekenler
-
-- `docs/AJAN_PLANI.md` — yalnızca proje sahibi günceller.
-- `FDownloader.sln` — proje yapısı değişmedikçe dokunma.
-- `tools/7z/` — 7-Zip ikili, sürüm bilinmiyor; P8-01'de lisans kontrolü yapılacak.
-
+2. **P4-02:** Yakalama doğruluğu testleri ve entegrasyonu (Tarayıcı indirmesini iptal edip uygulamaya devretme; çerez, Referer, User-Agent aktarımı; Alt tuşu ile atlama; uygulama kapalıyken normal devam).
