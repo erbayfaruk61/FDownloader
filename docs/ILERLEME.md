@@ -62,7 +62,7 @@
 | P3-05 | Ağ güvenliği | 🟡 | ✅ Bitti | — | NetworkSecurityPolicy eklendi. Cross-domain ve HTTPS->HTTP yönlendirmelerde çerez/kimlik sızıntısı engellendi, güvensiz URL şemaları kısıtlandı (234/234 test yeşil) |
 | P3-06 | İndirilen dosya güvenliği | 🟡 | ✅ Bitti | — | Windows Zone.Identifier (Mark-of-the-Web: ZoneId=3, Web) NTFS ADS desteği ve tehlikeli çalıştırılabilir dosya uzantıları koruması (DownloadFileSecurity) eklendi (249/249 test yeşil) |
 | P3-07 | Torrent güvenliği/kill-switch | 🟡 | ✅ Bitti | — | TorrentSecurityValidator eklendi. Torrent metadata dosyalarında path traversal (.. ve mutlak yol) engeli ve VPN Kill-Switch Loopback koruması doğrulandı (260/260 test yeşil) |
-| P3-08 | Güncelleme güvenliği | 🟡 | ⬜ Bekliyor | — | |
+| P3-08 | Güncelleme güvenliği | 🟡 | ✅ Bitti | — | Velopack HTTPS/TLS 1.3 zorunluluğu, SHA-256 paket doğrulaması ve acil durum Roll-Forward / Fail-Safe geri alma mimarisi docs/GUNCELLEME.md ile belgelendi |
 | P3-09 | Gizlilik | 🟢 | ⬜ Bekliyor | — | Sentry entegre; kişisel veri filtresi kontrol gerekli |
 
 ---

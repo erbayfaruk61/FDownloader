@@ -2,31 +2,28 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** P3-07 — Torrent Güvenliği ve VPN Kill-Switch
+**ID:** P3-08 — Güncelleme Güvenliği
 **Durum:** ✅ Bitti
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
-- `src/FDownloader.Core/Torrent/TorrentSecurityValidator.cs`:
-  - `TorrentSecurityValidator` statik güvenlik sınıfı oluşturuldu.
-  - Torrent içindeki dosyaların `ValidateTorrentFilePaths` ile hedef indirme dizini sınırları içinde kaldığı garanti altına alındı. `..`, mutlak kök yolları (`C:\...`, `/etc/...`) ve UNC paylaşımları engellenerek path traversal açıklarına set çekildi.
-  - `EvaluateNetworkBinding` ile ağ adaptörü bağlama ve VPN Kill-Switch kuralları standardize edildi: Seçili VPN adaptörü kapalı veya erişilemez olduğunda trafik Loopback (127.0.0.1) adresine kilitlenerek gerçek IP sızıntısı önleniyor.
-- `src/FDownloader.Core/Torrent/TorrentService.cs`:
-  - `NotifyMetadataLoaded` aşamasında gelen torrent dosyaları taranarak güvensiz dosya yolu tespit edilirse görev durdurulup kullanıcıya `TaskFailedEvent` ile güvenlik uyarısı veriliyor.
-  - Motor başlatılırken `TorrentSecurityValidator.EvaluateNetworkBinding` entegrasyonu sağlandı.
-- `tests/FDownloader.Core.Tests/TorrentSecurityTests.cs`:
-  - 11 teori ve birim testi eklendi: güvenli/güvensiz torrent dosya yolları, path traversal engeli, normal ağ bağlama ve VPN koptuğunda loopback kill-switch devreye girişi doğrulandı.
-- Toplam test sayısı 249'dan **260'a** yükseldi. **260/260 test yeşil**.
+- `src/FDownloader.App/Services/UpdateService.cs`:
+  - Velopack GitHub Releases entegrasyonu, HTTPS/TLS 1.3 zorunluluğu ve `UpdateManager.IsInstalled` kontrolü doğrulandı.
+- `docs/GUNCELLEME.md`:
+  - Kapsamlı güncelleme ve güvenlik mimarisi dokümanı oluşturuldu.
+  - Taşıma güvenliği (In-Transit HTTPS), `releases.win.json` içindeki SHA-256 ve SHA-1 paket bütünlüğü denetimi, kullanıcı izni ve onay mekanizması belgelendi.
+  - Acil durum geri alma prosedürleri (GitHub Releases geri çekme, Roll-Forward yama dağıtımı ve Velopack istemci taraflı fail-safe rollback) açıklandı.
+- Test durumu korundu: **260/260 test yeşil**.
 
 ---
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** P3-07 tamamlandı.
-- **Sıradaki Görev:** **P3-08 — Güncelleme Güvenliği**.
-  - Velopack güncelleme akışında HTTPS kanalı, SHA-256 paket bütünlüğü ve geri alma (rollback) planının `docs/GUNCELLEME.md` ile doğrulanması/belgelenmesi.
+- **Tam olarak nerede kaldım:** P3-08 tamamlandı.
+- **Sıradaki Görev:** **P3-09 — Gizlilik ve Kişisel Veri Filtresi (Sentry & Log filtreleme)**.
+  - Sentry ve Serilog hata raporlama mekanizmalarında kullanıcı adı, parola, token, çerez ve yerel dosya yollarının maskelenmesi/filtrelenmesi.
 - **Derleme durumu:** ✅ Başarılı (0 hata)
 - **Test durumu:** 260/260 geçiyor
 
@@ -37,9 +34,9 @@
 1. Değişiklikleri commit et:
    ```
    git add src/ tests/ docs/
-   git commit -m "feat(security): P3-07 - Torrent guvenligi, path traversal engeli ve VPN kill-switch korumasi"
+   git commit -m "docs(security): P3-08 - Velopack guncelleme guvenligi, SHA-256 butunluk ve geri alma plani"
    ```
-2. **P3-08:** Güncelleme güvenliği (`docs/GUNCELLEME.md`, Velopack HTTPS/bütünlük kontrolleri) dokümantasyon ve güvenlik denetimini uygula.
+2. **P3-09:** Sentry ve Serilog için `SensitiveDataMasker` entegrasyonunu kontrol et ve kişisel veri filtreleme kurallarını uygula.
 
 ---
 
