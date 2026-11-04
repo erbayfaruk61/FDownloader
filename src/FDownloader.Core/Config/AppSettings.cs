@@ -119,7 +119,8 @@ public enum AppThemeMode
     OceanBlue = 0,
     CyberPurple = 1,
     PlatinumGray = 2,
-    LightClean = 3
+    LightClean = 3,
+    HighContrast = 4
 }
 
 /// <summary>İndirme tamamlanınca çalınacak zil sesi</summary>

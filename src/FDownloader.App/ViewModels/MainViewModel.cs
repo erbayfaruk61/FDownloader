@@ -570,6 +570,16 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
     }
 
+    public bool IsThemeHighContrast
+
+    {
+
+        get => _currentThemeMode == AppThemeMode.HighContrast;
+
+        set { if (value) SetThemeMode(AppThemeMode.HighContrast); }
+
+    }
+
     // ─── Çoklu Dil Desteği (P6-02: Localization) ──────────────────────────
     public FDownloader.Core.Localization.LocalizationService Loc => FDownloader.Core.Localization.LocalizationService.Instance;
 
@@ -763,6 +773,8 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         OnPropertyChanged(nameof(IsThemePlatinumGray));
 
         OnPropertyChanged(nameof(IsThemeLightClean));
+
+        OnPropertyChanged(nameof(IsThemeHighContrast));
 
         ApplyThemeMode(mode);
 
@@ -1073,6 +1085,56 @@ public partial class MainViewModel : ViewModelBase, IDisposable
                 ThemeSpeedMaxValueFg = "#A78BFA";
 
                 ThemeSpeedMaxColFg = "#6EE7B7";
+
+                break;
+
+            case AppThemeMode.HighContrast:
+
+                ThemeWindowBg = "#000000";
+
+                ThemeToolbarBg = "#000000";
+
+                ThemeSidebarBg = "#000000";
+
+                ThemeCardBg = "#000000";
+
+                ThemeTableHeaderBg = "#000000";
+
+                ThemeDetailBg = "#000000";
+
+                ThemeStatusBarBg = "#000000";
+
+                ThemeBorderColor = "#FFFFFF";
+
+                ThemeForeground = "#FFFFFF";
+
+                ThemeTextSecondary = "#FFFF00";
+
+                ThemeAccentBg = "#FFFF00";
+
+                ThemeAccentFg = "#000000";
+
+                ThemeSpeedGraphPanelBg = "#000000";
+
+                ThemeSpeedGraphInnerBg = "#000000";
+
+                ThemeSpeedCurrentBadgeBg = "#000000";
+
+                ThemeSpeedCurrentBadgeBorder = "#00FF00";
+
+                ThemeSpeedCurrentLabelFg = "#00FF00";
+
+                ThemeSpeedCurrentValueFg = "#00FF00";
+
+                ThemeSpeedMaxBadgeBg = "#000000";
+
+                ThemeSpeedMaxBadgeBorder = "#00FFFF";
+
+                ThemeSpeedMaxLabelFg = "#00FFFF";
+
+                ThemeSpeedMaxValueFg = "#00FFFF";
+
+                ThemeSpeedMaxColFg = "#00FF00";
 
                 break;
 

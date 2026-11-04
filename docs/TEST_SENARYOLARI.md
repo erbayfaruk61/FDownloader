@@ -361,3 +361,27 @@ Bu belge, FDownloader indirme motoru ve disk/dosya sistemi için hem otomatik he
 - **Elle Test:**
   1. Masaüstündeki bir `.torrent` dosyasını sürükleyip FDownloader penceresine bırakın; Torrent ekleme penceresinin otomatik açıldığını görün.
   2. Tarayıcıdaki bir indirme linkini fareyle sürükleyip pencereye bırakın; İndirme Ekle penceresine linkin aktarıldığını doğrulayın.
+
+---
+
+## 12. Erişilebilirlik ve Ekran Uyumu Senaryoları (P6-05)
+
+### 12.1 Ekran Okuyucu Desteği (AutomationProperties)
+- **Amaç:** Görme engelli kullanıcıların Windows Narrator (Ekran Okuyucusu) veya NVDA kullandığında arayüzdeki buton ve işlevleri doğru duymasını sağlamak.
+- **Elle Test:**
+  1. Windows tuşu + Ctrl + Enter ile Windows Ekran Okuyucusunu (Narrator) açın.
+  2. Tab tuşuyla araç çubuğu butonları arasında gezinin.
+  3. "Yeni İndirme Ekle", "Tüm Aktif İndirmeleri Duraklat", "Seçili İndirmeyi Sil" ve "Ayarlar Penceresini Aç" etiketlerinin seslendirildiğini doğrulayın.
+
+### 12.2 Yüksek Kontrast Teması (High Contrast)
+- **Amaç:** Az gören veya yüksek kontrast tercih eden kullanıcılar için saf siyah (#000000) zemin ve keskin sarı/yeşil/camgöbeği (#FFFF00 / #00FF00 / #00FFFF) vurguların sunulması.
+- **Elle Test:**
+  1. Ayarlar > Görünüm sekmesinden "Yüksek Kontrast" temasını seçin.
+  2. Tüm pencerenin siyah zemine, beyaz sınırlara ve sarı vurgu butonlarına dönüştüğünü; metinlerin okunurluğunun maksimuma çıktığını doğrulayın.
+
+### 12.3 Fare Olmadan Klavyeyle Tam Yönetim (Tab & Shortcuts)
+- **Amaç:** Yalnızca klavye (Tab, Shift+Tab, Enter, Space, Ok tuşları, Ctrl+N, Ctrl+O, Del) kullanılarak temel indirme döngüsünün eksiksiz yürütülebilmesi.
+- **Elle Test:**
+  1. Fareyi kullanmadan `Ctrl+N` ile indirme ekleme penceresini açın.
+  2. `Tab` ile URL alanına geçin, link yapıştırın, `Enter` ile indirmeyi başlatın.
+  3. Ok tuşlarıyla görevi seçip `Space` ile duraklatıp devam ettirin; `Delete` ile silme diyaloğunu açıp onaylayın.

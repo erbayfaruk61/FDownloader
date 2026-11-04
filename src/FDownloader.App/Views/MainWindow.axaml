@@ -143,7 +143,8 @@
                         <Separator Width="1" Height="20" Margin="4,0" VerticalAlignment="Center" />
 
                         <!-- Yeni İndirme Ekle -->
-                        <Button Command="{Binding OpenAddDownloadDialogCommand}" Background="{Binding ThemeAccentBg}" Foreground="{Binding ThemeAccentFg}" FontWeight="SemiBold" Padding="14,6" Height="34" VerticalAlignment="Center">
+                        <Button Command="{Binding OpenAddDownloadDialogCommand}" Background="{Binding ThemeAccentBg}" Foreground="{Binding ThemeAccentFg}" FontWeight="SemiBold" Padding="14,6" Height="34" VerticalAlignment="Center"
+                                AutomationProperties.Name="Yeni İndirme Ekle" AutomationProperties.HelpText="Yeni URL veya dosya indirme görevi ekler">
                             <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                 <TextBlock Text="➕" VerticalAlignment="Center" />
                                 <TextBlock Text="Ekle" VerticalAlignment="Center" />
@@ -154,10 +155,12 @@
                     <!-- Orta Bölüm: İşlem Butonları (Toolbar Ortalanmış Buton Grubu) -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <!-- Toplu İşlem Butonları -->
-                        <Button Command="{Binding StartAllCommand}" ToolTip.Tip="Bekleyen ve duraklatılmış tüm indirmeleri başlatır" Padding="10,6" Height="34" VerticalAlignment="Center">
+                        <Button Command="{Binding StartAllCommand}" ToolTip.Tip="Bekleyen ve duraklatılmış tüm indirmeleri başlatır" Padding="10,6" Height="34" VerticalAlignment="Center"
+                                AutomationProperties.Name="Bekleyen Tüm İndirmeleri Başlat">
                             <TextBlock Text="▶ Bekleyenleri Başlat" VerticalAlignment="Center" />
                         </Button>
-                        <Button Command="{Binding PauseAllCommand}" ToolTip.Tip="Tüm aktif indirmeleri duraklatır" Padding="10,6" Height="34" VerticalAlignment="Center">
+                        <Button Command="{Binding PauseAllCommand}" ToolTip.Tip="Tüm aktif indirmeleri duraklatır" Padding="10,6" Height="34" VerticalAlignment="Center"
+                                AutomationProperties.Name="Tüm Aktif İndirmeleri Duraklat">
                             <TextBlock Text="⏸ Tümünü Duraklat" VerticalAlignment="Center" />
                         </Button>
                         <Separator Width="1" Height="20" Margin="4,0" VerticalAlignment="Center" />
@@ -165,19 +168,22 @@
                         <!-- Hibrit Başlat / Duraklat Butonu -->
                         <Button Command="{Binding ToggleStartPauseSelectedCommand}" 
                                 ToolTip.Tip="{Binding SelectedHybridTooltip}" 
-                                Padding="12,6" Height="34" VerticalAlignment="Center">
+                                Padding="12,6" Height="34" VerticalAlignment="Center"
+                                AutomationProperties.Name="Seçili İndirmeyi Başlat veya Duraklat">
                             <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                 <TextBlock Text="{Binding SelectedHybridIcon}" Foreground="{Binding SelectedHybridColor}" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
                                 <TextBlock Text="{Binding SelectedHybridText}" FontWeight="SemiBold" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
-                        <Button Command="{Binding RequestDeleteSelectedCommand}" ToolTip.Tip="Seçileni Sil (Diskten silme seçeneğiyle)" Padding="10,6" Height="34" VerticalAlignment="Center">
+                        <Button Command="{Binding RequestDeleteSelectedCommand}" ToolTip.Tip="Seçileni Sil (Diskten silme seçeneğiyle)" Padding="10,6" Height="34" VerticalAlignment="Center"
+                                AutomationProperties.Name="Seçili İndirmeyi Sil">
                             <TextBlock Text="🗑 Sil" VerticalAlignment="Center" />
                         </Button>
                         <Separator Width="1" Height="20" Margin="4,0" VerticalAlignment="Center" />
 
                         <!-- Ayarlar -->
-                        <Button Command="{Binding OpenSettingsDialogCommand}" ToolTip.Tip="Ayarlar, Hız Sınırları ve Site Yakalayıcı" Padding="12,6" Height="34" VerticalAlignment="Center">
+                        <Button Command="{Binding OpenSettingsDialogCommand}" ToolTip.Tip="Ayarlar, Hız Sınırları ve Site Yakalayıcı" Padding="12,6" Height="34" VerticalAlignment="Center"
+                                AutomationProperties.Name="Ayarlar Penceresini Aç">
                             <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                 <TextBlock Text="⚙️" VerticalAlignment="Center" />
                                 <TextBlock Text="Ayarlar" VerticalAlignment="Center" />
@@ -1664,7 +1670,7 @@
                                             </StackPanel>
                                             <TextBlock Text="Arayüzün renk tonunu ve kontrastını tercihinize göre anında uyarlayın." FontSize="11" Foreground="{Binding ThemeTextSecondary}" />
 
-                                            <Grid ColumnDefinitions="*, *, *, *" Margin="0,2,0,0">
+                                            <Grid ColumnDefinitions="*, *, *, *, *" Margin="0,2,0,0">
                                                 <!-- 1: Okyanus (Varsayılan) -->
                                                 <Border Grid.Column="0" Margin="3" Padding="8,6" CornerRadius="8" BorderThickness="1.5"
                                                         Background="#0F172A" BorderBrush="#0284C7" Cursor="Hand"
@@ -1752,6 +1758,28 @@
                                                         <TextBlock Text="Aydınlık, sade ve net zemin" FontSize="10" Foreground="#475569" HorizontalAlignment="Center" />
                                                     </StackPanel>
                                                 </Border>
+
+                                                <!-- 5: Yüksek Kontrast (Erişilebilirlik - P6-05) -->
+                                                <Border Grid.Column="4" Margin="3" Padding="8,6" CornerRadius="8" BorderThickness="1.5"
+                                                        Background="#000000" BorderBrush="#FFFFFF" Cursor="Hand"
+                                                        Tag="HighContrast" PointerPressed="OnThemeCardPointerPressed">
+                                                    <StackPanel Spacing="6">
+                                                        <RadioButton IsChecked="{Binding IsThemeHighContrast, Mode=TwoWay}"
+                                                                     Command="{Binding SelectThemeCommand}"
+                                                                     CommandParameter="HighContrast"
+                                                                     GroupName="AppThemeGroup" Foreground="#FFFFFF">
+                                                            <TextBlock Text="Yüksek Kontrast" FontWeight="Bold" FontSize="12" Foreground="#FFFFFF" />
+                                                        </RadioButton>
+                                                        <Border Height="24" CornerRadius="4" Background="#000000" BorderBrush="#FFFFFF" BorderThickness="1">
+                                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="4">
+                                                                <Border Width="10" Height="10" CornerRadius="5" Background="#FFFF00" />
+                                                                <Border Width="10" Height="10" CornerRadius="5" Background="#00FF00" />
+                                                                <Border Width="10" Height="10" CornerRadius="5" Background="#00FFFF" />
+                                                            </StackPanel>
+                                                        </Border>
+                                                        <TextBlock Text="Siyah zemin, keskin kontrast" FontSize="10" Foreground="#FFFF00" HorizontalAlignment="Center" />
+                                                    </StackPanel>
+                                                </Border>
                                             </Grid>
                                         </StackPanel>
                                     </Border>
@@ -1781,7 +1809,7 @@
                                             </StackPanel>
                                             <TextBlock Text="İndirme listesindeki ilerleme çubuğunun görsel tarzını tercihinize göre belirleyin." FontSize="11" Foreground="{Binding ThemeTextSecondary}" />
 
-                                            <Grid ColumnDefinitions="*, *, *, *" Margin="0,2,0,0">
+                                            <Grid ColumnDefinitions="*, *, *, *, *" Margin="0,2,0,0">
                                                 <!-- Klasik -->
                                                 <Border Grid.Column="0" Margin="3" Padding="8,6" CornerRadius="8" BorderThickness="1.5"
                                                         Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" Cursor="Hand"
