@@ -32,6 +32,8 @@ $RECYCLE.BIN/
 *.tmp
 *.bak
 *~
+tools/browser-extension/dist/
+Releases/
 
 ## Excluded Folders & Working Notes
 .agents/

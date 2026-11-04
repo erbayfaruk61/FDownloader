@@ -74,8 +74,8 @@ jobs:
             --runtime win-x64 `
             --outputDir ./Releases
 
-          if (Test-Path tools/browser-extension) {
-            Compress-Archive -Path tools/browser-extension/* -DestinationPath ./Releases/FDownloader-Browser-Extension.zip -Force
+          if (Test-Path tools/browser-extension/package.ps1) {
+            powershell -ExecutionPolicy Bypass -File tools/browser-extension/package.ps1 -OutputDir ./Releases
           }
 
       - name: GitHub Release Oluştur ve Paketleri Yükle
