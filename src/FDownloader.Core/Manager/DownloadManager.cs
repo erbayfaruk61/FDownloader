@@ -32,6 +32,8 @@ public sealed class DownloadManager : IAsyncDisposable
     public IReadOnlyList<DownloadTask> Tasks { get { lock (_lock) { return _tasks.ToList(); } } }
     public SpeedLimiter SpeedLimiter { get; } = new();
     public ArchiveExtractorService ArchiveExtractor { get; }
+    public DownloadScheduler Scheduler { get; }
+    public NetworkWatcher NetworkWatcher { get; }
 
     public string? GetSetting(string key) => _repository.GetSetting(key);
     public void SetSetting(string key, string value) => _repository.SetSetting(key, value);
@@ -52,6 +54,36 @@ public sealed class DownloadManager : IAsyncDisposable
         _loggerFactory = loggerFactory;
         _logger = loggerFactory.CreateLogger<DownloadManager>();
         ArchiveExtractor = new ArchiveExtractorService(loggerFactory.CreateLogger<ArchiveExtractorService>());
+
+        Scheduler = new DownloadScheduler(
+            eventBus,
+            loggerFactory.CreateLogger<DownloadScheduler>(),
+            onStartScheduled: async () => await StartAllTasksAsync(),
+            onStopScheduled: async () => await PauseAllTasksAsync());
+
+        NetworkWatcher = new NetworkWatcher(
+            eventBus,
+            loggerFactory.CreateLogger<NetworkWatcher>(),
+            onNetworkLost: async () =>
+            {
+                List<long> activeIds;
+                lock (_lock)
+                {
+                    activeIds = _tasks.Where(t => t.Status == DownloadStatus.Downloading).Select(t => t.Id).ToList();
+                }
+                foreach (var id in activeIds)
+                {
+                    await PauseTaskAsync(id);
+                }
+                return activeIds;
+            },
+            onNetworkRestored: async (taskIds) =>
+            {
+                foreach (var id in taskIds)
+                {
+                    await StartOrResumeTaskAsync(id);
+                }
+            });
 
         SubscribeToEvents();
         LoadExistingTasks();
@@ -91,6 +123,8 @@ public sealed class DownloadManager : IAsyncDisposable
                     _logger.LogInformation("Görev #{TaskId} tamamlandı ve SQLite veritabanına kaydedildi: {File}", task.Id, task.FileName);
                 }
             }
+            _ = ProcessQueueAsync();
+            Scheduler.NotifyAllDownloadsCompleted();
         });
 
         _eventBus.Subscribe<TaskFailedEvent>(e =>
@@ -105,6 +139,7 @@ public sealed class DownloadManager : IAsyncDisposable
                     _repository.UpdateTaskStatus(task);
                 }
             }
+            _ = ProcessQueueAsync();
         });
 
         _eventBus.Subscribe<TaskPausedEvent>(e =>
@@ -118,6 +153,7 @@ public sealed class DownloadManager : IAsyncDisposable
                     _repository.UpdateTaskStatus(task);
                 }
             }
+            _ = ProcessQueueAsync();
         });
 
         _eventBus.Subscribe<TaskCancelledEvent>(e =>
@@ -276,7 +312,20 @@ public sealed class DownloadManager : IAsyncDisposable
 
         if (startImmediately)
         {
-            StartHttpTask(task);
+            lock (_lock)
+            {
+                int activeCount = _tasks.Count(t => t.Status is DownloadStatus.Downloading or DownloadStatus.Connecting);
+                if (activeCount < MaxConcurrentDownloads)
+                {
+                    task.Status = DownloadStatus.Downloading;
+                    StartHttpTask(task);
+                }
+                else
+                {
+                    task.Status = DownloadStatus.Queued;
+                    _logger.LogInformation("Eşzamanlı indirme sınırı ({Max}) dolu. Görev #{Id} kuyruğa alındı.", MaxConcurrentDownloads, task.Id);
+                }
+            }
         }
 
         return System.Threading.Tasks.Task.FromResult(task);
@@ -467,6 +516,76 @@ public sealed class DownloadManager : IAsyncDisposable
         }
 
         StartHttpTask(task);
+    }
+
+    /// <summary>
+    /// Kuyrukta bekleyen (Queued) görevleri MaxConcurrentDownloads sınırına göre çalıştırır.
+    /// </summary>
+    public async Task ProcessQueueAsync()
+    {
+        List<long> taskIdsToStart = new();
+
+        lock (_lock)
+        {
+            int activeCount = _tasks.Count(t => t.Status is DownloadStatus.Downloading or DownloadStatus.Connecting);
+            int availableSlots = MaxConcurrentDownloads - activeCount;
+
+            if (availableSlots > 0)
+            {
+                var candidates = _tasks
+                    .Where(t => t.Status == DownloadStatus.Queued)
+                    .OrderByDescending(t => t.Priority)
+                    .ThenBy(t => t.CreatedAt)
+                    .Take(availableSlots)
+                    .Select(t => t.Id)
+                    .ToList();
+
+                taskIdsToStart.AddRange(candidates);
+            }
+
+            int queuedCount = _tasks.Count(t => t.Status == DownloadStatus.Queued);
+            _eventBus.Publish(new QueueChangedEvent(activeCount, queuedCount));
+        }
+
+        foreach (var id in taskIdsToStart)
+        {
+            await StartOrResumeTaskAsync(id);
+        }
+    }
+
+    /// <summary>
+    /// Bir görevin kuyruk önceliğini günceller ve kuyruğu yeniden işler.
+    /// </summary>
+    public void SetTaskPriority(long taskId, int priority)
+    {
+        lock (_lock)
+        {
+            var task = _tasks.FirstOrDefault(t => t.Id == taskId);
+            if (task != null)
+            {
+                task.Priority = priority;
+                _repository.UpdateTaskStatus(task);
+            }
+        }
+        _ = ProcessQueueAsync();
+    }
+
+    /// <summary>
+    /// Kuyruktaki görevlerin sırasını değiştirir (sürükle-bırak desteği).
+    /// </summary>
+    public void MoveTaskInQueue(long taskId, int newIndex)
+    {
+        lock (_lock)
+        {
+            int currentIndex = _tasks.FindIndex(t => t.Id == taskId);
+            if (currentIndex >= 0 && newIndex >= 0 && newIndex < _tasks.Count)
+            {
+                var task = _tasks[currentIndex];
+                _tasks.RemoveAt(currentIndex);
+                _tasks.Insert(newIndex, task);
+            }
+        }
+        _ = ProcessQueueAsync();
     }
 
     /// <summary>
@@ -964,20 +1083,42 @@ public sealed class DownloadManager : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        foreach (var downloader in _httpDownloaders.Values)
+        List<HttpDownloader> downloaders;
+        lock (_lock)
         {
-            await downloader.PauseAsync();
+            downloaders = _httpDownloaders.Values.ToList();
+            _httpDownloaders.Clear();
+        }
+
+        foreach (var downloader in downloaders)
+        {
+            try
+            {
+                await downloader.PauseAsync();
+            }
+            catch { }
             downloader.Dispose();
         }
-        _httpDownloaders.Clear();
 
-        foreach (var cts in _mediaCtsList.Values)
+        List<CancellationTokenSource> mediaCts;
+        lock (_mediaCtsList)
         {
-            cts.Cancel();
+            mediaCts = _mediaCtsList.Values.ToList();
+            _mediaCtsList.Clear();
+        }
+
+        foreach (var cts in mediaCts)
+        {
+            try
+            {
+                cts.Cancel();
+            }
+            catch { }
             cts.Dispose();
         }
-        _mediaCtsList.Clear();
 
+        Scheduler.Dispose();
+        NetworkWatcher.Dispose();
         await _torrentService.DisposeAsync();
     }
 }
