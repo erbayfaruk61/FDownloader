@@ -2,35 +2,34 @@
 
 ## 1. Şu an üzerinde çalıştığım görev
 
-**ID:** P3-05 — Ağ Güvenliği
+**ID:** P3-06 — İndirilen Dosya Güvenliği
 **Durum:** ✅ Bitti
 
 ---
 
 ## 2. Yaptıklarım (bu oturumda)
 
-- `src/FDownloader.Core/Network/NetworkSecurityPolicy.cs`:
-  - `NetworkSecurityPolicy` sınıfı eklendi.
-  - Cross-domain yönlendirmelerde (`ShouldPreserveSensitiveHeaders`) ve HTTPS'ten HTTP'ye düşürme (`IsHttpsDowngrade`) senaryolarında çerezlerin ve oturum kimliklerinin yabancı etki alanlarına sızması engellendi.
-  - Güvensiz ve yerel kod çalıştırma riski taşıyan URL şemaları (`file://`, `javascript://`, `data://`) `IsSafeUrlScheme` ile engellendi.
-- `src/FDownloader.Core/Engine/Probe/DownloadProber.cs`:
-  - `DownloadProber` yönlendirme döngüsünde cross-domain veya downgrade tespit edildiğinde `activeCookies` sıfırlanarak hedef sunucuya oturum çerezinin gitmesi önlendi.
-- `src/FDownloader.Core/Engine/Worker/SegmentWorker.cs`:
-  - İndirme worker'larında referer ile hedef domain uyuşmadığında güvenlik uyarısı verilerek çerez başlığı kaldırıldı.
-- `tests/FDownloader.Core.Tests/NetworkSecurityTests.cs`:
-  - 16 teori ve birim testi eklendi: host kuralları, HTTPS düşürme tespiti, güvenli şema doğrulama ve mock sunucu ile cross-domain yönlendirmede çerez sızıntısı olmaması test edildi.
-- Toplam test sayısı 218'den **234'e** yükseldi. **234/234 test yeşil**.
+- `src/FDownloader.Core/Security/DownloadFileSecurity.cs`:
+  - `DownloadFileSecurity` sınıfı oluşturuldu.
+  - Windows NTFS Zone.Identifier (Mark-of-the-Web: ZoneId=3, Web) Alternate Data Stream (ADS) yazma ve kontrol mantığı (`ApplyZoneIdentifier`, `HasZoneIdentifier`) uygulandı. ReferrerUrl ve HostUrl meta verileri de ADS içine yazılıyor.
+  - Tehlikeli dosya türleri tespiti (`IsDangerousFileType`): `.exe`, `.bat`, `.cmd`, `.scr`, `.js`, `.vbs`, `.ps1`, `.msi` vb. sistemde zararlı kod yürütebilecek 26 uzantı denetim altına alındı.
+- `src/FDownloader.Core/Engine/HttpDownloader.cs`:
+  - İndirme başarıyla tamamlanıp birleştirildiğinde (CommitAsync sonrası), otomatik olarak `ApplyZoneIdentifier` çağrılması sağlandı.
+- `tests/FDownloader.Core.Tests/DownloadFileSecurityTests.cs`:
+  - 15 teori ve birim testi eklendi: tehlikeli ve güvenli uzantı ayrımı, NTFS ADS Zone.Identifier yazımı ve doğrulaması test edildi.
+- Toplam test sayısı 234'ten **249'a** yükseldi. **249/249 test yeşil**.
 
 ---
 
 ## 3. Yarıda kalan iş
 
-- **Tam olarak nerede kaldım:** P3-05 tamamlandı.
-- **Sıradaki Görev:** **P3-06 — İndirilen Dosya Güvenliği (Zone.Identifier ve tehlikeli dosya uzantıları koruması)**.
-  - İndirilen dosyalara NTFS Alternate Data Stream `Zone.Identifier` (ZoneId=3, Web) eklenmesi.
-  - `.exe`, `.bat`, `.cmd`, `.scr`, `.js`, `.vbs`, `.ps1`, `.msi` vb. dosyalar için çalıştırma uyarısı.
+- **Tam olarak nerede kaldım:** P3-06 tamamlandı.
+- **Sıradaki Görev:** **P3-07 — Torrent Güvenliği ve Kill-Switch**.
+  - Torrent dosya adları/yollarında path traversal (`..` ve mutlak yol) engeli.
+  - Varsayılan klasör dışına yazmama kontrolü.
+  - Ağ adaptörü kilidi (VPN kill-switch) ve ağ arayüzü bağlama test senaryoları.
 - **Derleme durumu:** ✅ Başarılı (0 hata)
-- **Test durumu:** 234/234 geçiyor
+- **Test durumu:** 249/249 geçiyor
 
 ---
 
@@ -39,9 +38,9 @@
 1. Değişiklikleri commit et:
    ```
    git add src/ tests/ docs/
-   git commit -m "feat(security): P3-05 - Ag guvenligi, cross-domain yonlendirme ve cerez sizinti korumasi"
+   git commit -m "feat(security): P3-06 - Indirilen dosya guvenligi, Zone.Identifier Mark-of-the-Web ve tehlikeli uzanti korumasi"
    ```
-2. **P3-06:** `ZoneIdentifierHelper` (Zone.Identifier NTFS ADS) ve tehlikeli dosya uzantı listesi doğrulamasını uygula ve test et.
+2. **P3-07:** `TorrentService` içinde path traversal denetimleri, VPN ağ arayüzü bağlama (kill-switch) mantığını ve testlerini uygula.
 
 ---
 

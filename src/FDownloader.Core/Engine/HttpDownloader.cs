@@ -396,6 +396,13 @@ public sealed class HttpDownloader : IDisposable
 
             await writer.CommitAsync(_task.FinalFilePath, cancellationToken);
 
+            // 5.5 ADIM: Mark-of-the-Web (Zone.Identifier) Uygulaması (P3-06)
+            Security.DownloadFileSecurity.ApplyZoneIdentifier(
+                _task.FinalFilePath,
+                _task.Referer,
+                _task.OriginalUrl,
+                _logger);
+
             _task.Status = DownloadStatus.Completed;
             _task.CompletedAt = DateTimeOffset.UtcNow;
             _task.DownloadedBytes = _task.TotalBytes > 0 ? _task.TotalBytes : _task.DownloadedBytes;

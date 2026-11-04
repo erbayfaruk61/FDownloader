@@ -60,7 +60,7 @@
 | P3-03 | Dış süreç güvenliği | 🔴 | ✅ Bitti | — | YtDlpMediaService ArgumentList kullanımı ve URL doğrulama ile parametre enjeksiyonu önlendi |
 | P3-04 | Hassas veri saklama | 🟡 | ✅ Bitti | — | Windows DPAPI ve PBKDF2/AES-GCM çapraz platform koruması (SecureDataProtector) eklendi. DownloadTasks Cookies ve Settings hassas değerleri (parola/token vb.) veritabanında şifreli saklanıyor (218/218 test yeşil) |
 | P3-05 | Ağ güvenliği | 🟡 | ✅ Bitti | — | NetworkSecurityPolicy eklendi. Cross-domain ve HTTPS->HTTP yönlendirmelerde çerez/kimlik sızıntısı engellendi, güvensiz URL şemaları kısıtlandı (234/234 test yeşil) |
-| P3-06 | İndirilen dosya güvenliği | 🟡 | ⬜ Bekliyor | — | Zone.Identifier eksik |
+| P3-06 | İndirilen dosya güvenliği | 🟡 | ✅ Bitti | — | Windows Zone.Identifier (Mark-of-the-Web: ZoneId=3, Web) NTFS ADS desteği ve tehlikeli çalıştırılabilir dosya uzantıları koruması (DownloadFileSecurity) eklendi (249/249 test yeşil) |
 | P3-07 | Torrent güvenliği/kill-switch | 🟡 | ⬜ Bekliyor | — | |
 | P3-08 | Güncelleme güvenliği | 🟡 | ⬜ Bekliyor | — | |
 | P3-09 | Gizlilik | 🟢 | ⬜ Bekliyor | — | Sentry entegre; kişisel veri filtresi kontrol gerekli |
