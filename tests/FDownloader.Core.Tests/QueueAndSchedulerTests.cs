@@ -102,8 +102,12 @@ public sealed class QueueAndSchedulerTests : IDisposable
         // task1 tamamlandığında kuyruk tetiklenmeli ve task3 aktif (Connecting veya Downloading) olmalı
         _eventBus.Publish(new TaskCompletedEvent(task1.Id, task1.FinalFilePath, 1000, TimeSpan.FromSeconds(1)));
 
-        // Kısa bir bekleme ile ProcessQueueAsync'in çalışmasına izin ver
-        await Task.Delay(100);
+        // ProcessQueueAsync asenkron çalıştığından kuyruktaki görevin başlamasını güvenle bekle
+        var timeout1 = DateTime.UtcNow.AddSeconds(5);
+        while (task3.Status == DownloadStatus.Queued && DateTime.UtcNow < timeout1)
+        {
+            await Task.Delay(25);
+        }
 
         Assert.Equal(DownloadStatus.Completed, task1.Status);
         Assert.True(task3.Status is DownloadStatus.Downloading or DownloadStatus.Connecting);
@@ -135,7 +139,13 @@ public sealed class QueueAndSchedulerTests : IDisposable
 
         // task1 bittiğinde, kuyruktan priority'si 200 olan taskHigh önce başlamalı!
         _eventBus.Publish(new TaskCompletedEvent(task1.Id, task1.FinalFilePath, 1000, TimeSpan.FromSeconds(1)));
-        await Task.Delay(250);
+
+        // ProcessQueueAsync'in öncelikli görevi başlatmasını güvenle bekle
+        var timeout2 = DateTime.UtcNow.AddSeconds(5);
+        while (taskHigh.Status == DownloadStatus.Queued && DateTime.UtcNow < timeout2)
+        {
+            await Task.Delay(25);
+        }
 
         Assert.True(taskHigh.Status is DownloadStatus.Downloading or DownloadStatus.Connecting);
         Assert.Equal(DownloadStatus.Queued, taskLow.Status);
