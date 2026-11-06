@@ -43,6 +43,9 @@ public sealed class TorrentSettings
     /// <summary>Yeni eklenen video torrentleri için sıralı indirmeyi (önizleme) varsayılan yap.</summary>
     public bool EnableAutoSequentialForVideo { get; set; }
 
+    /// <summary>Torrentler ve magnet linkler için genel açık fallback izleyicilerini otomatik ekle.</summary>
+    public bool EnableFallbackTrackers { get; set; } = true;
+
     /// <summary>Hedef paylaşım oranı (Ratio). 0 ise sınır yok.</summary>
     public double SeedRatioLimit { get; set; } = DefaultSeedRatio;
 

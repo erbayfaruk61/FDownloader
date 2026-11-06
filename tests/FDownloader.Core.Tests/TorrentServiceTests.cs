@@ -36,8 +36,10 @@ public class TorrentServiceTests : IDisposable
                 EnableDht = false,
                 EnableUpnp = false,
                 EnableLsd = false,
-                EnableAutoSequentialForVideo = false
-            });
+                EnableAutoSequentialForVideo = false,
+                EnableFallbackTrackers = false
+            },
+            Path.Combine(_tempDir, "torrent_cache"));
     }
 
     public void Dispose()
@@ -90,6 +92,7 @@ public class TorrentServiceTests : IDisposable
             EnableDht = false,
             EnableUpnp = false,
             EnableLsd = false,
+            EnableFallbackTrackers = false,
             EncryptionMode = 1,
             MaxConnectionsTotal = 150,
             SeedRatioLimit = 2.0,
@@ -315,6 +318,7 @@ public class TorrentServiceTests : IDisposable
         // Standart bir SHA1 info-hash'e sahip magnet linki
         const string rawMagnet = "magnet:?xt=urn:btih:0123456789abcdef0123456789abcdef01234567&dn=UbuntuTest";
 
+        _torrentService.Settings.EnableFallbackTrackers = true;
         var manager = await _torrentService.RestoreTorrentTaskAsync(700, rawMagnet, _downloadDir, startImmediately: false);
 
         Assert.NotNull(manager);

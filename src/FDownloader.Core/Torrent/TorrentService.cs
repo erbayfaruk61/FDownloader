@@ -59,7 +59,8 @@ public sealed class TorrentService : IAsyncDisposable
         DownloadEventBus eventBus,
         ILogger<TorrentService> logger,
         string? downloadDirectory = null,
-        TorrentSettings? settings = null)
+        TorrentSettings? settings = null,
+        string? cacheDirectory = null)
     {
         _eventBus = eventBus;
         _logger = logger;
@@ -67,7 +68,7 @@ public sealed class TorrentService : IAsyncDisposable
         _downloadDirectory = downloadDirectory ?? Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
 
-        _cacheDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "torrent_cache");
+        _cacheDirectory = cacheDirectory ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "torrent_cache");
         Directory.CreateDirectory(_cacheDirectory);
 
         var engineSettings = CreateEngineSettings(_settings);
@@ -242,7 +243,7 @@ public sealed class TorrentService : IAsyncDisposable
         {
             string enrichedMagnet = cleanSource;
             // Eğer magnet linkinde tracker bilgisi yoksa veya eksikse, global fallback tracker'ları ekle
-            if (!enrichedMagnet.Contains("tr=", StringComparison.OrdinalIgnoreCase))
+            if (_settings.EnableFallbackTrackers && !enrichedMagnet.Contains("tr=", StringComparison.OrdinalIgnoreCase))
             {
                 var sb = new System.Text.StringBuilder(enrichedMagnet);
                 foreach (var tracker in DefaultFallbackTrackers)
@@ -329,7 +330,10 @@ public sealed class TorrentService : IAsyncDisposable
         }
 
         // Tüm torrentler (.torrent ve magnet) için zengin açık izleyici havuzunu bağla
-        _ = AddTrackersAsync(taskId, DefaultFallbackTrackers);
+        if (_settings.EnableFallbackTrackers && (cleanSource.StartsWith("magnet:", StringComparison.OrdinalIgnoreCase) || (manager.Torrent != null && (manager.Torrent.AnnounceUrls == null || manager.Torrent.AnnounceUrls.Count == 0))))
+        {
+            _ = AddTrackersAsync(taskId, DefaultFallbackTrackers);
+        }
 
         if (manager.Torrent != null && !_metadataNotifiedTasks.Contains(taskId))
         {
@@ -596,7 +600,14 @@ public sealed class TorrentService : IAsyncDisposable
 
             if (manager.State != TorrentState.Stopped)
             {
-                await manager.StopAsync();
+                try
+                {
+                    await manager.StopAsync();
+                }
+                catch (IOException ex)
+                {
+                    _logger.LogWarning(ex, "StopAsync sırasında fresume erişim çakışması oluştu, devam ediliyor.");
+                }
             }
 
             IPieceRequester requester = newSequentialState
@@ -1286,12 +1297,31 @@ public sealed class TorrentService : IAsyncDisposable
         }
     }
 
+    private bool _isDisposed;
+
     public async ValueTask DisposeAsync()
     {
-        _cts.Cancel();
-        _cts.Dispose();
-        await _engine.StopAllAsync();
-        _engine.Dispose();
+        if (_isDisposed) return;
+        _isDisposed = true;
+
+        try
+        {
+            if (!_cts.IsCancellationRequested)
+            {
+                _cts.Cancel();
+            }
+        }
+        catch { }
+
+        try { _cts.Dispose(); } catch { }
+
+        try
+        {
+            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+            await _engine.StopAllAsync().WaitAsync(timeoutCts.Token);
+            _engine.Dispose();
+        }
+        catch { }
     }
 }
 

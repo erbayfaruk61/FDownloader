@@ -33,14 +33,20 @@ public sealed class QueueAndSchedulerTests : IDisposable
         _repository = new DownloadRepository(_database, NullLogger<DownloadRepository>.Instance);
         _eventBus = new DownloadEventBus();
         _httpClient = new HttpClient();
-        _torrentService = new TorrentService(_eventBus, NullLogger<TorrentService>.Instance);
+        _torrentService = new TorrentService(
+            _eventBus,
+            NullLogger<TorrentService>.Instance,
+            Path.Combine(_tempDir, "torrent_downloads"),
+            new FDownloader.Core.Torrent.TorrentSettings { ListeningPort = 0, EnableDht = false, EnableUpnp = false, EnableLsd = false, EnableFallbackTrackers = false },
+            Path.Combine(_tempDir, "torrent_cache"));
         _mediaService = new YtDlpMediaService(_eventBus, NullLogger<YtDlpMediaService>.Instance, _httpClient);
     }
 
     public void Dispose()
     {
         _httpClient.Dispose();
-        _database.Dispose();
+        _torrentService.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        try { _database.Dispose(); } catch { }
         try
         {
             if (Directory.Exists(_tempDir))
@@ -129,7 +135,7 @@ public sealed class QueueAndSchedulerTests : IDisposable
 
         // task1 bittiğinde, kuyruktan priority'si 200 olan taskHigh önce başlamalı!
         _eventBus.Publish(new TaskCompletedEvent(task1.Id, task1.FinalFilePath, 1000, TimeSpan.FromSeconds(1)));
-        await Task.Delay(100);
+        await Task.Delay(250);
 
         Assert.True(taskHigh.Status is DownloadStatus.Downloading or DownloadStatus.Connecting);
         Assert.Equal(DownloadStatus.Queued, taskLow.Status);
