@@ -30,7 +30,7 @@
 
 ---
 
-## 🚀 Öne Çıkan Özellikler (v1.5.0)
+## 🚀 Öne Çıkan Özellikler (v1.5.6)
 
 * ⚡ **Çok Kanallı & Parçalı Hızlı İndirme:** HTTP/HTTPS bağlantılarını dinamik parçalara bölerek bant genişliğinizi tam kapasite kullanır; kopan veya duraklatılan indirmeleri sıfır kayıpla sürdürür.
 * 🧩 **Akıllı Medya Yakalayıcısı (Floating Grabber):** Web sayfalarındaki videolarda sağ üstte beliren indirme butonu (yt-dlp tarafından desteklenen sitelerden medya indirme uyumlu). Telif haklarına ve sitelerin kullanım şartlarına uymak kullanıcının sorumluluğundadır.

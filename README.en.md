@@ -30,7 +30,7 @@
 
 ---
 
-## 🚀 Key Features (v1.5.0)
+## 🚀 Key Features (v1.5.6)
 
 * ⚡ **High-Speed Multi-Part Downloading:** Segments HTTP/HTTPS connections dynamically to fully utilize available bandwidth; effortlessly resumes interrupted transfers.
 * 🧩 **Smart Media Sniffer (Floating Grabber):** Automatically detects video and audio streams on web pages and displays an overlay grabber button (compatible with platforms supported by yt-dlp).

@@ -1,8 +1,7 @@
 # FDownloader ve Tarayıcı Eklentisi Gizlilik Politikası
 
 > **Yürürlük Tarihi:** 4 Kasım 2026  
-> **Kapsam:** FDownloader Masaüstü Uygulaması ve FDownloader Tarayıcı Entegrasyon Eklentisi  
-> **İlgili Görev:** `P4-01` (Faz 4 — Tarayıcı Eklentisi ve Entegrasyon)
+> **Kapsam:** FDownloader Masaüstü Uygulaması ve FDownloader Tarayıcı Entegrasyon Eklentisi
 
 ---
 

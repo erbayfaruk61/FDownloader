@@ -5,6 +5,17 @@ Format, [Keep a Changelog](https://keepachangelog.com/tr/1.0.0/) standardına da
 
 ---
 
+## [1.5.6] - 2026-11-06
+
+### İyileştirildi & Düzeltildi
+- **Torrent Seçimli İndirme:** Yalnızca seçilen dosyaların net boyutu ve tahmini süresi hesaplanacak şekilde güncellendi.
+- **Tarayıcı Entegrasyonu:** Alt tuşu basılı tutulduğunda indirmeyi tarayıcıya bırakma (baypas) mekanizması kusursuzlaştırıldı.
+- **Çoklu Dil (i18n):** Durum çubuğu, hız limitleri ve arayüz kartlarının anlık dil değişimi sağlandı.
+- **Arayüz:** Durum çubuğu taşma ve hizalama sorunları giderildi.
+- **Eklenti Sürümü:** Tarayıcı eklentisi sürümü masaüstü ile eşitlenerek v1.5.6 yapıldı.
+
+---
+
 ## [1.5.0] - 2026-11-04
 
 ### Eklendi
