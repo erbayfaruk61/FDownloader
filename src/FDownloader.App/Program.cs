@@ -63,7 +63,7 @@ sealed class Program
             {
                 o.Dsn = sentryDsn;
                 o.TracesSampleRate = 1.0;
-                o.Release = "fdownloader@1.5.6";
+                o.Release = "fdownloader@1.5.7";
                 // P3-09: Kişisel Veri & Gizlilik Filtresi (BeforeSend)
                 o.SetBeforeSend((sentryEvent, hint) =>
                 {

@@ -5,14 +5,14 @@ Format, [Keep a Changelog](https://keepachangelog.com/tr/1.0.0/) standardına da
 
 ---
 
-## [1.5.6] - 2026-11-06
+## [1.5.7] - 2026-11-06
 
 ### İyileştirildi & Düzeltildi
-- **Torrent Seçimli İndirme:** Yalnızca seçilen dosyaların net boyutu ve tahmini süresi hesaplanacak şekilde güncellendi.
-- **Tarayıcı Entegrasyonu:** Alt tuşu basılı tutulduğunda indirmeyi tarayıcıya bırakma (baypas) mekanizması kusursuzlaştırıldı.
-- **Çoklu Dil (i18n):** Durum çubuğu, hız limitleri ve arayüz kartlarının anlık dil değişimi sağlandı.
-- **Arayüz:** Durum çubuğu taşma ve hizalama sorunları giderildi.
-- **Eklenti Sürümü:** Tarayıcı eklentisi sürümü masaüstü ile eşitlenerek v1.5.6 yapıldı.
+- **Torrent Seçimli İndirme:** Parça ve dosya seçiminde yalnızca seçilen dosyaların net boyutu ve doğru tahmini kalan süresi hesaplanacak şekilde güncellendi.
+- **Tarayıcı Entegrasyonu:** Alt tuşu basılı tutulduğunda indirmeyi tarayıcıya bırakma (baypas) mekanizması hem eklenti hem de masaüstü tarafında kusursuzlaştırıldı.
+- **Çoklu Dil (i18n):** İngilizce dil seçildiğinde durum çubuğu, hız sınırları, eklenti bekleme rozeti, tablo başlıkları ve alt bilgi kartlarındaki metinlerin anlık güncellenmesi tamamlandı.
+- **Arayüz & Yerleşim:** Durum çubuğundaki taşma sorunları giderildi, görsel hizalamalar optimize edildi.
+- **Eklenti Sürümü:** Tarayıcı eklentisi sürümü masaüstü uygulaması ile eşitlenerek `v1.5.7` yapıldı.
 
 ---
 
@@ -48,4 +48,3 @@ Format, [Keep a Changelog](https://keepachangelog.com/tr/1.0.0/) standardına da
 ### Eklendi
 - FDownloader ilk kararlı masaüstü sürümü (.NET 9 & Avalonia UI).
 - Temel tek parçalı HTTP indirme ve yerel SQLite görev veritabanı.
-
