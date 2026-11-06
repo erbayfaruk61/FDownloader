@@ -31,7 +31,7 @@ jobs:
         run: dotnet build FDownloader.sln --no-restore -c Release
 
       - name: Birim Testlerini Çalıştır
-        run: dotnet test tests/FDownloader.Core.Tests/FDownloader.Core.Tests.csproj --no-build -c Release --verbosity normal --logger "trx;LogFileName=test_results.trx"
+        run: dotnet test tests/FDownloader.Core.Tests/FDownloader.Core.Tests.csproj -c Release --verbosity normal --logger "trx;LogFileName=test_results.trx"
 
       - name: Eklenti Paketleme Doğrulaması
         run: powershell -ExecutionPolicy Bypass -File tools/browser-extension/package.ps1 -OutputDir ./extension-artifacts
