@@ -81,10 +81,14 @@ jobs:
       - name: SHA-256 Sağlama Listesi Üret (SHA256SUMS.txt)
         shell: pwsh
         run: |
+          $lines = @()
           Get-ChildItem -Path ./Releases -File | ForEach-Object {
-            $hash = (Get-FileHash -Path $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
-            "$hash  $($_.Name)"
-          } | Out-File -FilePath ./Releases/SHA256SUMS.txt -Encoding ascii
+            if ($_.Name -ne 'SHA256SUMS.txt') {
+              $hash = (Get-FileHash -Path $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+              $lines += ($hash + '  ' + $_.Name)
+            }
+          }
+          $lines | Set-Content -Path ./Releases/SHA256SUMS.txt -Encoding ascii
 
       - name: GitHub Release Oluştur ve Paketleri Yükle
         uses: softprops/action-gh-release@v2

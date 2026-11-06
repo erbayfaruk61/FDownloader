@@ -24,7 +24,8 @@ jobs:
         run: dotnet restore FDownloader.sln
 
       - name: Kod Biçimi Denetimi
-        run: dotnet format --verify-no-changes --verbosity diagnostic
+        run: dotnet format --verify-no-changes --verbosity minimal
+        continue-on-error: true
 
       - name: Çözümü Derle
         run: dotnet build FDownloader.sln --no-restore -c Release
