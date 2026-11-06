@@ -1,4 +1,5 @@
 using System.Net;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -15,6 +16,7 @@ public class BrowserDownloadRequest
     public string? Cookies { get; set; }
     public string? UserAgent { get; set; }
     public long? TotalBytes { get; set; }
+    public bool IsAltDown { get; set; }
 }
 
 /// <summary>
@@ -305,6 +307,20 @@ public sealed class BrowserBridgeService : IDisposable
 
                 if (downloadReq != null && !string.IsNullOrWhiteSpace(downloadReq.Url))
                 {
+                    // ─── Alt Tuşu Baypası (Kullanıcı Alt tuşuna basılı tutarak tıkladıysa indirmeyi tarayıcıya bırak) ───
+                    if (downloadReq.IsAltDown || IsAltBypassActive())
+                    {
+                        _logger.LogInformation("Alt tuşu basılı algılandı (OS seviyesinde). İndirme tarayıcıya devredildi: {Url}", downloadReq.Url);
+                        var bypassJson = JsonSerializer.Serialize(new
+                        {
+                            success = false,
+                            bypass = true,
+                            message = "Alt tuşu baypası devrede, indirme tarayıcıya devredildi"
+                        });
+                        await WriteJsonResponseAsync(response, 200, bypassJson);
+                        return;
+                    }
+
                     // ─── URL şema doğrulaması (komut enjeksiyonu ve yerel dosya erişimini önler) ───
                     var rawUrl = downloadReq.Url.Trim();
                     if (!IsUrlSchemeAllowed(rawUrl))
@@ -378,6 +394,48 @@ public sealed class BrowserBridgeService : IDisposable
         return url.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
             || url.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
             || url.StartsWith("ftp://", StringComparison.OrdinalIgnoreCase);
+    }
+
+    // ─── Windows P/Invoke Alt Tuşu Tespiti (IDM Tarzı Global Baypas) ───────
+    [DllImport("user32.dll")]
+    private static extern short GetAsyncKeyState(int vKey);
+
+    private const int VK_MENU = 0x12; // Alt tuşu (VK_MENU)
+    private static DateTime _lastAltPressedTime = DateTime.MinValue;
+    private static readonly object _altLock = new();
+
+        public static void NotifyAltKeyPressed()
+    {
+        lock (_altLock)
+        {
+            _lastAltPressedTime = DateTime.UtcNow;
+        }
+    }
+
+    public static bool IsAltBypassActive()
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            try
+            {
+                // Alt tuşu o anda fiziksel olarak basılı mı?
+                if ((GetAsyncKeyState(VK_MENU) & 0x8000) != 0)
+                {
+                    lock (_altLock)
+                    {
+                        _lastAltPressedTime = DateTime.UtcNow;
+                    }
+                    return true;
+                }
+            }
+            catch { }
+        }
+
+        lock (_altLock)
+        {
+            // Tıklamadan hemen sonra bırakma toleransı: 1.5 saniye (indirmelerin takılmasını önler)
+            return (DateTime.UtcNow - _lastAltPressedTime).TotalSeconds < 5.0;
+        }
     }
 
     public void Stop()

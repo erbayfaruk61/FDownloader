@@ -737,14 +737,20 @@ public sealed class YtDlpMediaService : IDisposable
         // Format ve argüman belirleme
         var commonArgs = BuildCommonArgumentList();
         string outputTemplate;
-        if (!isPlaylist && !string.IsNullOrWhiteSpace(customTitle))
+        bool hasSpecificTitle = !isPlaylist && !string.IsNullOrWhiteSpace(customTitle) &&
+            !customTitle.StartsWith("Medya", StringComparison.OrdinalIgnoreCase) &&
+            !customTitle.StartsWith("Video", StringComparison.OrdinalIgnoreCase) &&
+            !customTitle.StartsWith("Audio", StringComparison.OrdinalIgnoreCase);
+
+        if (hasSpecificTitle)
         {
             var sanitizedTitle = FDownloader.Core.Utilities.FileNameSanitizer.Sanitize(customTitle);
-            outputTemplate = Path.Combine(outputDirectory, $"{sanitizedTitle}.%(ext)s");
+            var titleWithoutExt = Path.GetFileNameWithoutExtension(sanitizedTitle);
+            outputTemplate = Path.Combine(outputDirectory, $"{titleWithoutExt}.%(ext)s");
         }
         else
         {
-            outputTemplate = Path.Combine(outputDirectory, "%(uploader)s - %(title)s.%(ext)s");
+            outputTemplate = Path.Combine(outputDirectory, "%(title)s.%(ext)s");
         }
 
         var psi = new ProcessStartInfo
@@ -875,6 +881,15 @@ public sealed class YtDlpMediaService : IDisposable
                     if (pIdx >= 0)
                     {
                         downloadedFilePath = line.Substring(pIdx + prefix.Length).Trim().Trim('\"');
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(downloadedFilePath))
+                {
+                    var actualName = Path.GetFileName(downloadedFilePath);
+                    if (!string.IsNullOrWhiteSpace(actualName))
+                    {
+                        _eventBus.Publish(new TaskRenamedEvent(taskId, actualName));
                     }
                 }
             }

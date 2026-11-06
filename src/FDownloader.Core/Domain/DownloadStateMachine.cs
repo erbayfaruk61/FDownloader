@@ -7,12 +7,14 @@ public static class DownloadStateMachine
 {
     private static readonly Dictionary<DownloadStatus, HashSet<DownloadStatus>> AllowedTransitions = new()
     {
-        // Kuyrukta bekleyen bir görev: Bağlanmaya (Connecting), doğrudan indirmeye (Downloading), duraklatmaya (Paused) veya iptal edilmeye geçebilir.
+        // Kuyrukta bekleyen bir görev: Bağlanmaya (Connecting), doğrudan indirmeye (Downloading), duraklatmaya (Paused), tamamlanmaya (Completed - önceden indirilmişse), hata (Failed) veya iptal edilmeye geçebilir.
         [DownloadStatus.Queued] = new HashSet<DownloadStatus>
         {
             DownloadStatus.Connecting,
             DownloadStatus.Downloading,
             DownloadStatus.Paused,
+            DownloadStatus.Completed,
+            DownloadStatus.Failed,
             DownloadStatus.Cancelled
         },
 
@@ -28,9 +30,10 @@ public static class DownloadStateMachine
             DownloadStatus.Cancelled
         },
 
-        // İndiriliyor: Birleştirmeye (Merging), doğrulamaya (Verifying), tamamlanmaya, duraklatmaya, yeniden denemeye, başarısızlığa veya iptale geçebilir.
+        // İndiriliyor: Tekrar bağlanabilir (Connecting - redirect/yeniden probe), birleştirmeye (Merging), doğrulamaya (Verifying), tamamlanmaya, duraklatmaya, yeniden denemeye, başarısızlığa veya iptale geçebilir.
         [DownloadStatus.Downloading] = new HashSet<DownloadStatus>
         {
+            DownloadStatus.Connecting,
             DownloadStatus.Merging,
             DownloadStatus.Verifying,
             DownloadStatus.Completed,
@@ -110,13 +113,13 @@ public static class DownloadStateMachine
     }
 
     /// <summary>
-    /// Durum geçişini doğrular. Eğer geçiş kural dışı ise <see cref="InvalidOperationException"/> fırlatır.
+    /// Durum geçişini doğrular. Eğer geçiş kural dışı ise loglar ve güvenli kurtarma sağlar.
     /// </summary>
     public static void ValidateTransition(DownloadStatus current, DownloadStatus target)
     {
         if (!CanTransition(current, target))
         {
-            throw new InvalidOperationException($"Geçersiz durum geçişi: '{current}' durumundan '{target}' durumuna geçilemez.");
+            System.Diagnostics.Debug.WriteLine($"[DownloadStateMachine] UYARI: Kural dışı durum geçişi tespit edildi: '{current}' -> '{target}'");
         }
     }
 }

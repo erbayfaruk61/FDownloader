@@ -147,7 +147,7 @@
                                 AutomationProperties.Name="Yeni İndirme Ekle" AutomationProperties.HelpText="Yeni URL veya dosya indirme görevi ekler">
                             <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                 <TextBlock Text="➕" VerticalAlignment="Center" />
-                                <TextBlock Text="Ekle" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding Loc[Common.Add], FallbackValue='Ekle'}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
                     </StackPanel>
@@ -157,11 +157,11 @@
                         <!-- Toplu İşlem Butonları -->
                         <Button Command="{Binding StartAllCommand}" ToolTip.Tip="Bekleyen ve duraklatılmış tüm indirmeleri başlatır" Padding="10,6" Height="34" VerticalAlignment="Center"
                                 AutomationProperties.Name="Bekleyen Tüm İndirmeleri Başlat">
-                            <TextBlock Text="▶ Bekleyenleri Başlat" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding Loc[Settings.StartPending], FallbackValue='▶ Bekleyenleri Başlat'}" VerticalAlignment="Center" />
                         </Button>
                         <Button Command="{Binding PauseAllCommand}" ToolTip.Tip="Tüm aktif indirmeleri duraklatır" Padding="10,6" Height="34" VerticalAlignment="Center"
                                 AutomationProperties.Name="Tüm Aktif İndirmeleri Duraklat">
-                            <TextBlock Text="⏸ Tümünü Duraklat" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding Loc[Toolbar.PauseAllShort], FallbackValue='⏸ Tümünü Duraklat'}" VerticalAlignment="Center" />
                         </Button>
                         <Separator Width="1" Height="20" Margin="4,0" VerticalAlignment="Center" />
 
@@ -177,7 +177,7 @@
                         </Button>
                         <Button Command="{Binding RequestDeleteSelectedCommand}" ToolTip.Tip="Seçileni Sil (Diskten silme seçeneğiyle)" Padding="10,6" Height="34" VerticalAlignment="Center"
                                 AutomationProperties.Name="Seçili İndirmeyi Sil">
-                            <TextBlock Text="🗑 Sil" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding Loc[Common.Delete], FallbackValue='🗑 Sil'}" VerticalAlignment="Center" />
                         </Button>
                         <Separator Width="1" Height="20" Margin="4,0" VerticalAlignment="Center" />
 
@@ -186,7 +186,7 @@
                                 AutomationProperties.Name="Ayarlar Penceresini Aç">
                             <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                 <TextBlock Text="⚙️" VerticalAlignment="Center" />
-                                <TextBlock Text="Ayarlar" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding Loc[Common.Settings], FallbackValue='Ayarlar'}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
                     </StackPanel>
@@ -195,7 +195,7 @@
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                         <!-- Pano İzleme Anahtarı -->
                         <Border Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="6" Padding="8,4" Height="34" VerticalAlignment="Center">
-                            <CheckBox IsChecked="{Binding IsClipboardMonitoringEnabled}" Content="📋 Pano İzleyici" VerticalAlignment="Center" />
+                            <CheckBox IsChecked="{Binding IsClipboardMonitoringEnabled}" Content="{Binding Loc[Toolbar.ClipboardWatcher], FallbackValue='📋 Pano İzleyici'}" VerticalAlignment="Center" />
                         </Border>
 
                         <!-- Toplam Hız Göstergesi Rozeti -->
@@ -251,14 +251,14 @@
                         <!-- Anlık Hız -->
                         <Border Background="{Binding ThemeSpeedCurrentBadgeBg}" BorderBrush="{Binding ThemeSpeedCurrentBadgeBorder}" BorderThickness="1" CornerRadius="4" Padding="8,4">
                             <StackPanel Orientation="Horizontal" Spacing="5">
-                                <TextBlock Text="⚡ Anlık:" FontSize="11" Foreground="{Binding ThemeSpeedCurrentLabelFg}" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding Loc[Speed.Current], FallbackValue='⚡ Anlık:'}" FontSize="11" Foreground="{Binding ThemeSpeedCurrentLabelFg}" VerticalAlignment="Center" />
                                 <TextBlock Text="{Binding GraphCurrentSpeedText}" FontWeight="Bold" FontSize="12" Foreground="{Binding ThemeSpeedCurrentValueFg}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Border>
                         <!-- Maks Hız -->
                         <Border Background="{Binding ThemeSpeedMaxBadgeBg}" BorderBrush="{Binding ThemeSpeedMaxBadgeBorder}" BorderThickness="1" CornerRadius="4" Padding="8,4">
                             <StackPanel Orientation="Horizontal" Spacing="5">
-                                <TextBlock Text="🚀 Maks:" FontSize="11" Foreground="{Binding ThemeSpeedMaxLabelFg}" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding Loc[Speed.Max], FallbackValue='🚀 Maks:'}" FontSize="11" Foreground="{Binding ThemeSpeedMaxLabelFg}" VerticalAlignment="Center" />
                                 <TextBlock Text="{Binding GraphMaxSpeedText}" FontWeight="SemiBold" FontSize="11" Foreground="{Binding ThemeSpeedMaxValueFg}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Border>
@@ -316,18 +316,18 @@
                 <!-- Sol Kenar Çubuğu (Kategori Ağacı) -->
                 <Border Grid.Column="0" Background="{Binding ThemeSidebarBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="0,0,1,0" Padding="10">
                     <StackPanel Spacing="6">
-                        <TextBlock Text="KATEGORİLER" FontWeight="Bold" FontSize="11" Foreground="{Binding ThemeTextSecondary}" Margin="8,4,8,8" />
+                        <TextBlock Text="{Binding Loc[Category.Header], FallbackValue='KATEGORİLER'}" FontWeight="Bold" FontSize="11" Foreground="{Binding ThemeTextSecondary}" Margin="8,4,8,8" />
                         
                         <ListBox SelectedIndex="{Binding SelectedCategoryIndex}" Background="Transparent">
-                            <ListBoxItem Content="📥 Tümü" />
-                            <ListBoxItem Content="⚡ İndiriliyor" />
-                            <ListBoxItem Content="✔️ Tamamlandı" />
-                            <ListBoxItem Content="⏸ Duraklatıldı" />
-                            <ListBoxItem Content="🌊 Torrent (Beta)" />
-                            <ListBoxItem Content="🎬 Videolar" />
-                            <ListBoxItem Content="🎵 Ses &amp; MP3" />
-                            <ListBoxItem Content="📦 Sıkıştırılmış" />
-                            <ListBoxItem Content="📄 Belgeler" />
+                            <ListBoxItem Content="{Binding Loc[Category.All], FallbackValue='📥 Tümü'}" />
+                            <ListBoxItem Content="{Binding Loc[Category.Downloading], FallbackValue='⚡ İndiriliyor'}" />
+                            <ListBoxItem Content="{Binding Loc[Category.Completed], FallbackValue='✔️ Tamamlandı'}" />
+                            <ListBoxItem Content="{Binding Loc[Category.Paused], FallbackValue='⏸ Duraklatıldı'}" />
+                            <ListBoxItem Content="{Binding Loc[Category.Torrent], FallbackValue='🌊 Torrent'}" />
+                            <ListBoxItem Content="{Binding Loc[Category.Video], FallbackValue='🎬 Videolar'}" />
+                            <ListBoxItem Content="{Binding Loc[Category.Music], FallbackValue='🎵 Ses &amp; MP3'}" />
+                            <ListBoxItem Content="{Binding Loc[Category.Archive], FallbackValue='📦 Sıkıştırılmış'}" />
+                            <ListBoxItem Content="{Binding Loc[Category.Document], FallbackValue='📄 Belgeler'}" />
                         </ListBox>
                     </StackPanel>
                 </Border>
@@ -361,55 +361,55 @@
                                 <Grid ColumnDefinitions="32, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto">
                                     <!-- 0: Durum -->
                                     <Grid Grid.Column="0" Width="32">
-                                        <TextBlock Text="Durum" FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding Loc[Column.Status], FallbackValue='Durum'}" FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                         <Border Width="1" Background="#26FFFFFF" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,3" />
                                     </Grid>
 
                                     <!-- 1: Tür -->
                                     <Grid Grid.Column="1" Width="32" IsVisible="{Binding ShowColCategory}">
-                                        <TextBlock Text="Tür" FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding Loc[Column.Type], FallbackValue='Tür'}" FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                         <Border Width="1" Background="#26FFFFFF" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,3" />
                                     </Grid>
 
                                     <!-- 2: Dosya Adı -->
                                     <Grid Grid.Column="2" Width="{Binding ColNameWidth}">
-                                        <TextBlock Text="Dosya Adı" FontWeight="SemiBold" VerticalAlignment="Center" Margin="6,0" />
+                                        <TextBlock Text="{Binding Loc[Column.FileName], FallbackValue='Dosya Adı'}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="6,0" />
                                         <Thumb Classes="colResizer" Tag="Name" DragDelta="OnColumnThumbDragDelta" DoubleTapped="OnColumnThumbDoubleTapped" ToolTip.Tip="Genişliği değiştirmek için sürükleyin, sıfırlamak için çift tıklayın" />
                                     </Grid>
 
                                     <!-- 3: Boyut -->
                                     <Grid Grid.Column="3" Width="{Binding ColSizeWidth}" IsVisible="{Binding ShowColSize}">
-                                        <TextBlock Text="Boyut" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0" />
+                                        <TextBlock Text="{Binding Loc[Column.Size], FallbackValue='Boyut'}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0" />
                                         <Thumb Classes="colResizer" Tag="Size" DragDelta="OnColumnThumbDragDelta" DoubleTapped="OnColumnThumbDoubleTapped" ToolTip.Tip="Genişliği değiştirmek için sürükleyin, sıfırlamak için çift tıklayın" />
                                     </Grid>
 
                                     <!-- 4: İlerleme -->
                                     <Grid Grid.Column="4" Width="{Binding ColProgressWidth}" IsVisible="{Binding ShowColProgress}">
-                                        <TextBlock Text="İlerleme" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0" />
+                                        <TextBlock Text="{Binding Loc[Column.Progress], FallbackValue='İlerleme'}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0" />
                                         <Thumb Classes="colResizer" Tag="Progress" DragDelta="OnColumnThumbDragDelta" DoubleTapped="OnColumnThumbDoubleTapped" ToolTip.Tip="Genişliği değiştirmek için sürükleyin, sıfırlamak için çift tıklayın" />
                                     </Grid>
 
                                     <!-- 5: Anlık Hız -->
                                     <Grid Grid.Column="5" Width="{Binding ColSpeedWidth}" IsVisible="{Binding ShowColSpeed}">
-                                        <TextBlock Text="Anlık Hız" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0" />
+                                        <TextBlock Text="{Binding Loc[Column.Speed], FallbackValue='Anlık Hız'}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0" />
                                         <Thumb Classes="colResizer" Tag="Speed" DragDelta="OnColumnThumbDragDelta" DoubleTapped="OnColumnThumbDoubleTapped" ToolTip.Tip="Genişliği değiştirmek için sürükleyin, sıfırlamak için çift tıklayın" />
                                     </Grid>
 
                                     <!-- 6: Maks. Hız -->
                                     <Grid Grid.Column="6" Width="{Binding ColMaxSpeedWidth}" IsVisible="{Binding ShowColMaxSpeed}">
-                                        <TextBlock Text="Maks. Hız" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0" />
+                                        <TextBlock Text="{Binding Loc[Column.MaxSpeed], FallbackValue='Maks. Hız'}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0" />
                                         <Thumb Classes="colResizer" Tag="MaxSpeed" DragDelta="OnColumnThumbDragDelta" DoubleTapped="OnColumnThumbDoubleTapped" ToolTip.Tip="Genişliği değiştirmek için sürükleyin, sıfırlamak için çift tıklayın" />
                                     </Grid>
 
                                     <!-- 7: Kalan Süre -->
                                     <Grid Grid.Column="7" Width="{Binding ColEtaWidth}" IsVisible="{Binding ShowColEta}">
-                                        <TextBlock Text="Kalan Süre" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0" />
+                                        <TextBlock Text="{Binding Loc[Column.TimeRemaining], FallbackValue='Kalan Süre'}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0" />
                                         <Thumb Classes="colResizer" Tag="Eta" DragDelta="OnColumnThumbDragDelta" DoubleTapped="OnColumnThumbDoubleTapped" ToolTip.Tip="Genişliği değiştirmek için sürükleyin, sıfırlamak için çift tıklayın" />
                                     </Grid>
 
                                     <!-- 8: Eşler -->
                                     <Grid Grid.Column="8" Width="{Binding ColPeersWidth}" IsVisible="{Binding ShowColPeers}">
-                                        <TextBlock Text="Eşler" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0" />
+                                        <TextBlock Text="{Binding Loc[Column.Peers], FallbackValue='Eşler'}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0" />
                                         <Thumb Classes="colResizer" Tag="Peers" DragDelta="OnColumnThumbDragDelta" DoubleTapped="OnColumnThumbDoubleTapped" ToolTip.Tip="Genişliği değiştirmek için sürükleyin, sıfırlamak için çift tıklayın" />
                                     </Grid>
 
@@ -732,27 +732,27 @@
                                 </Style>
                             </TabControl.Styles>
 
-                            <TabItem Header="ℹ️ Genel">
+                            <TabItem Header="{Binding Loc[Detail.TabGeneral], FallbackValue='ℹ️ Genel'}">
                                 <ScrollViewer Margin="8">
                                     <Grid ColumnDefinitions="140, *" RowDefinitions="Auto, Auto, Auto, Auto, Auto" Margin="4">
-                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Dosya Adı:" FontWeight="SemiBold" Margin="0,4" />
-                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedDownload.FileName, FallbackValue='Seçili öğe yok'}" Margin="0,4" />
-                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Kayıt Yolu:" FontWeight="SemiBold" Margin="0,4" />
-                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedDownload.SavePath, FallbackValue='-'}" Margin="0,4" />
-                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Kaynak URL:" FontWeight="SemiBold" Margin="0,4" />
-                                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedDownload.OriginalUrl, FallbackValue='-'}" TextWrapping="Wrap" Margin="0,4" />
-                                        <TextBlock Grid.Row="3" Grid.Column="0" Text="İndirilen Boyut:" FontWeight="SemiBold" Margin="0,4" />
-                                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedDownload.DownloadedBytesDisplay, FallbackValue='0 B'}" Margin="0,4" />
-                                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Son Hata:" FontWeight="SemiBold" Margin="0,4" />
-                                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SelectedDownload.LastErrorMessage, FallbackValue='Hata yok'}" Foreground="#EF4444" Margin="0,4" />
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Loc[Detail.FileName], FallbackValue='Dosya Adı:'}" FontWeight="SemiBold" Margin="0,4" />
+                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding DetailSelectedFileName}" Margin="0,4" />
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding Loc[Detail.SavePath], FallbackValue='Kayıt Yolu:'}" FontWeight="SemiBold" Margin="0,4" />
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding DetailSelectedSavePath}" Margin="0,4" />
+                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="{Binding Loc[Detail.SourceUrl], FallbackValue='Kaynak URL:'}" FontWeight="SemiBold" Margin="0,4" />
+                                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding DetailSelectedSourceUrl}" TextWrapping="Wrap" Margin="0,4" />
+                                        <TextBlock Grid.Row="3" Grid.Column="0" Text="{Binding Loc[Detail.DownloadedSize], FallbackValue='İndirilen Boyut:'}" FontWeight="SemiBold" Margin="0,4" />
+                                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding DetailSelectedDownloadedSize}" Margin="0,4" />
+                                        <TextBlock Grid.Row="4" Grid.Column="0" Text="{Binding Loc[Detail.LastError], FallbackValue='Son Hata:'}" FontWeight="SemiBold" Margin="0,4" />
+                                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding DetailSelectedLastError}" Foreground="{Binding DetailLastErrorForeground}" Margin="0,4" />
                                     </Grid>
                                 </ScrollViewer>
                             </TabItem>
 
-                            <TabItem Header="🟩 Parçalar">
+                            <TabItem Header="{Binding Loc[Detail.TabSegments], FallbackValue='🟩 Parçalar'}">
                                 <ScrollViewer Margin="8">
                                     <StackPanel Spacing="8">
-                                        <TextBlock Text="Segment / Parça Doluluk Haritası (Eşzamanlı Parçalar):" FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding Loc[Detail.SegmentsMap], FallbackValue='Segment / Parça Doluluk Haritası (Eşzamanlı Parçalar):'}" FontWeight="SemiBold" />
                                         <ItemsControl ItemsSource="{Binding SelectedDownload.SegmentProgresses}">
                                             <ItemsControl.ItemsPanel>
                                                 <ItemsPanelTemplate>
@@ -775,7 +775,7 @@
                             </TabItem>
 
                             <!-- Detaylı Torrent Sekmeleri -->
-                            <TabItem Header="🌊 Torrent (Beta)" IsVisible="{Binding SelectedDownload.IsTorrent, FallbackValue=False}">
+                            <TabItem Header="{Binding Loc[Detail.TabTorrent], FallbackValue='🌊 Torrent (Beta)'}" IsVisible="{Binding SelectedDownload.IsTorrent, FallbackValue=False}">
                                 <ScrollViewer Margin="8">
                                     <Grid ColumnDefinitions="*, *" RowDefinitions="Auto, Auto, Auto, Auto" Margin="4">
                                         <!-- Sol Kolon: Boyut ve İlerleme -->
@@ -832,7 +832,7 @@
                             </TabItem>
 
                             <!-- Torrent Stili Dosya & İçerik Seçimi -->
-                            <TabItem Header="📁 Dosyalar" IsVisible="{Binding SelectedDownload.IsTorrent, FallbackValue=False}">
+                            <TabItem Header="{Binding Loc[Detail.TabFiles], FallbackValue='📁 Dosyalar'}" IsVisible="{Binding SelectedDownload.IsTorrent, FallbackValue=False}">
                                 <Grid RowDefinitions="Auto, *">
                                     <Border Grid.Row="0" Background="{DynamicResource SystemControlBackgroundAltHighBrush}" Padding="6,2" BorderBrush="{DynamicResource SystemBaseLowColor}" BorderThickness="0,0,0,1">
                                         <StackPanel Orientation="Horizontal" Spacing="6">
@@ -878,7 +878,7 @@
                             </TabItem>
 
                             <!-- Torrent Eşleri (Peers) -->
-                            <TabItem Header="👥 Eşler" IsVisible="{Binding SelectedDownload.IsTorrent, FallbackValue=False}">
+                            <TabItem Header="{Binding Loc[Detail.TabPeers], FallbackValue='👥 Eşler'}" IsVisible="{Binding SelectedDownload.IsTorrent, FallbackValue=False}">
                                 <ListBox ItemsSource="{Binding CurrentTorrentDetails.Peers}" MaxHeight="160">
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
@@ -894,7 +894,7 @@
                             </TabItem>
 
                             <!-- Torrent İzleyicileri (Trackers) -->
-                            <TabItem Header="📡 İzleyiciler" IsVisible="{Binding SelectedDownload.IsTorrent, FallbackValue=False}">
+                            <TabItem Header="{Binding Loc[Detail.TabTrackers], FallbackValue='📡 İzleyiciler'}" IsVisible="{Binding SelectedDownload.IsTorrent, FallbackValue=False}">
                                 <Grid RowDefinitions="Auto, *">
                                     <Border Grid.Row="0" Background="{DynamicResource SystemChromeLowColor}" Padding="8,4" Margin="0,0,0,4" CornerRadius="4">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
@@ -936,15 +936,15 @@
                 <Grid ColumnDefinitions="*, Auto">
                     <!-- Sol Taraf: hDM Stili Sayaçlar ve Disk Boş Alanı -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding TotalCount, StringFormat='Listedeki Toplam: {0}'}" FontSize="11" FontWeight="Medium" />
+                        <TextBlock Text="{Binding TotalCountText}" FontSize="11" FontWeight="Medium" />
                         <TextBlock Text="|" Foreground="{DynamicResource SystemBaseLowColor}" />
-                        <TextBlock Text="{Binding CompletedCount, StringFormat='Tamamlanan: {0}'}" Foreground="#10B981" FontSize="11" />
+                        <TextBlock Text="{Binding CompletedCountText}" Foreground="#10B981" FontSize="11" />
                         <TextBlock Text="|" Foreground="{DynamicResource SystemBaseLowColor}" />
-                        <TextBlock Text="{Binding ActiveCount, StringFormat='Aktif: {0}'}" Foreground="#3B82F6" FontSize="11" />
+                        <TextBlock Text="{Binding ActiveStatusCountText}" Foreground="#3B82F6" FontSize="11" />
                         <TextBlock Text="|" Foreground="{DynamicResource SystemBaseLowColor}" />
-                        <TextBlock Text="{Binding PausedCount, StringFormat='Duraklatıldı: {0}'}" Foreground="#F59E0B" FontSize="11" />
+                        <TextBlock Text="{Binding PausedCountText}" Foreground="#F59E0B" FontSize="11" />
                         <TextBlock Text="|" Foreground="{DynamicResource SystemBaseLowColor}" />
-                        <TextBlock Text="{Binding FailedCount, StringFormat='Hata: {0}'}" Foreground="#EF4444" FontSize="11" />
+                        <TextBlock Text="{Binding FailedCountText}" Foreground="#EF4444" FontSize="11" />
                         <TextBlock Text="|" Foreground="{DynamicResource SystemBaseLowColor}" />
                         <TextBlock Text="{Binding DiskFreeSpaceText}" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
                     </StackPanel>
@@ -968,14 +968,13 @@
 
                         <TextBlock Text="|" Foreground="{DynamicResource SystemBaseLowColor}" VerticalAlignment="Center" />
 
-                        <!-- İndirme Hızı ve Limiti (Sabit Genişlik: 160) -->
-                        <Border Width=
-"160"
+                        <!-- İndirme Hızı ve Limiti -->
+                        <Border MinWidth="180"
  VerticalAlignment=
 "Center"
 >
                             <Grid ColumnDefinitions=
-"18, *, Auto"
+"18, Auto, Auto"
  VerticalAlignment=
 "Center"
 >
@@ -1033,6 +1032,7 @@
 "Bold"
  FontSize=
 "11"
+ Margin="6,0,0,0"
  VerticalAlignment=
 "Center"
  />
@@ -1047,14 +1047,13 @@
 "Center"
  />
 
-                        <!-- Yükleme Hızı ve Limiti (Sabit Genişlik: 160) -->
-                        <Border Width=
-"160"
+                        <!-- Yükleme Hızı ve Limiti -->
+                        <Border MinWidth="180"
  VerticalAlignment=
 "Center"
 >
                             <Grid ColumnDefinitions=
-"18, *, Auto"
+"18, Auto, Auto"
  VerticalAlignment=
 "Center"
 >
@@ -1112,6 +1111,7 @@
 "Bold"
  FontSize=
 "11"
+ Margin="6,0,0,0"
  VerticalAlignment=
 "Center"
  />
@@ -1274,7 +1274,7 @@
                     <Grid Grid.Row="0" ColumnDefinitions="*, Auto" Margin="4,0,4,12">
                         <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                             <TextBlock Text="⚙️" FontSize="18" VerticalAlignment="Center" />
-                            <TextBlock Text="Uygulama Ayarları" FontSize="16" FontWeight="Bold" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding Loc[Settings.Title], FallbackValue='Uygulama Ayarları'}" FontSize="16" FontWeight="Bold" VerticalAlignment="Center" />
                         </StackPanel>
                         <Button Grid.Column="1" Command="{Binding CancelSettingsCommand}" Content="✕" Background="Transparent" BorderThickness="0" FontSize="15" Padding="6,2" />
                     </Grid>
@@ -1315,7 +1315,7 @@
                         </TabControl.Styles>
                         
                         <!-- SEKME 1: 🎨 GÖRÜNÜM & TEMALAR -->
-                        <TabItem Header="⚡ Hız &amp; Ağ">
+                        <TabItem Header="{Binding Loc[Settings.TabSpeed], FallbackValue='⚡ Hız &amp; Ağ'}">
                             <ScrollViewer Margin="0,10,0,0">
                                 <StackPanel Spacing="14">
                                     <!-- GENEL HIZ LİMİTLERİ -->
@@ -1323,14 +1323,14 @@
                                         <StackPanel Spacing="10">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <TextBlock Text="🔄" Foreground="#10B981" FontWeight="Bold" VerticalAlignment="Center" />
-                                                <TextBlock Text="Genel Oran Sınırları (0 = Sınırsız ∞):" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding Loc[Settings.GeneralRateLimits], FallbackValue='Genel Oran Sınırları (0 = Sınırsız ∞):'}" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
                                             </StackPanel>
 
                                             <Grid ColumnDefinitions="140, 160, *" RowDefinitions="Auto, Auto" Margin="6,4,0,0">
-                                                <TextBlock Grid.Row="0" Grid.Column="0" Text="İndirme Limiti (KiB/s):" VerticalAlignment="Center" FontSize="12" />
+                                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Loc[Settings.DownloadLimit], FallbackValue='İndirme Limiti (KiB/s):'}" VerticalAlignment="Center" FontSize="12" />
                                                 <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding GlobalDownloadLimitKiB}" Margin="0,3" Height="30" VerticalContentAlignment="Center" />
 
-                                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Gönderme Limiti (KiB/s):" VerticalAlignment="Center" FontSize="12" />
+                                                <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding Loc[Settings.UploadLimit], FallbackValue='Gönderme Limiti (KiB/s):'}" VerticalAlignment="Center" FontSize="12" />
                                                 <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding GlobalUploadLimitKiB}" Margin="0,3" Height="30" VerticalContentAlignment="Center" />
                                             </Grid>
                                         </StackPanel>
@@ -1341,18 +1341,18 @@
                                         <StackPanel Spacing="10">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <TextBlock Text="⏱️" Foreground="#EF4444" FontWeight="Bold" VerticalAlignment="Center" />
-                                                <TextBlock Text="Alternatif Hız Sınırları (Hız İbresi Aktifken):" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding Loc[Settings.AltSpeedLimits], FallbackValue='Alternatif Hız Sınırları (Hız İbresi Aktifken):'}" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
                                             </StackPanel>
 
                                             <Grid ColumnDefinitions="140, 160, *" RowDefinitions="Auto, Auto" Margin="6,4,0,0">
-                                                <TextBlock Grid.Row="0" Grid.Column="0" Text="İndirme (KiB/s):" VerticalAlignment="Center" FontSize="12" />
+                                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Loc[Settings.AltSpeedDownload], FallbackValue='İndirme (KiB/s):'}" VerticalAlignment="Center" FontSize="12" />
                                                 <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding AltDownloadLimitKiB}" Margin="0,3" Height="30" VerticalContentAlignment="Center" />
 
-                                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Gönderme (KiB/s):" VerticalAlignment="Center" FontSize="12" />
+                                                <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding Loc[Settings.AltSpeedUpload], FallbackValue='Gönderme (KiB/s):'}" VerticalAlignment="Center" FontSize="12" />
                                                 <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding AltUploadLimitKiB}" Margin="0,3" Height="30" VerticalContentAlignment="Center" />
                                             </Grid>
 
-                                            <CheckBox IsChecked="{Binding IsAltRateLimitActive}" Content="⏱️ Yavaş Hız (Limitli) Modunu Etkinleştir (Limitleri Devreye Al)" FontWeight="Bold" Foreground="#F59E0B" Margin="6,4,0,0" FontSize="12" />
+                                            <CheckBox IsChecked="{Binding IsAltRateLimitActive}" Content="{Binding Loc[Settings.EnableLowSpeed], FallbackValue='⏱️ Yavaş Hız (Limitli) Modunu Etkinleştir (Limitleri Devreye Al)'}" FontWeight="Bold" Foreground="#F59E0B" Margin="6,4,0,0" FontSize="12" />
                                         </StackPanel>
                                     </Border>
 
@@ -1365,8 +1365,8 @@
                                                         <TextBlock Text="⏰" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                     </Border>
                                                     <StackPanel VerticalAlignment="Center" Spacing="2">
-                                                        <TextBlock Text="Gelişmiş İndirme Zamanlayıcısı" FontSize="13" FontWeight="Bold" Foreground="{Binding ThemeForeground}" />
-                                                        <TextBlock Text="Belirlenen saat aralığında otomatik indirme başlatma, durdurma veya kapatma." FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                                        <TextBlock Text="{Binding Loc[Settings.SchedulerTitle], FallbackValue='Gelişmiş İndirme Zamanlayıcısı'}" FontSize="13" FontWeight="Bold" Foreground="{Binding ThemeForeground}" />
+                                                        <TextBlock Text="{Binding Loc[Settings.SchedulerDesc], FallbackValue='Belirlenen saat aralığında otomatik indirme başlatma, durdurma veya kapatma.'}" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
                                                     </StackPanel>
                                                 </StackPanel>
                                                 <ToggleSwitch Grid.Column="1" IsChecked="{Binding IsSchedulerEnabled, Mode=TwoWay}" OnContent="" OffContent="" VerticalAlignment="Center" />
@@ -1377,24 +1377,24 @@
                                                 <Grid RowDefinitions="Auto, Auto" RowSpacing="10">
                                                     <!-- Başlangıç -->
                                                     <Grid Grid.Row="0" ColumnDefinitions="110, 80, 16, 120, *">
-                                                        <TextBlock Grid.Column="0" Text="Başlangıç Saati:" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" />
+                                                        <TextBlock Grid.Column="0" Text="{Binding Loc[Settings.StartTime], FallbackValue='Başlangıç Saati:'}" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" />
                                                         <TextBox Grid.Column="1" Text="{Binding SchedulerStartTime, Mode=TwoWay}" Height="30" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontSize="12" FontWeight="Bold" />
-                                                        <TextBlock Grid.Column="3" Text="Başlangıç Aksiyonu:" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" />
+                                                        <TextBlock Grid.Column="3" Text="{Binding Loc[Settings.StartAction], FallbackValue='Başlangıç Aksiyonu:'}" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" />
                                                         <ComboBox Grid.Column="4" SelectedIndex="{Binding SchedulerStartActionIndex, Mode=TwoWay}" HorizontalAlignment="Stretch" Height="30">
-                                                            <ComboBoxItem Content="▶ Bekleyenleri Başlat" />
-                                                            <ComboBoxItem Content="⚡ Tam Hıza Geç (Sınırsız)" />
+                                                            <ComboBoxItem Content="{Binding Loc[Settings.StartPending], FallbackValue='▶ Bekleyenleri Başlat'}" />
+                                                            <ComboBoxItem Content="{Binding Loc[Settings.FullSpeed], FallbackValue='⚡ Tam Hıza Geç (Sınırsız)'}" />
                                                         </ComboBox>
                                                     </Grid>
 
                                                     <!-- Bitiş -->
                                                     <Grid Grid.Row="1" ColumnDefinitions="110, 80, 16, 120, *">
-                                                        <TextBlock Grid.Column="0" Text="Bitiş Saati:" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" />
+                                                        <TextBlock Grid.Column="0" Text="{Binding Loc[Settings.EndTime], FallbackValue='Bitiş Saati:'}" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" />
                                                         <TextBox Grid.Column="1" Text="{Binding SchedulerEndTime, Mode=TwoWay}" Height="30" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontSize="12" FontWeight="Bold" />
-                                                        <TextBlock Grid.Column="3" Text="Bitiş Aksiyonu:" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" />
+                                                        <TextBlock Grid.Column="3" Text="{Binding Loc[Settings.EndAction], FallbackValue='Bitiş Aksiyonu:'}" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" />
                                                         <ComboBox Grid.Column="4" SelectedIndex="{Binding SchedulerEndActionIndex, Mode=TwoWay}" HorizontalAlignment="Stretch" Height="30">
-                                                            <ComboBoxItem Content="⏸ Tümünü Duraklat" />
-                                                            <ComboBoxItem Content="🐢 Yavaş Hız Moduna Geç" />
-                                                            <ComboBoxItem Content="🛑 Duraklat ve Bilgisayarı Kapat" />
+                                                            <ComboBoxItem Content="{Binding Loc[Settings.PauseAll], FallbackValue='⏸ Tümünü Duraklat'}" />
+                                                            <ComboBoxItem Content="{Binding Loc[Settings.SlowSpeed], FallbackValue='🐢 Yavaş Hız Moduna Geç'}" />
+                                                            <ComboBoxItem Content="{Binding Loc[Settings.PauseShutdown], FallbackValue='🛑 Duraklat ve Bilgisayarı Kapat'}" />
                                                         </ComboBox>
                                                     </Grid>
                                                 </Grid>
@@ -1403,15 +1403,15 @@
                                             <!-- Aktif Günler Seçimi -->
                                             <Border Background="{DynamicResource SystemChromeMediumColor}" CornerRadius="6" Padding="10" IsEnabled="{Binding IsSchedulerEnabled}">
                                                 <StackPanel Spacing="6">
-                                                    <TextBlock Text="Zamanlayıcının Çalışacağı Günler:" FontWeight="SemiBold" FontSize="11" Foreground="{Binding ThemeForeground}" />
+                                                    <TextBlock Text="{Binding Loc[Settings.SchedulerDays], FallbackValue='Zamanlayıcının Çalışacağı Günler:'}" FontWeight="SemiBold" FontSize="11" Foreground="{Binding ThemeForeground}" />
                                                     <WrapPanel Orientation="Horizontal">
-                                                        <CheckBox IsChecked="{Binding SchedulerMonday, Mode=TwoWay}" Content="Pazartesi" Margin="0,0,12,0" FontSize="11" />
-                                                        <CheckBox IsChecked="{Binding SchedulerTuesday, Mode=TwoWay}" Content="Salı" Margin="0,0,12,0" FontSize="11" />
-                                                        <CheckBox IsChecked="{Binding SchedulerWednesday, Mode=TwoWay}" Content="Çarşamba" Margin="0,0,12,0" FontSize="11" />
-                                                        <CheckBox IsChecked="{Binding SchedulerThursday, Mode=TwoWay}" Content="Perşembe" Margin="0,0,12,0" FontSize="11" />
-                                                        <CheckBox IsChecked="{Binding SchedulerFriday, Mode=TwoWay}" Content="Cuma" Margin="0,0,12,0" FontSize="11" />
-                                                        <CheckBox IsChecked="{Binding SchedulerSaturday, Mode=TwoWay}" Content="Cumartesi" Margin="0,0,12,0" FontSize="11" />
-                                                        <CheckBox IsChecked="{Binding SchedulerSunday, Mode=TwoWay}" Content="Pazar" Margin="0,0,12,0" FontSize="11" />
+                                                        <CheckBox IsChecked="{Binding SchedulerMonday, Mode=TwoWay}" Content="{Binding Loc[Settings.Monday], FallbackValue='Pazartesi'}" Margin="0,0,12,0" FontSize="11" />
+                                                        <CheckBox IsChecked="{Binding SchedulerTuesday, Mode=TwoWay}" Content="{Binding Loc[Settings.Tuesday], FallbackValue='Salı'}" Margin="0,0,12,0" FontSize="11" />
+                                                        <CheckBox IsChecked="{Binding SchedulerWednesday, Mode=TwoWay}" Content="{Binding Loc[Settings.Wednesday], FallbackValue='Çarşamba'}" Margin="0,0,12,0" FontSize="11" />
+                                                        <CheckBox IsChecked="{Binding SchedulerThursday, Mode=TwoWay}" Content="{Binding Loc[Settings.Thursday], FallbackValue='Perşembe'}" Margin="0,0,12,0" FontSize="11" />
+                                                        <CheckBox IsChecked="{Binding SchedulerFriday, Mode=TwoWay}" Content="{Binding Loc[Settings.Friday], FallbackValue='Cuma'}" Margin="0,0,12,0" FontSize="11" />
+                                                        <CheckBox IsChecked="{Binding SchedulerSaturday, Mode=TwoWay}" Content="{Binding Loc[Settings.Saturday], FallbackValue='Cumartesi'}" Margin="0,0,12,0" FontSize="11" />
+                                                        <CheckBox IsChecked="{Binding SchedulerSunday, Mode=TwoWay}" Content="{Binding Loc[Settings.Sunday], FallbackValue='Pazar'}" Margin="0,0,12,0" FontSize="11" />
                                                     </WrapPanel>
                                                 </StackPanel>
                                             </Border>
@@ -1421,25 +1421,25 @@
                             </ScrollViewer>
                         </TabItem>
 
-                        <TabItem Header="📁 Depolama">
+                        <TabItem Header="{Binding Loc[Settings.TabStorage], FallbackValue='📁 Depolama'}">
                             <ScrollViewer Margin="0,10,0,0">
                                 <StackPanel Spacing="14">
                                     <Border Background="{DynamicResource SystemChromeLowColor}" CornerRadius="8" Padding="14">
                                         <StackPanel Spacing="12">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <TextBlock Text="📁" FontSize="14" VerticalAlignment="Center" />
-                                                <TextBlock Text="Varsayılan Klasör ve Motor Parametreleri:" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding Loc[Settings.DefaultFolderAndEngine], FallbackValue='Varsayılan Klasör ve Motor Parametreleri:'}" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
                                             </StackPanel>
 
                                             <Grid ColumnDefinitions="140, *, Auto" RowDefinitions="Auto, Auto, Auto" Margin="6,4,0,0">
-                                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Kayıt Klasörü:" VerticalAlignment="Center" FontSize="12" />
+                                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Loc[Settings.SaveDirectory], FallbackValue='Kayıt Klasörü:'}" VerticalAlignment="Center" FontSize="12" />
                                                 <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SettingsDefaultSaveDirectory}" Margin="0,4" Height="32" VerticalContentAlignment="Center" />
-                                                <Button Grid.Row="0" Grid.Column="2" Command="{Binding BrowseSettingsDefaultSaveDirectoryCommand}" Content="📁 Gözat..." Margin="6,4,0,4" Height="32" Padding="10,0" VerticalContentAlignment="Center" />
+                                                <Button Grid.Row="0" Grid.Column="2" Command="{Binding BrowseSettingsDefaultSaveDirectoryCommand}" Content="{Binding Loc[Settings.BrowseButtonDots], FallbackValue='📁 Gözat...'}" Margin="6,4,0,4" Height="32" Padding="10,0" VerticalContentAlignment="Center" />
 
-                                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Eşzamanlı İndirme:" VerticalAlignment="Center" FontSize="12" />
+                                                <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding Loc[Settings.ConcurrentDownloads], FallbackValue='Eşzamanlı İndirme:'}" VerticalAlignment="Center" FontSize="12" />
                                                 <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding SettingsMaxConcurrentDownloads}" Margin="0,4" Width="70" HorizontalAlignment="Left" Height="30" VerticalContentAlignment="Center" />
 
-                                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Segment (Parça):" VerticalAlignment="Center" FontSize="12" />
+                                                <TextBlock Grid.Row="2" Grid.Column="0" Text="{Binding Loc[Settings.SegmentCount], FallbackValue='Segment (Parça):'}" VerticalAlignment="Center" FontSize="12" />
                                                 <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding SettingsDefaultSegments}" Margin="0,4" Width="70" HorizontalAlignment="Left" Height="30" VerticalContentAlignment="Center" />
                                             </Grid>
                                         </StackPanel>
@@ -1450,22 +1450,22 @@
                                         <StackPanel Spacing="10">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <TextBlock Text="📦" FontSize="14" VerticalAlignment="Center" />
-                                                <TextBlock Text="Otomatik Arşiv Çıkarma (Auto-Extract):" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding Loc[Settings.AutoExtractTitle], FallbackValue='Otomatik Arşiv Çıkarma (Auto-Extract):'}" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
                                             </StackPanel>
 
-                                            <TextBlock Text="İndirilen .zip, .rar, .7z, .tar, .gz arşivlerini indirme tamamlandığında otomatik olarak klasöre açar."
+                                            <TextBlock Text="{Binding Loc[Settings.AutoExtractDesc], FallbackValue='İndirilen .zip, .rar, .7z, .tar, .gz arşivlerini indirme tamamlandığında otomatik olarak klasöre açar.'}"
                                                        FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" TextWrapping="Wrap" Margin="6,0,0,4" />
 
-                                            <CheckBox IsChecked="{Binding AutoExtractArchives}" Content="İndirilen arşiv dosyalarını otomatik çıkart" FontSize="12" Margin="6,2,0,2" />
-                                            <CheckBox IsChecked="{Binding ExtractArchivesToSubfolder}" Content="Arşiv adıyla alt klasör oluşturup içine çıkart" FontSize="12" Margin="6,2,0,2" IsEnabled="{Binding AutoExtractArchives}" />
-                                            <CheckBox IsChecked="{Binding DeleteArchiveAfterExtract}" Content="Başarıyla çıkarıldıktan sonra orijinal arşiv dosyasını sil" FontSize="12" Margin="6,2,0,2" IsEnabled="{Binding AutoExtractArchives}" />
+                                            <CheckBox IsChecked="{Binding AutoExtractArchives}" Content="{Binding Loc[Settings.AutoExtractEnabled], FallbackValue='İndirilen arşiv dosyalarını otomatik çıkart'}" FontSize="12" Margin="6,2,0,2" />
+                                            <CheckBox IsChecked="{Binding ExtractArchivesToSubfolder}" Content="{Binding Loc[Settings.AutoExtractSubfolder], FallbackValue='Arşiv adıyla alt klasör oluşturup içine çıkart'}" FontSize="12" Margin="6,2,0,2" IsEnabled="{Binding AutoExtractArchives}" />
+                                            <CheckBox IsChecked="{Binding DeleteArchiveAfterExtract}" Content="{Binding Loc[Settings.AutoExtractDelete], FallbackValue='Başarıyla çıkarıldıktan sonra orijinal arşiv dosyasını sil'}" FontSize="12" Margin="6,2,0,2" IsEnabled="{Binding AutoExtractArchives}" />
                                         </StackPanel>
                                     </Border>
                                 </StackPanel>
                             </ScrollViewer>
                         </TabItem>
 
-                        <TabItem Header="🔔 Bildirim">
+                        <TabItem Header="{Binding Loc[Settings.TabNotification], FallbackValue='🔔 Bildirim'}">
                             <ScrollViewer Margin="0,10,0,0">
                                 <StackPanel Spacing="14">
                                     <Border Background="{DynamicResource SystemChromeLowColor}" CornerRadius="8" Padding="14">
@@ -1474,15 +1474,15 @@
                                                 <StackPanel Spacing="3">
                                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                                         <TextBlock Text="🎵" FontSize="14" VerticalAlignment="Center" />
-                                                        <TextBlock Text="İndirme Tamamlanma Zil Sesi:" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                                                        <TextBlock Text="{Binding Loc[Settings.SoundTitle], FallbackValue='İndirme Tamamlanma Zil Sesi:'}" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
                                                     </StackPanel>
-                                                    <TextBlock Text="Bir dosya başarıyla indirildiğinde çalınacak zil sesini seçin ve test edin." FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                                    <TextBlock Text="{Binding Loc[Settings.SoundDesc], FallbackValue='Bir dosya başarıyla indirildiğinde çalınacak zil sesini seçin ve test edin.'}" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
                                                 </StackPanel>
 
                                                 <Button Grid.Column="1" Command="{Binding PlayTestCurrentSoundCommand}" Background="{DynamicResource AccentButtonBackground}" Foreground="{DynamicResource AccentButtonForeground}" FontWeight="SemiBold" Padding="12,6" Height="32">
                                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                                         <TextBlock Text="▶" VerticalAlignment="Center" />
-                                                        <TextBlock Text="Seçileni Dinle" VerticalAlignment="Center" />
+                                                        <TextBlock Text="{Binding Loc[Settings.SoundListenSelected], FallbackValue='Seçileni Dinle'}" VerticalAlignment="Center" />
                                                     </StackPanel>
                                                 </Button>
                                             </Grid>
@@ -1492,56 +1492,56 @@
                                                 <!-- Notify -->
                                                 <Border Background="{DynamicResource SystemChromeMediumColor}" CornerRadius="6" Padding="12,8">
                                                     <Grid ColumnDefinitions="Auto, *, Auto">
-                                                        <RadioButton Grid.Column="0" Content="🔔 Windows Notify (Varsayılan Zarif Zil)"
+                                                        <RadioButton Grid.Column="0" Content="{Binding Loc[Settings.SoundNotify], FallbackValue='🔔 Windows Notify'}"
                                                                      IsChecked="{Binding IsSoundNotify, Mode=TwoWay}"
                                                                      GroupName="SoundGroup" FontWeight="Medium" VerticalAlignment="Center" />
-                                                        <Button Grid.Column="2" Command="{Binding PlaySpecificSoundCommand}" CommandParameter="Notify" Content="▶ Önizle" Padding="8,4" FontSize="11" />
+                                                        <Button Grid.Column="2" Command="{Binding PlaySpecificSoundCommand}" CommandParameter="Notify" Content="{Binding Loc[Settings.SoundPreview], FallbackValue='▶ Önizle'}" Padding="8,4" FontSize="11" />
                                                     </Grid>
                                                 </Border>
 
                                                 <!-- Chimes -->
                                                 <Border Background="{DynamicResource SystemChromeMediumColor}" CornerRadius="6" Padding="12,8">
                                                     <Grid ColumnDefinitions="Auto, *, Auto">
-                                                        <RadioButton Grid.Column="0" Content="✨ Chimes (Rüzgar Çanı / Melodik)"
+                                                        <RadioButton Grid.Column="0" Content="{Binding Loc[Settings.SoundChimes], FallbackValue='✨ Chimes'}"
                                                                      IsChecked="{Binding IsSoundChimes, Mode=TwoWay}"
                                                                      GroupName="SoundGroup" FontWeight="Medium" VerticalAlignment="Center" />
-                                                        <Button Grid.Column="2" Command="{Binding PlaySpecificSoundCommand}" CommandParameter="Chimes" Content="▶ Önizle" Padding="8,4" FontSize="11" />
+                                                        <Button Grid.Column="2" Command="{Binding PlaySpecificSoundCommand}" CommandParameter="Chimes" Content="{Binding Loc[Settings.SoundPreview], FallbackValue='▶ Önizle'}" Padding="8,4" FontSize="11" />
                                                     </Grid>
                                                 </Border>
 
                                                 <!-- Ding -->
                                                 <Border Background="{DynamicResource SystemChromeMediumColor}" CornerRadius="6" Padding="12,8">
                                                     <Grid ColumnDefinitions="Auto, *, Auto">
-                                                        <RadioButton Grid.Column="0" Content="🛎️ Ding (Kısa &amp; Net Zil Sesi)"
+                                                        <RadioButton Grid.Column="0" Content="{Binding Loc[Settings.SoundDing], FallbackValue='🛎️ Ding'}"
                                                                      IsChecked="{Binding IsSoundDing, Mode=TwoWay}"
                                                                      GroupName="SoundGroup" FontWeight="Medium" VerticalAlignment="Center" />
-                                                        <Button Grid.Column="2" Command="{Binding PlaySpecificSoundCommand}" CommandParameter="Ding" Content="▶ Önizle" Padding="8,4" FontSize="11" />
+                                                        <Button Grid.Column="2" Command="{Binding PlaySpecificSoundCommand}" CommandParameter="Ding" Content="{Binding Loc[Settings.SoundPreview], FallbackValue='▶ Önizle'}" Padding="8,4" FontSize="11" />
                                                     </Grid>
                                                 </Border>
 
                                                 <!-- Tada -->
                                                 <Border Background="{DynamicResource SystemChromeMediumColor}" CornerRadius="6" Padding="12,8">
                                                     <Grid ColumnDefinitions="Auto, *, Auto">
-                                                        <RadioButton Grid.Column="0" Content="🎺 Tada (Klasik Windows Kutlama Melodisi)"
+                                                        <RadioButton Grid.Column="0" Content="{Binding Loc[Settings.SoundTada], FallbackValue='🎺 Tada'}"
                                                                      IsChecked="{Binding IsSoundTada, Mode=TwoWay}"
                                                                      GroupName="SoundGroup" FontWeight="Medium" VerticalAlignment="Center" />
-                                                        <Button Grid.Column="2" Command="{Binding PlaySpecificSoundCommand}" CommandParameter="Tada" Content="▶ Önizle" Padding="8,4" FontSize="11" />
+                                                        <Button Grid.Column="2" Command="{Binding PlaySpecificSoundCommand}" CommandParameter="Tada" Content="{Binding Loc[Settings.SoundPreview], FallbackValue='▶ Önizle'}" Padding="8,4" FontSize="11" />
                                                     </Grid>
                                                 </Border>
 
                                                 <!-- Chord -->
                                                 <Border Background="{DynamicResource SystemChromeMediumColor}" CornerRadius="6" Padding="12,8">
                                                     <Grid ColumnDefinitions="Auto, *, Auto">
-                                                        <RadioButton Grid.Column="0" Content="🎹 Chord (Yumuşak Akor Sesi)"
+                                                        <RadioButton Grid.Column="0" Content="{Binding Loc[Settings.SoundChord], FallbackValue='🎹 Chord'}"
                                                                      IsChecked="{Binding IsSoundChord, Mode=TwoWay}"
                                                                      GroupName="SoundGroup" FontWeight="Medium" VerticalAlignment="Center" />
-                                                        <Button Grid.Column="2" Command="{Binding PlaySpecificSoundCommand}" CommandParameter="Chord" Content="▶ Önizle" Padding="8,4" FontSize="11" />
+                                                        <Button Grid.Column="2" Command="{Binding PlaySpecificSoundCommand}" CommandParameter="Chord" Content="{Binding Loc[Settings.SoundPreview], FallbackValue='▶ Önizle'}" Padding="8,4" FontSize="11" />
                                                     </Grid>
                                                 </Border>
 
                                                 <!-- Sessiz -->
                                                 <Border Background="{DynamicResource SystemChromeMediumColor}" CornerRadius="6" Padding="12,8">
-                                                    <RadioButton Content="🔇 Sessiz (Tamamlanınca ses çalma)"
+                                                    <RadioButton Content="{Binding Loc[Settings.SoundSilent], FallbackValue='🔇 Sessiz'}"
                                                                  IsChecked="{Binding IsSoundSessiz, Mode=TwoWay}"
                                                                  GroupName="SoundGroup" FontWeight="Medium" VerticalAlignment="Center" />
                                                 </Border>
@@ -1554,18 +1554,18 @@
                                         <StackPanel Spacing="8">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <TextBlock Text="💡" FontSize="14" VerticalAlignment="Center" />
-                                                <TextBlock Text="Kullanıcı Önerileri ve İpuçları:" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding Loc[Settings.TipsTitle], FallbackValue='Kullanıcı Önerileri ve İpuçları:'}" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
                                             </StackPanel>
-                                            <TextBlock Text="Uygulama açılışında gösterilen tarayıcı eklentisi kurulum rehberi ve faydalı ipucu bildirimlerini yönetin." FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                            <TextBlock Text="{Binding Loc[Settings.TipsDesc], FallbackValue='Uygulama açılışında gösterilen tarayıcı eklentisi kurulum rehberi ve faydalı ipucu bildirimlerini yönetin.'}" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
 
-                                            <CheckBox IsChecked="{Binding EnableSuggestions}" Content="Başlangıçta İpuçları ve Önerileri Göster (Eklenti kurulum rehberi vb.)" Margin="4,4,0,0" />
+                                            <CheckBox IsChecked="{Binding EnableSuggestions}" Content="{Binding Loc[Settings.TipsEnable], FallbackValue='Başlangıçta İpuçları ve Önerileri Göster'}" Margin="4,4,0,0" />
                                         </StackPanel>
                                     </Border>
                                 </StackPanel>
                             </ScrollViewer>
                         </TabItem>
 
-                        <TabItem Header="🧲 Torrent">
+                        <TabItem Header="{Binding Loc[Settings.TabTorrent], FallbackValue='🧲 Torrent'}">
                             <ScrollViewer Margin="0,10,0,0" VerticalScrollBarVisibility="Auto">
                                 <StackPanel Spacing="14">
                                     <!-- Ağ ve Port Ayarları -->
@@ -1573,17 +1573,17 @@
                                         <StackPanel Spacing="10">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <TextBlock Text="🔌" FontSize="14" VerticalAlignment="Center" />
-                                                <TextBlock Text="Dinleme Portu ve Bağlantılar" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding Loc[Settings.TorrentPortSection], FallbackValue='Dinleme Portu ve Bağlantılar'}" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
                                             </StackPanel>
 
                                             <Grid ColumnDefinitions="200, *" RowDefinitions="Auto, Auto, Auto" Margin="6,4,0,0">
-                                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Gelen Bağlantı Portu:" VerticalAlignment="Center" FontSize="12" />
+                                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Loc[Settings.TorrentIncomingPort], FallbackValue='Gelen Bağlantı Portu:'}" VerticalAlignment="Center" FontSize="12" />
                                                 <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding TorrentListeningPort}" Margin="0,4" Width="90" HorizontalAlignment="Left" Height="30" VerticalContentAlignment="Center" />
 
-                                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Genel Azami Bağlantı Sayısı:" VerticalAlignment="Center" FontSize="12" />
+                                                <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding Loc[Settings.TorrentMaxConnectionsTotal], FallbackValue='Genel Azami Bağlantı Sayısı:'}" VerticalAlignment="Center" FontSize="12" />
                                                 <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding TorrentMaxConnectionsTotal}" Margin="0,4" Width="90" HorizontalAlignment="Left" Height="30" VerticalContentAlignment="Center" />
 
-                                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Torrent Başına Azami Bağlantı:" VerticalAlignment="Center" FontSize="12" />
+                                                <TextBlock Grid.Row="2" Grid.Column="0" Text="{Binding Loc[Settings.TorrentMaxConnectionsPerTorrent], FallbackValue='Torrent Başına Azami Bağlantı:'}" VerticalAlignment="Center" FontSize="12" />
                                                 <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding TorrentMaxConnectionsPerTorrent}" Margin="0,4" Width="90" HorizontalAlignment="Left" Height="30" VerticalContentAlignment="Center" />
                                             </Grid>
                                         </StackPanel>
@@ -1594,20 +1594,20 @@
                                         <StackPanel Spacing="10">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <TextBlock Text="🌐" FontSize="14" VerticalAlignment="Center" />
-                                                <TextBlock Text="Protokol Özellikleri ve Gizlilik" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding Loc[Settings.TorrentProtocolSection], FallbackValue='Protokol Özellikleri ve Gizlilik'}" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
                                             </StackPanel>
 
-                                            <CheckBox IsChecked="{Binding TorrentEnableUpnp}" Content="UPnP / NAT-PMP Port Yönlendirmeyi Etkinleştir" FontSize="12" Margin="6,2,0,2" />
-                                            <CheckBox IsChecked="{Binding TorrentEnableDht}" Content="DHT (Dağıtık Ağ) ile Eş Bulmayı Etkinleştir" FontSize="12" Margin="6,2,0,2" />
-                                            <CheckBox IsChecked="{Binding TorrentEnablePex}" Content="PeX (Eş Değişimi - Peer Exchange) Etkinleştir" FontSize="12" Margin="6,2,0,2" />
-                                            <CheckBox IsChecked="{Binding TorrentEnableLsd}" Content="LSD (Yerel Ağ Eş Keşfi) Etkinleştir" FontSize="12" Margin="6,2,0,2" />
+                                            <CheckBox IsChecked="{Binding TorrentEnableUpnp}" Content="{Binding Loc[Settings.TorrentEnableUpnp], FallbackValue='UPnP / NAT-PMP Port Yönlendirmeyi Etkinleştir'}" FontSize="12" Margin="6,2,0,2" />
+                                            <CheckBox IsChecked="{Binding TorrentEnableDht}" Content="{Binding Loc[Settings.TorrentEnableDht], FallbackValue='DHT (Dağıtık Ağ) ile Eş Bulmayı Etkinleştir'}" FontSize="12" Margin="6,2,0,2" />
+                                            <CheckBox IsChecked="{Binding TorrentEnablePex}" Content="{Binding Loc[Settings.TorrentEnablePex], FallbackValue='PeX (Eş Değişimi - Peer Exchange) Etkinleştir'}" FontSize="12" Margin="6,2,0,2" />
+                                            <CheckBox IsChecked="{Binding TorrentEnableLsd}" Content="{Binding Loc[Settings.TorrentEnableLsd], FallbackValue='LSD (Yerel Ağ Eş Keşfi) Etkinleştir'}" FontSize="12" Margin="6,2,0,2" />
 
                                             <Grid ColumnDefinitions="200, *" Margin="6,8,0,0">
-                                                <TextBlock Text="Protokol Şifreleme (Encryption):" VerticalAlignment="Center" FontSize="12" />
+                                                <TextBlock Text="{Binding Loc[Settings.TorrentEncryption], FallbackValue='Protokol Şifreleme (Encryption):'}" VerticalAlignment="Center" FontSize="12" />
                                                 <ComboBox Grid.Column="1" SelectedIndex="{Binding TorrentEncryptionMode}" HorizontalAlignment="Left" Width="220">
-                                                    <ComboBoxItem Content="İzin Ver (Tercih Edilen)" />
-                                                    <ComboBoxItem Content="Zorunlu Kıl (Yalnızca Şifreli)" />
-                                                    <ComboBoxItem Content="Devre Dışı" />
+                                                    <ComboBoxItem Content="{Binding Loc[Settings.TorrentEncAllow], FallbackValue='İzin Ver (Tercih Edilen)'}" />
+                                                    <ComboBoxItem Content="{Binding Loc[Settings.TorrentEncRequire], FallbackValue='Zorunlu Kıl (Yalnızca Şifreli)'}" />
+                                                    <ComboBoxItem Content="{Binding Loc[Settings.TorrentEncDisable], FallbackValue='Devre Dışı'}" />
                                                 </ComboBox>
                                             </Grid>
                                         </StackPanel>
@@ -1618,14 +1618,14 @@
                                         <StackPanel Spacing="10">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <TextBlock Text="🔒" FontSize="14" VerticalAlignment="Center" />
-                                                <TextBlock Text="Ağ Adaptörü ve VPN Kilidi (Kill-Switch)" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding Loc[Settings.TorrentKillSwitchSection], FallbackValue='Ağ Adaptörü ve VPN Kilidi (Kill-Switch)'}" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
                                             </StackPanel>
 
-                                            <TextBlock Text="BitTorrent trafiğini yalnızca seçtiğiniz ağ kartına (VPN) kilitler. VPN bağlantısı koptuğunda gerçek IP adresinizin sızmaması için indirme ve gönderme anında durdurulur."
+                                            <TextBlock Text="{Binding Loc[Settings.TorrentKillSwitchDesc], FallbackValue='BitTorrent trafiğini yalnızca seçtiğiniz ağ kartına (VPN) kilitler.'}"
                                                        FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" TextWrapping="Wrap" Margin="6,0,0,4" />
 
                                             <Grid ColumnDefinitions="160, *" Margin="6,2,0,0">
-                                                <TextBlock Text="Bağlanılacak Ağ Kartı:" VerticalAlignment="Center" FontSize="12" />
+                                                <TextBlock Text="{Binding Loc[Settings.TorrentBindAdapter], FallbackValue='Bağlanılacak Ağ Kartı:'}" VerticalAlignment="Center" FontSize="12" />
                                                 <ComboBox Grid.Column="1" ItemsSource="{Binding NetworkInterfaces}" SelectedItem="{Binding SelectedNetworkInterface}" HorizontalAlignment="Stretch">
                                                     <ComboBox.ItemTemplate>
                                                         <DataTemplate>
@@ -1642,13 +1642,13 @@
                                         <StackPanel Spacing="10">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <TextBlock Text="⚡" FontSize="14" VerticalAlignment="Center" />
-                                                <TextBlock Text="İndirme ve Gönderme (Seeding) Kuralları" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding Loc[Settings.TorrentRulesSection], FallbackValue='İndirme ve Gönderme (Seeding) Kuralları'}" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
                                             </StackPanel>
 
-                                            <CheckBox IsChecked="{Binding TorrentEnableAutoSequential}" Content="Yeni eklenen torrentleri otomatik 'Sıralı İndir' (Streaming) modunda başlat" FontSize="12" Margin="6,2,0,2" />
+                                            <CheckBox IsChecked="{Binding TorrentEnableAutoSequential}" Content="{Binding Loc[Settings.TorrentAutoSequential], FallbackValue='Yeni eklenen torrentleri otomatik Sıralı İndir modunda başlat'}" FontSize="12" Margin="6,2,0,2" />
 
                                             <StackPanel Orientation="Horizontal" Spacing="8" Margin="6,4,0,2">
-                                                <CheckBox IsChecked="{Binding TorrentStopSeedingWhenRatioReached}" Content="Paylaşım Oranına Ulaşılınca Göndermeyi Durdur:" VerticalAlignment="Center" FontSize="12" />
+                                                <CheckBox IsChecked="{Binding TorrentStopSeedingWhenRatioReached}" Content="{Binding Loc[Settings.TorrentStopSeeding], FallbackValue='Paylaşım Oranına Ulaşılınca Göndermeyi Durdur:'}" VerticalAlignment="Center" FontSize="12" />
                                                 <TextBox Text="{Binding TorrentSeedRatioLimit}" Width="60" Height="28" VerticalContentAlignment="Center" IsEnabled="{Binding TorrentStopSeedingWhenRatioReached}" />
                                                 <TextBlock Text="(Örn: 1.00 veya 2.00 katı)" VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
                                             </StackPanel>
@@ -1658,7 +1658,7 @@
                             </ScrollViewer>
                         </TabItem>
 
-                        <TabItem Header="🎨 Görünüm">
+                        <TabItem Header="{Binding Loc[Settings.TabAppearance], FallbackValue='🎨 Görünüm'}">
                             <ScrollViewer Margin="0,6,0,0" VerticalScrollBarVisibility="Auto">
                                 <StackPanel Spacing="10">
                                     <!-- Renk Temaları -->
@@ -1666,9 +1666,9 @@
                                         <StackPanel Spacing="8">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <TextBlock Text="🎭" FontSize="14" VerticalAlignment="Center" />
-                                                <TextBlock Text="Renk Teması Seçimi:" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding Loc[Settings.ThemeSelectionTitle], FallbackValue='Renk Teması Seçimi:'}" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
                                             </StackPanel>
-                                            <TextBlock Text="Arayüzün renk tonunu ve kontrastını tercihinize göre anında uyarlayın." FontSize="11" Foreground="{Binding ThemeTextSecondary}" />
+                                            <TextBlock Text="{Binding Loc[Settings.ThemeSelectionDesc], FallbackValue='Arayüzün renk tonunu ve kontrastını tercihinize göre anında uyarlayın.'}" FontSize="11" Foreground="{Binding ThemeTextSecondary}" />
 
                                             <Grid ColumnDefinitions="*, *, *, *, *" Margin="0,2,0,0">
                                                 <!-- 1: Okyanus (Varsayılan) -->
@@ -1680,7 +1680,7 @@
                                                                      Command="{Binding SelectThemeCommand}"
                                                                      CommandParameter="OceanBlue"
                                                                      GroupName="AppThemeGroup" Foreground="#F8FAFC">
-                                                            <TextBlock Text="Okyanus" FontWeight="SemiBold" FontSize="12" Foreground="#F8FAFC" />
+                                                            <TextBlock Text="{Binding Loc[Settings.ThemeOcean], FallbackValue='Okyanus'}" FontWeight="SemiBold" FontSize="12" Foreground="#F8FAFC" />
                                                         </RadioButton>
                                                         <Border Height="24" CornerRadius="4" Background="#0C4A6E" BorderBrush="#0369A1" BorderThickness="1">
                                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="4">
@@ -1689,7 +1689,7 @@
                                                                 <Border Width="10" Height="10" CornerRadius="5" Background="#BAE6FD" />
                                                             </StackPanel>
                                                         </Border>
-                                                        <TextBlock Text="Deniz mavisi &amp; ferah vurgular" FontSize="10" Foreground="#7DD3FC" HorizontalAlignment="Center" />
+                                                        <TextBlock Text="{Binding Loc[Settings.ThemeOceanDesc], FallbackValue='Deniz mavisi &amp; ferah vurgular'}" FontSize="10" Foreground="#7DD3FC" HorizontalAlignment="Center" />
                                                     </StackPanel>
                                                 </Border>
 
@@ -1702,7 +1702,7 @@
                                                                      Command="{Binding SelectThemeCommand}"
                                                                      CommandParameter="CyberPurple"
                                                                      GroupName="AppThemeGroup" Foreground="#F8FAFC">
-                                                            <TextBlock Text="Siber Mor" FontWeight="SemiBold" FontSize="12" Foreground="#F8FAFC" />
+                                                            <TextBlock Text="{Binding Loc[Settings.ThemeCyber], FallbackValue='Siber Mor'}" FontWeight="SemiBold" FontSize="12" Foreground="#F8FAFC" />
                                                         </RadioButton>
                                                         <Border Height="24" CornerRadius="4" Background="#3B0764" BorderBrush="#581C87" BorderThickness="1">
                                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="4">
@@ -1711,7 +1711,7 @@
                                                                 <Border Width="10" Height="10" CornerRadius="5" Background="#C084FC" />
                                                             </StackPanel>
                                                         </Border>
-                                                        <TextBlock Text="Neon mor &amp; modern siber stil" FontSize="10" Foreground="#D8B4FE" HorizontalAlignment="Center" />
+                                                        <TextBlock Text="{Binding Loc[Settings.ThemeCyberDesc], FallbackValue='Neon mor &amp; modern siber stil'}" FontSize="10" Foreground="#D8B4FE" HorizontalAlignment="Center" />
                                                     </StackPanel>
                                                 </Border>
 
@@ -1724,7 +1724,7 @@
                                                                      Command="{Binding SelectThemeCommand}"
                                                                      CommandParameter="PlatinumGray"
                                                                      GroupName="AppThemeGroup" Foreground="#111827">
-                                                            <TextBlock Text="Platin Gri" FontWeight="SemiBold" FontSize="12" Foreground="#111827" />
+                                                            <TextBlock Text="{Binding Loc[Settings.ThemePlatinum], FallbackValue='Platin Gri'}" FontWeight="SemiBold" FontSize="12" Foreground="#111827" />
                                                         </RadioButton>
                                                         <Border Height="24" CornerRadius="4" Background="#EAEFF5" BorderBrush="#CBD5E1" BorderThickness="1">
                                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="4">
@@ -1733,7 +1733,7 @@
                                                                 <Border Width="10" Height="10" CornerRadius="5" Background="#6B7280" />
                                                             </StackPanel>
                                                         </Border>
-                                                        <TextBlock Text="Mat platin &amp; dengeli gri tonlar" FontSize="10" Foreground="#4B5563" HorizontalAlignment="Center" />
+                                                        <TextBlock Text="{Binding Loc[Settings.ThemePlatinumDesc], FallbackValue='Mat platin &amp; dengeli gri tonlar'}" FontSize="10" Foreground="#4B5563" HorizontalAlignment="Center" />
                                                     </StackPanel>
                                                 </Border>
 
@@ -1746,7 +1746,7 @@
                                                                      Command="{Binding SelectThemeCommand}"
                                                                      CommandParameter="LightClean"
                                                                      GroupName="AppThemeGroup" Foreground="#0F172A">
-                                                            <TextBlock Text="Aydınlık" FontWeight="SemiBold" FontSize="12" Foreground="#0F172A" />
+                                                            <TextBlock Text="{Binding Loc[Settings.ThemeLightClean], FallbackValue='Aydınlık'}" FontWeight="SemiBold" FontSize="12" Foreground="#0F172A" />
                                                         </RadioButton>
                                                         <Border Height="24" CornerRadius="4" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1">
                                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="4">
@@ -1755,7 +1755,7 @@
                                                                 <Border Width="10" Height="10" CornerRadius="5" Background="#E2E8F0" />
                                                             </StackPanel>
                                                         </Border>
-                                                        <TextBlock Text="Aydınlık, sade ve net zemin" FontSize="10" Foreground="#475569" HorizontalAlignment="Center" />
+                                                        <TextBlock Text="{Binding Loc[Settings.ThemeLightCleanDesc], FallbackValue='Aydınlık, sade ve net zemin'}" FontSize="10" Foreground="#475569" HorizontalAlignment="Center" />
                                                     </StackPanel>
                                                 </Border>
 
@@ -1768,7 +1768,7 @@
                                                                      Command="{Binding SelectThemeCommand}"
                                                                      CommandParameter="HighContrast"
                                                                      GroupName="AppThemeGroup" Foreground="#FFFFFF">
-                                                            <TextBlock Text="Yüksek Kontrast" FontWeight="Bold" FontSize="12" Foreground="#FFFFFF" />
+                                                            <TextBlock Text="{Binding Loc[Settings.ThemeHighContrast], FallbackValue='Yüksek Kontrast'}" FontWeight="Bold" FontSize="12" Foreground="#FFFFFF" />
                                                         </RadioButton>
                                                         <Border Height="24" CornerRadius="4" Background="#000000" BorderBrush="#FFFFFF" BorderThickness="1">
                                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="4">
@@ -1777,7 +1777,7 @@
                                                                 <Border Width="10" Height="10" CornerRadius="5" Background="#00FFFF" />
                                                             </StackPanel>
                                                         </Border>
-                                                        <TextBlock Text="Siyah zemin, keskin kontrast" FontSize="10" Foreground="#FFFF00" HorizontalAlignment="Center" />
+                                                        <TextBlock Text="{Binding Loc[Settings.ThemeHighContrastDesc], FallbackValue='Siyah zemin, keskin kontrast'}" FontSize="10" Foreground="#FFFF00" HorizontalAlignment="Center" />
                                                     </StackPanel>
                                                 </Border>
                                             </Grid>
@@ -1805,9 +1805,9 @@
                                         <StackPanel Spacing="8">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <TextBlock Text="📊" FontSize="14" VerticalAlignment="Center" />
-                                                <TextBlock Text="İlerleme Çubuğu Tasarımı:" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding Loc[Settings.ProgressBarDesignTitle], FallbackValue='İlerleme Çubuğu Tasarımı:'}" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
                                             </StackPanel>
-                                            <TextBlock Text="İndirme listesindeki ilerleme çubuğunun görsel tarzını tercihinize göre belirleyin." FontSize="11" Foreground="{Binding ThemeTextSecondary}" />
+                                            <TextBlock Text="{Binding Loc[Settings.ProgressBarDesignDesc], FallbackValue='İndirme listesindeki ilerleme çubuğunun görsel tarzını tercihinize göre belirleyin.'}" FontSize="11" Foreground="{Binding ThemeTextSecondary}" />
 
                                             <Grid ColumnDefinitions="*, *, *, *, *" Margin="0,2,0,0">
                                                 <!-- Klasik -->
@@ -1817,7 +1817,7 @@
                                                         PointerEntered="OnProgressCardPointerEntered" PointerExited="OnProgressCardPointerExited">
                                                     <StackPanel Spacing="6">
                                                         <Grid ColumnDefinitions="*, Auto">
-                                                            <RadioButton Content="Klasik"
+                                                            <RadioButton Content="{Binding Loc[Settings.ProgClassic], FallbackValue='Klasik'}"
                                                                          IsChecked="{Binding IsProgressStyleKlasik, Mode=TwoWay}"
                                                                          Command="{Binding SelectProgressStyleCommand}"
                                                                          CommandParameter="Klasik"
@@ -1831,7 +1831,7 @@
                                                                              Foreground="#0284C7" Background="Transparent" ClipToBounds="True" />
                                                             </Border>
                                                         </Border>
-                                                        <TextBlock Text="Klasik mavi" FontSize="10" Foreground="{Binding ThemeTextSecondary}" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Text="{Binding Loc[Settings.ProgClassicDesc], FallbackValue='Klasik mavi'}" FontSize="10" Foreground="{Binding ThemeTextSecondary}" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis" />
                                                     </StackPanel>
                                                 </Border>
 
@@ -1842,7 +1842,7 @@
                                                         PointerEntered="OnProgressCardPointerEntered" PointerExited="OnProgressCardPointerExited">
                                                     <StackPanel Spacing="6">
                                                         <Grid ColumnDefinitions="*, Auto">
-                                                            <RadioButton Content="Gradyan"
+                                                            <RadioButton Content="{Binding Loc[Settings.ProgGradient], FallbackValue='Gradyan'}"
                                                                          IsChecked="{Binding IsProgressStyleGradyan, Mode=TwoWay}"
                                                                          Command="{Binding SelectProgressStyleCommand}"
                                                                          CommandParameter="Gradyan"
@@ -1864,7 +1864,7 @@
                                                                 </ProgressBar>
                                                             </Border>
                                                         </Border>
-                                                        <TextBlock Text="Mavi-Mor-Yeşil geçiş" FontSize="10" Foreground="{Binding ThemeTextSecondary}" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Text="{Binding Loc[Settings.ProgGradientDesc], FallbackValue='Mavi-Mor-Yeşil geçiş'}" FontSize="10" Foreground="{Binding ThemeTextSecondary}" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis" />
                                                     </StackPanel>
                                                 </Border>
 
@@ -1875,7 +1875,7 @@
                                                         PointerEntered="OnProgressCardPointerEntered" PointerExited="OnProgressCardPointerExited">
                                                     <StackPanel Spacing="6">
                                                         <Grid ColumnDefinitions="*, Auto">
-                                                            <RadioButton Content="Neon"
+                                                            <RadioButton Content="{Binding Loc[Settings.ProgNeon], FallbackValue='Neon'}"
                                                                          IsChecked="{Binding IsProgressStyleNeon, Mode=TwoWay}"
                                                                          Command="{Binding SelectProgressStyleCommand}"
                                                                          CommandParameter="Neon"
@@ -1889,7 +1889,7 @@
                                                                              Foreground="#38BDF8" Background="Transparent" ClipToBounds="True" />
                                                             </Border>
                                                         </Border>
-                                                        <TextBlock Text="Parlak cyan parlama" FontSize="10" Foreground="{Binding ThemeTextSecondary}" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Text="{Binding Loc[Settings.ProgNeonDesc], FallbackValue='Parlak cyan parlama'}" FontSize="10" Foreground="{Binding ThemeTextSecondary}" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis" />
                                                     </StackPanel>
                                                 </Border>
 
@@ -1900,7 +1900,7 @@
                                                         PointerEntered="OnProgressCardPointerEntered" PointerExited="OnProgressCardPointerExited">
                                                     <StackPanel Spacing="6">
                                                         <Grid ColumnDefinitions="*, Auto">
-                                                            <RadioButton Content="İnce Çizgi"
+                                                            <RadioButton Content="{Binding Loc[Settings.ProgThin], FallbackValue='İnce Çizgi'}"
                                                                          IsChecked="{Binding IsProgressStyleInce, Mode=TwoWay}"
                                                                          Command="{Binding SelectProgressStyleCommand}"
                                                                          CommandParameter="Ince"
@@ -1914,7 +1914,7 @@
                                                                              Foreground="#10B981" Background="Transparent" ClipToBounds="True" />
                                                             </Border>
                                                         </Border>
-                                                        <TextBlock Text="Minimalist zarif çizgi" FontSize="10" Foreground="{Binding ThemeTextSecondary}" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Text="{Binding Loc[Settings.ProgThinDesc], FallbackValue='Minimalist zarif çizgi'}" FontSize="10" Foreground="{Binding ThemeTextSecondary}" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis" />
                                                     </StackPanel>
                                                 </Border>
                                             </Grid>
@@ -1924,11 +1924,11 @@
                             </ScrollViewer>
                         </TabItem>
 
-                        <TabItem Header="🕸️ Site Yakalayıcı">
+                        <TabItem Header="{Binding Loc[Settings.TabGrabber], FallbackValue='🕸️ Site Yakalayıcı'}">
                             <Grid RowDefinitions="Auto, Auto, *, Auto" Margin="4,10,4,0">
                                 <Grid Grid.Row="0" ColumnDefinitions="*, 120" Margin="0,0,0,8">
                                     <TextBox Grid.Column="0" Text="{Binding SiteGrabberUrl}" PlaceholderText="https://example.com/galeri" Height="34" VerticalContentAlignment="Center" Margin="0,0,8,0" />
-                                    <Button Grid.Column="1" Command="{Binding AnalyzeSiteCommand}" Content="Sayfayı Tara" Background="{DynamicResource AccentButtonBackground}" Foreground="{DynamicResource AccentButtonForeground}" FontWeight="SemiBold" Height="34" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+                                    <Button Grid.Column="1" Command="{Binding AnalyzeSiteCommand}" Content="{Binding Loc[Settings.GrabberScan], FallbackValue='Sayfayı Tara'}" Background="{DynamicResource AccentButtonBackground}" Foreground="{DynamicResource AccentButtonForeground}" FontWeight="SemiBold" Height="34" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
                                 </Grid>
 
                                 <TextBlock Grid.Row="1" Text="{Binding SiteGrabberStatusText}" FontSize="12" Foreground="{DynamicResource SystemBaseMediumColor}" Margin="0,0,0,8" />
@@ -1948,11 +1948,11 @@
                                     </ListBox>
                                 </Border>
 
-                                <Button Grid.Row="3" Command="{Binding ConfirmGrabbedDownloadsCommand}" Content="Seçilenleri İndirmeye Ekle" Background="{DynamicResource AccentButtonBackground}" Foreground="{DynamicResource AccentButtonForeground}" FontWeight="Bold" Height="34" HorizontalAlignment="Right" Margin="0,10,0,0" />
+                                <Button Grid.Row="3" Command="{Binding ConfirmGrabbedDownloadsCommand}" Content="{Binding Loc[Settings.GrabberAddSelected], FallbackValue='Seçilenleri İndirmeye Ekle'}" Background="{DynamicResource AccentButtonBackground}" Foreground="{DynamicResource AccentButtonForeground}" FontWeight="Bold" Height="34" HorizontalAlignment="Right" Margin="0,10,0,0" />
                             </Grid>
                         </TabItem>
 
-                        <TabItem Header="🧩 Tarayıcı (Eklenti)">
+                        <TabItem Header="{Binding Loc[Settings.TabBrowser], FallbackValue='🧩 Tarayıcı'}">
                             <ScrollViewer VerticalScrollBarVisibility="Auto">
                                 <StackPanel Spacing="10" Margin="4,8,4,0">
                                     <!-- Durum Kartı -->
@@ -1962,13 +1962,13 @@
                                                 <Image Source="/Assets/logo.png" Width="28" Height="28" Stretch="Uniform" />
                                             </Border>
                                             <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                                                <TextBlock Text="FDownloader Tarayıcı Köprüsü (127.0.0.1:9666)" FontWeight="Bold" FontSize="13" Foreground="{Binding ThemeForeground}" />
-                                                <TextBlock Text="Chrome, Microsoft Edge, Brave, Opera ve Firefox ile doğrudan çift yönlü haberleşir." FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                                <TextBlock Text="{Binding Loc[Settings.BrowserBridgeTitle], FallbackValue='FDownloader Tarayıcı Köprüsü (127.0.0.1:9666)'}" FontWeight="Bold" FontSize="13" Foreground="{Binding ThemeForeground}" />
+                                                <TextBlock Text="{Binding Loc[Settings.BrowserBridgeDesc], FallbackValue='Chrome, Microsoft Edge, Brave, Opera ve Firefox ile doğrudan çift yönlü haberleşir.'}" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
                                             </StackPanel>
                                             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                                 <!-- Köprü Durumu (Her Zaman Aktif) -->
                                                 <Border Background="#2010B981" BorderBrush="#10B981" BorderThickness="1" CornerRadius="4" Padding="7,3" VerticalAlignment="Center" ToolTip.Tip="FDownloader yerel HTTP köprüsü açık ve 9666 portunu dinliyor.">
-                                                    <TextBlock Text="✓ Köprü Aktif" FontSize="10" FontWeight="Bold" Foreground="#10B981" VerticalAlignment="Center" />
+                                                    <TextBlock Text="{Binding Loc[Settings.BrowserBridgeActive], FallbackValue='✓ Köprü Aktif'}" FontSize="10" FontWeight="Bold" Foreground="#10B981" VerticalAlignment="Center" />
                                                 </Border>
 
                                                 <!-- Eklenti Durumu -->
@@ -1985,14 +1985,14 @@
                                             <StackPanel Spacing="3" VerticalAlignment="Center">
                                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                                     <TextBlock Text="⚠️" FontSize="14" VerticalAlignment="Center" />
-                                                    <TextBlock Text="Tarayıcı Eklentiniz İçin Yeni Bir Sürüm Mevcut!" FontWeight="Bold" FontSize="12" Foreground="#F59E0B" VerticalAlignment="Center" />
+                                                    <TextBlock Text="{Binding Loc[Settings.BrowserExtUpdateAvailable], FallbackValue='Tarayıcı Eklentiniz İçin Yeni Bir Sürüm Mevcut!'}" FontWeight="Bold" FontSize="12" Foreground="#F59E0B" VerticalAlignment="Center" />
                                                 </StackPanel>
                                                 <TextBlock Text="{Binding ExpectedExtensionVersion, StringFormat='Tarayıcınızdaki eklenti sürümü eski. FDownloader içindeki en son sürüm (v{0}) ile güncelleyebilirsiniz.'}" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
                                             </StackPanel>
                                             <Button Grid.Column="1" Command="{Binding UpdateExtensionGuideCommand}" Background="#F59E0B" Foreground="Black" FontWeight="Bold" Padding="12,6" VerticalAlignment="Center">
                                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                                     <TextBlock Text="🔄" VerticalAlignment="Center" />
-                                                    <TextBlock Text="Eklentiyi Güncelle &amp; Klasörü Aç" VerticalAlignment="Center" />
+                                                    <TextBlock Text="{Binding Loc[Settings.BrowserUpdateExtButton], FallbackValue='Eklentiyi Güncelle &amp; Klasörü Aç'}" VerticalAlignment="Center" />
                                                 </StackPanel>
                                             </Button>
                                         </Grid>
@@ -2001,33 +2001,33 @@
                                     <!-- Hızlı Kurulum Butonları -->
                                     <Border Background="{DynamicResource SystemChromeLowColor}" CornerRadius="8" Padding="12">
                                         <StackPanel Spacing="8">
-                                            <TextBlock Text="🚀 Hızlı İşlemler (Tek Tıkla Kurulum Kolaylığı):" FontWeight="Bold" FontSize="12" />
+                                            <TextBlock Text="{Binding Loc[Settings.BrowserQuickActions], FallbackValue='🚀 Hızlı İşlemler (Tek Tıkla Kurulum Kolaylığı):'}" FontWeight="Bold" FontSize="12" />
                                             <WrapPanel Orientation="Horizontal">
                                                 <Button Command="{Binding OpenBrowserExtensionFolderCommand}" Background="{DynamicResource AccentButtonBackground}" Foreground="{DynamicResource AccentButtonForeground}" FontWeight="SemiBold" Padding="12,6" Margin="0,0,8,6">
                                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                                         <TextBlock Text="📁" VerticalAlignment="Center" />
-                                                        <TextBlock Text="Eklenti Klasörünü Aç" VerticalAlignment="Center" FontSize="11" />
+                                                        <TextBlock Text="{Binding Loc[Settings.BrowserOpenDir], FallbackValue='Eklenti Klasörünü Aç'}" VerticalAlignment="Center" FontSize="11" />
                                                     </StackPanel>
                                                 </Button>
 
                                                 <Button Command="{Binding CopyBrowserExtensionPathCommand}" Background="{DynamicResource SystemChromeMediumColor}" Padding="12,6" Margin="0,0,8,6">
                                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                                         <TextBlock Text="📋" VerticalAlignment="Center" />
-                                                        <TextBlock Text="Klasör Yolunu Kopyala" VerticalAlignment="Center" FontSize="11" />
+                                                        <TextBlock Text="{Binding Loc[Settings.BrowserCopyPath], FallbackValue='Klasör Yolunu Kopyala'}" VerticalAlignment="Center" FontSize="11" />
                                                     </StackPanel>
                                                 </Button>
 
                                                 <Button Command="{Binding OpenChromeExtensionsPageCommand}" Background="{DynamicResource SystemChromeMediumColor}" Padding="12,6" Margin="0,0,8,6">
                                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                                         <TextBlock Text="🌐" VerticalAlignment="Center" />
-                                                        <TextBlock Text="Chrome Eklentilerini Aç &amp; Kopyala" VerticalAlignment="Center" FontSize="11" />
+                                                        <TextBlock Text="{Binding Loc[Settings.BrowserOpenChromeExt], FallbackValue='Chrome Eklentilerini Aç &amp; Kopyala'}" VerticalAlignment="Center" FontSize="11" />
                                                     </StackPanel>
                                                 </Button>
 
                                                 <Button Command="{Binding CopyEdgeExtensionsUrlCommand}" Background="{DynamicResource SystemChromeMediumColor}" Padding="12,6" Margin="0,0,8,6">
                                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                                         <TextBlock Text="🌐" VerticalAlignment="Center" />
-                                                        <TextBlock Text="Edge Adresini Kopyala (edge://extensions)" VerticalAlignment="Center" FontSize="11" />
+                                                        <TextBlock Text="{Binding Loc[Settings.BrowserCopyEdgeExt], FallbackValue='Edge Adresini Kopyala (edge://extensions)'}" VerticalAlignment="Center" FontSize="11" />
                                                     </StackPanel>
                                                 </Button>
                                             </WrapPanel>
@@ -2037,7 +2037,7 @@
                                     <!-- 3 Adımda Kolay Kurulum Rehberi -->
                                     <Border Background="{DynamicResource SystemChromeLowColor}" CornerRadius="8" Padding="12">
                                         <StackPanel Spacing="8">
-                                            <TextBlock Text="📋 3 Adımda Tarayıcıya Ekleme Rehberi:" FontWeight="Bold" FontSize="12" Foreground="#38BDF8" />
+                                            <TextBlock Text="{Binding Loc[Settings.BrowserGuideTitle], FallbackValue='📋 3 Adımda Tarayıcıya Ekleme Rehberi:'}" FontWeight="Bold" FontSize="12" Foreground="#38BDF8" />
 
                                             <!-- Adım 1 -->
                                             <Border Background="{DynamicResource SystemChromeMediumColor}" CornerRadius="6" Padding="8,6">
@@ -2046,8 +2046,8 @@
                                                         <TextBlock Text="1" FontWeight="Bold" Foreground="White" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                     </Border>
                                                     <StackPanel Grid.Column="1" Spacing="1" Margin="8,0,0,0">
-                                                        <TextBlock Text="Tarayıcınızda Eklentiler Sayfasını Açın" FontWeight="SemiBold" FontSize="11" />
-                                                        <TextBlock Text="Chrome için 'chrome://extensions', Edge için 'edge://extensions' yazıp Enter'a basın." FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                                        <TextBlock Text="{Binding Loc[Settings.BrowserStep1Title], FallbackValue='Tarayıcınızda Eklentiler Sayfasını Açın'}" FontWeight="SemiBold" FontSize="11" />
+                                                        <TextBlock Text="{Binding Loc[Settings.BrowserStep1Desc], FallbackValue='Chrome için chrome://extensions yazın'}" FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" />
                                                     </StackPanel>
                                                 </Grid>
                                             </Border>
@@ -2059,8 +2059,8 @@
                                                         <TextBlock Text="2" FontWeight="Bold" Foreground="White" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                     </Border>
                                                     <StackPanel Grid.Column="1" Spacing="1" Margin="8,0,0,0">
-                                                        <TextBlock Text="Geliştirici Modunu (Developer Mode) Açın" FontWeight="SemiBold" FontSize="11" />
-                                                        <TextBlock Text="Açılan sayfanın sağ üst köşesindeki 'Geliştirici Modu' (Developer Mode) anahtarını açın." FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                                        <TextBlock Text="{Binding Loc[Settings.BrowserStep2Title], FallbackValue='Geliştirici Modunu Açın'}" FontWeight="SemiBold" FontSize="11" />
+                                                        <TextBlock Text="{Binding Loc[Settings.BrowserStep2Desc], FallbackValue='Geliştirici Modu anahtarını açın'}" FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" />
                                                     </StackPanel>
                                                 </Grid>
                                             </Border>
@@ -2072,8 +2072,8 @@
                                                         <TextBlock Text="3" FontWeight="Bold" Foreground="White" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                     </Border>
                                                     <StackPanel Grid.Column="1" Spacing="1" Margin="8,0,0,0">
-                                                        <TextBlock Text="Paketlenmemiş Öğe Yükle (Load unpacked)" FontWeight="SemiBold" FontSize="11" Foreground="#10B981" />
-                                                        <TextBlock Text="Sol üstteki 'Paketlenmemiş Öğe Yükle' butonuna basıp yukarıdan kopyaladığınız FDownloader eklenti klasörünü seçin." FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                                        <TextBlock Text="{Binding Loc[Settings.BrowserStep3Title], FallbackValue='Paketlenmemiş Öğe Yükle'}" FontWeight="SemiBold" FontSize="11" Foreground="#10B981" />
+                                                        <TextBlock Text="{Binding Loc[Settings.BrowserStep3Desc], FallbackValue='FDownloader eklenti klasörünü seçin'}" FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" />
                                                     </StackPanel>
                                                 </Grid>
                                             </Border>
@@ -2082,10 +2082,10 @@
                                             <Border Background="#1510B981" BorderBrush="#10B981" BorderThickness="1" CornerRadius="6" Padding="8,6">
                                                 <Grid ColumnDefinitions="*, Auto">
                                                     <StackPanel Spacing="1">
-                                                        <TextBlock Text="🎉 Eklenti Kuruldu mu?" FontWeight="Bold" FontSize="11" Foreground="#10B981" />
-                                                        <TextBlock Text="Artık videolarda fareyi hareket ettirdiğinizde sağ üstte '⚡ Bu Videoyu İndir' butonu çıkacaktır." FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                                        <TextBlock Text="{Binding Loc[Settings.BrowserInstalledSuccess], FallbackValue='🎉 Eklenti Kuruldu mu?'}" FontWeight="Bold" FontSize="11" Foreground="#10B981" />
+                                                        <TextBlock Text="{Binding Loc[Settings.BrowserInstalledDesc], FallbackValue='Artık videolarda fareyi hareket ettirdiğinizde buton çıkacaktır'}" FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" />
                                                     </StackPanel>
-                                                    <Button Grid.Column="1" Command="{Binding DismissSuggestionsCommand}" Content="✓ Eklentiyi Kurdum, Önerileri Kapat" Background="#10B981" Foreground="White" FontWeight="Bold" Padding="10,5" FontSize="11" VerticalAlignment="Center" />
+                                                    <Button Grid.Column="1" Command="{Binding DismissSuggestionsCommand}" Content="{Binding Loc[Settings.BrowserDismissSuggestions], FallbackValue='✓ Eklentiyi Kurdum, Önerileri Kapat'}" Background="#10B981" Foreground="White" FontWeight="Bold" Padding="10,5" FontSize="11" VerticalAlignment="Center" />
                                                 </Grid>
                                             </Border>
                                         </StackPanel>
@@ -2094,22 +2094,22 @@
                             </ScrollViewer>
                         </TabItem>
 
-                        <TabItem Header="🖥️ Davranış">
+                        <TabItem Header="{Binding Loc[Settings.TabBehavior], FallbackValue='🖥️ Davranış'}">
                             <ScrollViewer VerticalScrollBarVisibility="Auto">
                                 <StackPanel Spacing="10" Margin="4,8,4,0">
                                     <Border Background="{DynamicResource SystemChromeLowColor}" CornerRadius="8" Padding="14">
                                         <StackPanel Spacing="10">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <TextBlock Text="🖥️" FontSize="16" VerticalAlignment="Center" />
-                                                <TextBlock Text="Sistem &amp; Tepsi (Tray) Davranışı:" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding Loc[Settings.BehaviorTitle], FallbackValue='Sistem &amp; Tepsi Davranışı:'}" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
                                             </StackPanel>
-                                            <TextBlock Text="Windows başlangıcı ve görev çubuğu sistem tepsisi (bildirim alanı) entegrasyon ayarları." FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                            <TextBlock Text="{Binding Loc[Settings.BehaviorDesc], FallbackValue='Windows başlangıcı ve sistem tepsisi ayarları.'}" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
 
                                             <StackPanel Spacing="10" Margin="4,6,0,0">
                                                 <CheckBox IsChecked="{Binding StartWithWindows, Mode=TwoWay}">
                                                     <StackPanel Spacing="2">
-                                                        <TextBlock Text="Windows başladığında FDownloader'ı otomatik çalıştır" FontWeight="SemiBold" FontSize="12" />
-                                                        <TextBlock Text="Bilgisayarınız açıldığında indirme yöneticisi otomatik olarak hazır bekler." FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                                        <TextBlock Text="{Binding Loc[Settings.BehaviorAutoStart], FallbackValue='Windows başladığında FDownloader otomatik çalışsın'}" FontWeight="SemiBold" FontSize="12" />
+                                                        <TextBlock Text="{Binding Loc[Settings.BehaviorAutoStartDesc], FallbackValue='Bilgisayarınız açıldığında indirme yöneticisi hazır bekler.'}" FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" />
                                                     </StackPanel>
                                                 </CheckBox>
 
@@ -2117,8 +2117,8 @@
                                                           IsEnabled="{Binding StartWithWindows}"
                                                           Margin="24,0,0,0">
                                                     <StackPanel Spacing="2">
-                                                        <TextBlock Text="Açılışta sistem tepsisinde (simge durumunda) başlat" FontWeight="SemiBold" FontSize="12" />
-                                                        <TextBlock Text="Pencereyi doğrudan ekrana getirmeden sağ alttaki sistem tepsisinde sessizce başlatır." FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                                        <TextBlock Text="{Binding Loc[Settings.BehaviorStartMinimized], FallbackValue='Açılışta sistem tepsisinde başlat'}" FontWeight="SemiBold" FontSize="12" />
+                                                        <TextBlock Text="{Binding Loc[Settings.BehaviorStartMinimizedDesc], FallbackValue='Sistem tepsisinde sessizce başlatır.'}" FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" />
                                                     </StackPanel>
                                                 </CheckBox>
 
@@ -2126,15 +2126,15 @@
 
                                                 <CheckBox IsChecked="{Binding MinimizeToTrayOnClose, Mode=TwoWay}">
                                                     <StackPanel Spacing="2">
-                                                        <TextBlock Text="Pencere kapatıldığında (X) tamamen kapatmak yerine sistem tepsisine küçült" FontWeight="SemiBold" FontSize="12" />
-                                                        <TextBlock Text="Kapat butonuna basıldığında indirmeler kesilmez, uygulama arka planda çalışmaya devam eder." FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                                        <TextBlock Text="{Binding Loc[Settings.BehaviorMinimizeToTray], FallbackValue='Pencere kapatıldığında sistem tepsisine küçült'}" FontWeight="SemiBold" FontSize="12" />
+                                                        <TextBlock Text="{Binding Loc[Settings.BehaviorMinimizeToTrayDesc], FallbackValue='İndirmeler arka planda devam eder.'}" FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" />
                                                     </StackPanel>
                                                 </CheckBox>
 
                                                 <CheckBox IsChecked="{Binding ShowTrayIcon, Mode=TwoWay}">
                                                     <StackPanel Spacing="2">
-                                                        <TextBlock Text="Sistem tepsisinde simge göster" FontWeight="SemiBold" FontSize="12" />
-                                                        <TextBlock Text="Görev çubuğu bildirim alanında FDownloader hızlı erişim simgesini görüntüler." FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                                        <TextBlock Text="{Binding Loc[Settings.BehaviorShowTrayIcon], FallbackValue='Sistem tepsisinde simge göster'}" FontWeight="SemiBold" FontSize="12" />
+                                                        <TextBlock Text="{Binding Loc[Settings.BehaviorShowTrayIconDesc], FallbackValue='Bildirim alanında simge görüntüler.'}" FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" />
                                                     </StackPanel>
                                                 </CheckBox>
 
@@ -2161,29 +2161,29 @@
                             </ScrollViewer>
                         </TabItem>
 
-                        <TabItem Header="🔄 Hakkında">
+                        <TabItem Header="{Binding Loc[Settings.TabAbout], FallbackValue='🔄 Hakkında'}">
                             <ScrollViewer VerticalScrollBarVisibility="Auto">
                                 <StackPanel Spacing="14" Margin="4,10,4,0">
                                     <Border Background="{DynamicResource SystemChromeLowColor}" CornerRadius="8" Padding="14">
                                         <StackPanel Spacing="10">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <TextBlock Text="⚡" FontSize="16" VerticalAlignment="Center" />
-                                                <TextBlock Text="Otomatik Güncelleme (Velopack &amp; GitHub Releases)" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding Loc[Settings.AboutUpdatesTitle], FallbackValue='Otomatik Güncelleme'}" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
                                             </StackPanel>
-                                            <TextBlock Text="GitHub deposundaki en son yayınlanan sürümleri otomatik denetler ve sessizce günceller." FontSize="12" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                            <TextBlock Text="{Binding Loc[Settings.AboutUpdatesDesc], FallbackValue='GitHub sürümlerini denetler.'}" FontSize="12" Foreground="{DynamicResource SystemBaseMediumColor}" />
                                             
                                             <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,6,0,0">
                                                 <Button Command="{Binding CheckForUpdatesManualCommand}" Background="{DynamicResource AccentButtonBackground}" Foreground="{DynamicResource AccentButtonForeground}" FontWeight="SemiBold" Padding="14,7">
                                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                                         <TextBlock Text="🔍" VerticalAlignment="Center" />
-                                                        <TextBlock Text="Güncellemeleri Şimdi Denetle" VerticalAlignment="Center" />
+                                                        <TextBlock Text="{Binding Loc[Settings.AboutCheckUpdates], FallbackValue='Güncellemeleri Şimdi Denetle'}" VerticalAlignment="Center" />
                                                     </StackPanel>
                                                 </Button>
 
                                                 <Button Command="{Binding ApplyUpdateCommand}" IsVisible="{Binding IsUpdateAvailable}" Background="#10B981" Foreground="White" FontWeight="Bold" Padding="14,7">
                                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                                         <TextBlock Text="🚀" VerticalAlignment="Center" />
-                                                        <TextBlock Text="Yeni Sürümü İndir ve Yeniden Başlat" VerticalAlignment="Center" />
+                                                        <TextBlock Text="{Binding Loc[Settings.AboutDownloadUpdate], FallbackValue='Yeni Sürümü İndir ve Yeniden Başlat'}" VerticalAlignment="Center" />
                                                     </StackPanel>
                                                 </Button>
                                             </StackPanel>
@@ -2196,7 +2196,7 @@
                                     <!-- Depo Bilgisi -->
                                     <Border Background="{DynamicResource SystemChromeLowColor}" CornerRadius="8" Padding="14">
                                         <StackPanel Spacing="6">
-                                            <TextBlock Text="📦 Dağıtım Kanalı:" FontWeight="SemiBold" FontSize="12" />
+                                            <TextBlock Text="{Binding Loc[Settings.AboutChannel], FallbackValue='📦 Dağıtım Kanalı:'}" FontWeight="SemiBold" FontSize="12" />
                                             <TextBlock Text="https://github.com/erbayfaruk61/FDownloader" FontSize="11" Foreground="#38BDF8" />
                                         </StackPanel>
                                     </Border>
@@ -2205,9 +2205,9 @@
                                         <StackPanel Spacing="6">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <TextBlock Text="✉️" FontSize="14" VerticalAlignment="Center" />
-                                                <TextBlock Text="Hata ve Geliştirme Bildirimleri:" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding Loc[Settings.AboutContact], FallbackValue='Hata ve Geliştirme Bildirimleri:'}" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" />
                                             </StackPanel>
-                                            <TextBlock Text="Öneri, hata bildirimi ve geliştirmeler için doğrudan iletişim adresi:" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                            <TextBlock Text="{Binding Loc[Settings.AboutContactDesc], FallbackValue='Doğrudan iletişim adresi:'}" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
                                             <SelectableTextBlock Text="erbayfaruk61@gmail.com" FontSize="12" FontWeight="Bold" Foreground="#38BDF8" />
                                         </StackPanel>
                                     </Border>
@@ -2217,10 +2217,10 @@
                                         <StackPanel Spacing="6">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <TextBlock Text="📜" FontSize="14" VerticalAlignment="Center" />
-                                                <TextBlock Text="Açık Kaynak Lisansları ve Yasal Bildirim:" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding Loc[Settings.AboutLicense], FallbackValue='Açık Kaynak Lisansları ve Yasal Bildirim:'}" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" />
                                             </StackPanel>
-                                            <TextBlock Text="FDownloader, MIT lisanslı açık kaynaklı bir yazılımdır. MonoTorrent, yt-dlp, SharpCompress, Velopack ve Avalonia UI bileşenlerini kullanır. Ayrıntılı bildirimler için repo kökündeki THIRD_PARTY_NOTICES.md belgesini inceleyebilirsiniz." TextWrapping="Wrap" FontSize="11" LineHeight="16" Foreground="{DynamicResource SystemBaseMediumColor}" />
-                                            <TextBlock Text="Telif haklarına ve sitelerin kullanım koşullarına uymak kullanıcının sorumluluğundadır." FontSize="11" FontWeight="SemiBold" Foreground="#F59E0B" Margin="0,4,0,0" />
+                                            <TextBlock Text="{Binding Loc[Settings.AboutLicenseDesc], FallbackValue='FDownloader MIT lisanslı açık kaynaklı bir yazılımdır.'}" TextWrapping="Wrap" FontSize="11" LineHeight="16" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                            <TextBlock Text="{Binding Loc[Settings.AboutLegalWarn], FallbackValue='Telif haklarına uymak kullanıcının sorumluluğundadır.'}" FontSize="11" FontWeight="SemiBold" Foreground="#F59E0B" Margin="0,4,0,0" />
                                         </StackPanel>
                                     </Border>
                                 </StackPanel>

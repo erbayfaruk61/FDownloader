@@ -98,10 +98,25 @@ public sealed class DownloadManager : IAsyncDisposable
         SubscribeToEvents();
         LoadExistingTasks();
         _ = _torrentService.ApplySettingsAsync(GetTorrentSettings());
+        _ = ProcessQueueAsync();
     }
 
     private void SubscribeToEvents()
     {
+        _eventBus.Subscribe<TaskRenamedEvent>(e =>
+        {
+            lock (_lock)
+            {
+                var task = _tasks.FirstOrDefault(t => t.Id == e.TaskId);
+                if (task != null && !string.IsNullOrWhiteSpace(e.NewName))
+                {
+                    task.Name = e.NewName;
+                    task.FileName = e.NewName;
+                    _repository.UpdateTaskStatus(task);
+                }
+            }
+        });
+
         _eventBus.Subscribe<TaskCompletedEvent>(e =>
         {
             lock (_lock)
@@ -209,8 +224,8 @@ public sealed class DownloadManager : IAsyncDisposable
                 _tasks.Clear();
                 foreach (var task in existing)
                 {
-                    // Uygulama kapatıldığında veya çöktüğünde 'Downloading' durumunda kalmış görevleri doğrula
-                    if (task.Status == DownloadStatus.Downloading)
+                    // Uygulama kapatıldığında veya çöktüğünde aktif durumda kalmış görevleri doğrula
+                    if (task.Status is DownloadStatus.Downloading or DownloadStatus.Connecting or DownloadStatus.Merging or DownloadStatus.Verifying)
                     {
                         bool isCompletedOnDisk = false;
 
@@ -241,14 +256,14 @@ public sealed class DownloadManager : IAsyncDisposable
 
                         if (isCompletedOnDisk)
                         {
-                            task.Status = DownloadStatus.Completed;
+                            task.SetStatusDirect(DownloadStatus.Completed);
                             task.CompletedAt ??= DateTimeOffset.UtcNow;
                             _repository.UpdateTaskStatus(task);
                         }
                         else
                         {
                             // Yarım kalmış; şu an arkaplanda çalışan işlem olmadığı için Duraklatıldı yap
-                            task.Status = DownloadStatus.Paused;
+                            task.SetStatusDirect(DownloadStatus.Paused);
                             _repository.UpdateTaskStatus(task);
                         }
                     }
@@ -354,12 +369,14 @@ public sealed class DownloadManager : IAsyncDisposable
                 int activeCount = _tasks.Count(t => t.Status is DownloadStatus.Downloading or DownloadStatus.Connecting);
                 if (activeCount < MaxConcurrentDownloads)
                 {
-                    task.Status = DownloadStatus.Downloading;
+                    task.Status = DownloadStatus.Connecting;
+                    _repository.UpdateTaskStatus(task);
                     StartHttpTask(task);
                 }
                 else
                 {
                     task.Status = DownloadStatus.Queued;
+                    _repository.UpdateTaskStatus(task);
                     _logger.LogInformation("Eşzamanlı indirme sınırı ({Max}) dolu. Görev #{Id} kuyruğa alındı.", MaxConcurrentDownloads, task.Id);
                 }
             }
@@ -589,6 +606,12 @@ public sealed class DownloadManager : IAsyncDisposable
                 }
             });
             return;
+        }
+
+        if (task.Status != DownloadStatus.Downloading && task.Status != DownloadStatus.Connecting)
+        {
+            task.Status = DownloadStatus.Connecting;
+            _repository.UpdateTaskStatus(task);
         }
 
         StartHttpTask(task);
@@ -1042,9 +1065,14 @@ public sealed class DownloadManager : IAsyncDisposable
     {
         lock (_httpDownloaders)
         {
-            if (_httpDownloaders.TryGetValue(task.Id, out var existing) && existing.IsRunning)
+            if (_httpDownloaders.TryGetValue(task.Id, out var existing))
             {
-                return;
+                if (existing.IsRunning)
+                {
+                    return;
+                }
+                existing.Dispose();
+                _httpDownloaders.Remove(task.Id);
             }
 
             var downloader = new HttpDownloader(

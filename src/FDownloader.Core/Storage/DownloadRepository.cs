@@ -215,7 +215,7 @@ public sealed class DownloadRepository
         var rawCookies = r.IsDBNull(r.GetOrdinal("Cookies")) ? null : r.GetString(r.GetOrdinal("Cookies"));
         var decryptedCookies = !string.IsNullOrEmpty(rawCookies) ? _dataProtector.Unprotect(rawCookies) : null;
 
-        return new DownloadTask
+        var task = new DownloadTask
         {
             Id = r.GetInt64(r.GetOrdinal("Id")),
             Name = r.GetString(r.GetOrdinal("Name")),
@@ -227,7 +227,6 @@ public sealed class DownloadRepository
             TotalBytes = r.GetInt64(r.GetOrdinal("TotalBytes")),
             DownloadedBytes = r.GetInt64(r.GetOrdinal("DownloadedBytes")),
             Category = (DownloadCategory)r.GetInt32(r.GetOrdinal("Category")),
-            Status = (DownloadStatus)r.GetInt32(r.GetOrdinal("Status")),
             RetryCount = r.GetInt32(r.GetOrdinal("RetryCount")),
             LastErrorMessage = r.IsDBNull(r.GetOrdinal("LastErrorMessage")) ? null : r.GetString(r.GetOrdinal("LastErrorMessage")),
             SegmentCount = r.GetInt32(r.GetOrdinal("SegmentCount")),
@@ -241,6 +240,9 @@ public sealed class DownloadRepository
             Cookies = decryptedCookies,
             CreatedAt = DateTimeOffset.Parse(r.GetString(r.GetOrdinal("CreatedAt")))
         };
+
+        task.SetStatusDirect((DownloadStatus)r.GetInt32(r.GetOrdinal("Status")));
+        return task;
     }
 
     private static Domain.Segment ReadSegment(SqliteDataReader r)

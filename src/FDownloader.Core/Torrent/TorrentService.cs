@@ -75,6 +75,19 @@ public sealed class TorrentService : IAsyncDisposable
         _ = MonitorTorrentsLoopAsync(_cts.Token);
     }
 
+    private MonoTorrent.Client.TorrentSettings CreateTorrentSettings()
+    {
+        var dlLimit = _currentDlLimit > 0 ? (int)Math.Min(int.MaxValue, _currentDlLimit) : 0;
+        var ulLimit = _currentUlLimit > 0 ? (int)Math.Min(int.MaxValue, _currentUlLimit) : 0;
+
+        return new MonoTorrent.Client.TorrentSettingsBuilder
+        {
+            MaximumConnections = Math.Max(100, _settings.MaxConnectionsPerTorrent),
+            MaximumDownloadRate = dlLimit,
+            MaximumUploadRate = ulLimit
+        }.ToSettings();
+    }
+
     private EngineSettings CreateEngineSettings(TorrentSettings settings)
     {
         var builder = new EngineSettingsBuilder
@@ -83,7 +96,9 @@ public sealed class TorrentService : IAsyncDisposable
             AllowLocalPeerDiscovery = settings.EnableLsd,
             AutoSaveLoadFastResume = true,
             CacheDirectory = _cacheDirectory,
-            MaximumConnections = settings.MaxConnectionsTotal
+            MaximumConnections = Math.Max(250, settings.MaxConnectionsTotal),
+            MaximumHalfOpenConnections = 60,
+            DiskCacheBytes = 64 * 1024 * 1024
         };
 
         // Ağ Adaptörü Bağlama & VPN Kill-Switch Mantığı
@@ -215,13 +230,13 @@ public sealed class TorrentService : IAsyncDisposable
         if (File.Exists(localCachePath))
         {
             var torrent = await MonoTorrent.Torrent.LoadAsync(localCachePath);
-            manager = await _engine.AddAsync(torrent, saveDirectory);
+            manager = await _engine.AddAsync(torrent, saveDirectory, CreateTorrentSettings());
         }
         else if (File.Exists(urlCachedFile))
         {
             var torrent = await MonoTorrent.Torrent.LoadAsync(urlCachedFile);
             try { File.Copy(urlCachedFile, localCachePath, overwrite: true); } catch { }
-            manager = await _engine.AddAsync(torrent, saveDirectory);
+            manager = await _engine.AddAsync(torrent, saveDirectory, CreateTorrentSettings());
         }
         else if (cleanSource.StartsWith("magnet:", StringComparison.OrdinalIgnoreCase))
         {
@@ -255,16 +270,14 @@ public sealed class TorrentService : IAsyncDisposable
                 catch { }
             }
 
-            manager = await _engine.AddAsync(magnetLink, saveDirectory);
+            manager = await _engine.AddAsync(magnetLink, saveDirectory, CreateTorrentSettings());
 
-            // Motor tracker yöneticisine de doğrudan yedek izleyicileri ekle
-            _ = AddTrackersAsync(taskId, DefaultFallbackTrackers);
         }
         else if (File.Exists(cleanSource))
         {
             var torrent = await MonoTorrent.Torrent.LoadAsync(cleanSource);
             try { File.Copy(cleanSource, localCachePath, overwrite: true); } catch { }
-            manager = await _engine.AddAsync(torrent, saveDirectory);
+            manager = await _engine.AddAsync(torrent, saveDirectory, CreateTorrentSettings());
         }
         else if (cleanSource.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
                  cleanSource.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
@@ -303,7 +316,7 @@ public sealed class TorrentService : IAsyncDisposable
             }
             catch { }
 
-            manager = await _engine.AddAsync(torrent, saveDirectory);
+            manager = await _engine.AddAsync(torrent, saveDirectory, CreateTorrentSettings());
         }
         else
         {
@@ -314,6 +327,9 @@ public sealed class TorrentService : IAsyncDisposable
         {
             _activeManagers[taskId] = manager;
         }
+
+        // Tüm torrentler (.torrent ve magnet) için zengin açık izleyici havuzunu bağla
+        _ = AddTrackersAsync(taskId, DefaultFallbackTrackers);
 
         if (manager.Torrent != null && !_metadataNotifiedTasks.Contains(taskId))
         {
@@ -338,6 +354,7 @@ public sealed class TorrentService : IAsyncDisposable
             {
                 try { _ = manager.TrackerManager.AnnounceAsync(CancellationToken.None); } catch { }
             }
+            try { _ = manager.DhtAnnounceAsync(); } catch { }
             _eventBus.Publish(new TaskStartedEvent(taskId));
             _logger.LogInformation("Torrent başlatıldı: Task #{TaskId}, İsim: {Name}", taskId, manager.Torrent?.Name ?? "Magnet");
         }
@@ -995,8 +1012,30 @@ public sealed class TorrentService : IAsyncDisposable
         }
         catch { }
 
-        long totalSize = manager.Torrent?.Size ?? 0;
-        long downloaded = (long)(totalSize * (manager.Progress / 100.0));
+        long totalSize = 0;
+        long downloaded = 0;
+        double calculatedProgress = manager.Progress;
+
+        if (manager.Files != null && manager.Files.Count > 0)
+        {
+            var selectedFiles = manager.Files.Where(f => f.Priority != Priority.DoNotDownload).ToList();
+            if (selectedFiles.Count > 0 && selectedFiles.Count < manager.Files.Count)
+            {
+                totalSize = selectedFiles.Sum(f => f.Length);
+                downloaded = selectedFiles.Sum(f => f.BytesDownloaded());
+                calculatedProgress = totalSize > 0 ? Math.Min(100.0, downloaded * 100.0 / totalSize) : 0;
+            }
+            else
+            {
+                totalSize = manager.Torrent?.Size ?? 0;
+                downloaded = (long)(totalSize * (manager.Progress / 100.0));
+            }
+        }
+        else
+        {
+            totalSize = manager.Torrent?.Size ?? 0;
+            downloaded = (long)(totalSize * (manager.Progress / 100.0));
+        }
         long uploaded = manager.Monitor.DataBytesSent;
         double ratio = downloaded > 0 ? (double)uploaded / downloaded : 0.0;
 
@@ -1009,7 +1048,7 @@ public sealed class TorrentService : IAsyncDisposable
         return new TorrentDetails
         {
             Name = manager.Torrent?.Name ?? "Meta verisi indiriliyor...",
-            ProgressPercent = manager.Progress,
+            ProgressPercent = calculatedProgress,
             DownloadSpeed = manager.Monitor.DownloadRate,
             UploadSpeed = manager.Monitor.UploadRate,
             TotalBytes = totalSize,
@@ -1082,8 +1121,31 @@ public sealed class TorrentService : IAsyncDisposable
                     }
 
                     var isPausedOrStopped = manager.State is TorrentState.Paused or TorrentState.Stopped;
-                    var totalSize = manager.Torrent?.Size ?? 0;
-                    var downloaded = (long)(totalSize * (manager.Progress / 100.0));
+                    long totalSize = 0;
+                    long downloaded = 0;
+                    double effectiveProgress = manager.Progress;
+
+                    if (manager.Files != null && manager.Files.Count > 0)
+                    {
+                        var selectedFiles = manager.Files.Where(f => f.Priority != Priority.DoNotDownload).ToList();
+                        if (selectedFiles.Count > 0 && selectedFiles.Count < manager.Files.Count)
+                        {
+                            totalSize = selectedFiles.Sum(f => f.Length);
+                            downloaded = selectedFiles.Sum(f => f.BytesDownloaded());
+                            effectiveProgress = totalSize > 0 ? Math.Min(100.0, downloaded * 100.0 / totalSize) : 0;
+                        }
+                        else
+                        {
+                            totalSize = manager.Torrent?.Size ?? 0;
+                            downloaded = (long)(totalSize * (manager.Progress / 100.0));
+                        }
+                    }
+                    else
+                    {
+                        totalSize = manager.Torrent?.Size ?? 0;
+                        downloaded = (long)(totalSize * (manager.Progress / 100.0));
+                    }
+
                     var speed = isPausedOrStopped ? 0 : (double)manager.Monitor.DownloadRate;
 
                     TimeSpan? eta = null;
@@ -1098,7 +1160,7 @@ public sealed class TorrentService : IAsyncDisposable
                             taskId,
                             downloaded,
                             totalSize,
-                            manager.Progress,
+                            effectiveProgress,
                             speed,
                             eta,
                             Array.Empty<SegmentProgressInfo>()
@@ -1178,16 +1240,42 @@ public sealed class TorrentService : IAsyncDisposable
         return details;
     }
 
+    private long _currentDlLimit;
+    private long _currentUlLimit;
+
     public void SetRateLimits(long downloadBytesPerSec, long uploadBytesPerSec)
     {
         try
         {
+            _currentDlLimit = downloadBytesPerSec;
+            _currentUlLimit = uploadBytesPerSec;
+
+            var dlLimit = downloadBytesPerSec > 0 ? (int)Math.Min(int.MaxValue, downloadBytesPerSec) : 0;
+            var ulLimit = uploadBytesPerSec > 0 ? (int)Math.Min(int.MaxValue, uploadBytesPerSec) : 0;
+
             var builder = new EngineSettingsBuilder(_engine.Settings)
             {
-                MaximumDownloadRate = downloadBytesPerSec > 0 ? (int)Math.Min(int.MaxValue, downloadBytesPerSec) : 0,
-                MaximumUploadRate = uploadBytesPerSec > 0 ? (int)Math.Min(int.MaxValue, uploadBytesPerSec) : 0
+                MaximumDownloadRate = dlLimit,
+                MaximumUploadRate = ulLimit
             };
             _ = _engine.UpdateSettingsAsync(builder.ToSettings());
+
+            lock (_activeManagers)
+            {
+                foreach (var manager in _activeManagers.Values)
+                {
+                    try
+                    {
+                        var tsb = new MonoTorrent.Client.TorrentSettingsBuilder(manager.Settings)
+                        {
+                            MaximumDownloadRate = dlLimit,
+                            MaximumUploadRate = ulLimit
+                        };
+                        _ = manager.UpdateSettingsAsync(tsb.ToSettings());
+                    }
+                    catch { }
+                }
+            }
         }
         catch (Exception ex)
         {

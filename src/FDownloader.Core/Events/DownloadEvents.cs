@@ -21,6 +21,8 @@ public record FileChangedOnServerEvent(long TaskId, string? OldEtag, string? New
 
 public record TaskCompletedEvent(long TaskId, string FilePath, long TotalBytes, TimeSpan Duration);
 
+public record TaskRenamedEvent(long TaskId, string NewName);
+
 public record TaskFailedEvent(long TaskId, string Reason, bool IsRetrying);
 
 public record TaskRetryingEvent(long TaskId, int AttemptNumber, TimeSpan Delay);

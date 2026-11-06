@@ -151,6 +151,7 @@ public sealed class ClipboardWatcher : IDisposable
                     if (isAltPressed)
                     {
                         _altBypassUntil = DateTimeOffset.UtcNow.AddSeconds(5);
+                        Network.BrowserBridgeService.NotifyAltKeyPressed();
                     }
 
                     if (DateTimeOffset.UtcNow < _altBypassUntil)

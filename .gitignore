@@ -33,6 +33,7 @@ $RECYCLE.BIN/
 *.bak
 *~
 tools/browser-extension/dist/
+dist/
 Releases/
 
 ## Excluded Folders & Working Notes

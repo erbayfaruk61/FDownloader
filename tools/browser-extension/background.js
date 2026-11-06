@@ -263,10 +263,7 @@ async function sendToFDownloader(item) {
 let memIsAltDown = false;
 let memAltPressedUntil = 0;
 
-// Eski takılı kalmış storage bayraklarını sıfırla
-try {
-  chrome.storage.local.remove(["isAltDown", "altPressedUntil"]);
-} catch (e) { }
+// Alt tuşu baypası persistence hazırlandı
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message && message.type === "ALT_EVENT") {

@@ -8,12 +8,18 @@
     }
   }
 
+    let localAltUntil = 0;
+
   function updateAltState(isDown) {
+    if (isDown) {
+      localAltUntil = Math.max(localAltUntil, Date.now() + 5000);
+    }
     if (!isExtensionValid()) return;
     try {
       chrome.runtime.sendMessage({
         type: "ALT_EVENT",
-        isDown: Boolean(isDown)
+        isDown: Boolean(isDown),
+        until: Date.now() + 5000
       }, () => {
         // Alıcı dinleyici hazır değilse veya uyuyorsa hatayı sessizce yut
         if (chrome.runtime.lastError) { /* ignore */ }
@@ -36,8 +42,14 @@
   }, true);
 
   // 3. Mouse ve Tıklama (Alt basılı tutularak tıklandığında)
+  window.addEventListener("pointerdown", (e) => {
+    if (e.altKey || e.key === "Alt") {
+      updateAltState(true);
+    }
+  }, true);
+
   window.addEventListener("mousedown", (e) => {
-    if (e.altKey) {
+    if (e.altKey || e.key === "Alt") {
       updateAltState(true);
     }
   }, true);

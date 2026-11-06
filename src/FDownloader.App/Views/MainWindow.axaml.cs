@@ -38,6 +38,19 @@ public partial class MainWindow : Window
                 };
             }
         };
+
+        var speedBorder = this.FindControl<Border>("SpeedGraphBorder");
+        if (speedBorder != null)
+        {
+            speedBorder.SizeChanged += (s, e) =>
+            {
+                if (DataContext is MainViewModel vm && e.NewSize.Width > 50)
+                {
+                    int barCount = Math.Max(20, (int)((e.NewSize.Width - 8) / 7));
+                    vm.SetHistoryBarCount(barCount);
+                }
+            };
+        }
     }
 
     private async Task<string?> BrowseFolderAsync()

@@ -10,7 +10,7 @@ public sealed class SpeedCalculator
     private long _totalBytesInWindow;
 
     /// <param name="windowSeconds">Hareketli ortalama pencere süresi (saniye). Varsayılan: 4 sn.</param>
-    public SpeedCalculator(int windowSeconds = 4)
+    public SpeedCalculator(int windowSeconds = 3)
     {
         _windowSeconds = windowSeconds;
     }
@@ -52,12 +52,14 @@ public sealed class SpeedCalculator
     {
         get
         {
-            PruneExpiredSamples(DateTimeOffset.UtcNow);
+            var now = DateTimeOffset.UtcNow;
+            PruneExpiredSamples(now);
 
-            if (_samples.Count < 2 || _totalBytesInWindow <= 0) return 0;
+            if (_samples.Count == 0 || _totalBytesInWindow <= 0) return 0;
 
-            double elapsed = (DateTimeOffset.UtcNow - _samples.Peek().Timestamp).TotalSeconds;
-            return elapsed > 0 ? _totalBytesInWindow / elapsed : 0;
+            double elapsed = (now - _samples.Peek().Timestamp).TotalSeconds;
+            if (elapsed < 0.1) elapsed = 0.1;
+            return _totalBytesInWindow / elapsed;
         }
     }
 

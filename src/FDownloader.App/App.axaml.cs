@@ -162,6 +162,7 @@ public partial class App : Application
         services.AddLogging(builder =>
         {
             builder.SetMinimumLevel(LogLevel.Information);
+            builder.AddProvider(new FDownloader.Core.Logging.AppFileLoggerProvider());
         });
 
         // HttpClient (SocketsHttpHandler ile otomatik redirect ve ham akış)
