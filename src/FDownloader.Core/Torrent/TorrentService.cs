@@ -354,7 +354,10 @@ public sealed class TorrentService : IAsyncDisposable
             {
                 try { _ = manager.TrackerManager.AnnounceAsync(CancellationToken.None); } catch { }
             }
+        if (_settings.EnableDht)
+        {
             try { _ = manager.DhtAnnounceAsync(); } catch { }
+        }
             _eventBus.Publish(new TaskStartedEvent(taskId));
             _logger.LogInformation("Torrent başlatıldı: Task #{TaskId}, İsim: {Name}", taskId, manager.Torrent?.Name ?? "Magnet");
         }
