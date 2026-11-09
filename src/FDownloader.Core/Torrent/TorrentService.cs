@@ -711,28 +711,50 @@ public sealed class TorrentService : IAsyncDisposable
             var previousState = manager.State;
             var wasRunning = previousState is TorrentState.Starting or TorrentState.Downloading or TorrentState.Seeding or TorrentState.Metadata;
 
-            if (manager.State != TorrentState.Stopped)
-            {
-                try
-                {
-                    await manager.StopAsync();
-                    var stopTimeout = DateTime.UtcNow.AddSeconds(3);
-                    while (manager.State != TorrentState.Stopped && DateTime.UtcNow < stopTimeout)
-                    {
-                        await Task.Delay(25);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "StopAsync sırasında geçici hata alındı, devam ediliyor.");
-                }
-            }
-
             IPieceRequester requester = newSequentialState
                 ? new StreamingPieceRequester()
                 : new StandardPieceRequester(new PieceRequesterSettings());
 
-            await manager.ChangePickerAsync(requester);
+            var pickerTimeout = DateTime.UtcNow.AddSeconds(10);
+            var pickerChanged = false;
+
+            while (!pickerChanged && DateTime.UtcNow < pickerTimeout)
+            {
+                try
+                {
+                    if (manager.State != TorrentState.Stopped)
+                    {
+                        try
+                        {
+                            await manager.StopAsync();
+                        }
+                        catch
+                        {
+                            // Geçici durdurma hatası yoksayılabilir
+                        }
+
+                        var stopTimeout = DateTime.UtcNow.AddSeconds(3);
+                        while (manager.State != TorrentState.Stopped && DateTime.UtcNow < stopTimeout)
+                        {
+                            await Task.Delay(25);
+                        }
+                    }
+
+                    await manager.ChangePickerAsync(requester);
+                    pickerChanged = true;
+                }
+                catch (InvalidOperationException)
+                {
+                    await Task.Delay(50);
+                }
+            }
+
+            if (!pickerChanged)
+            {
+                _logger.LogWarning("Zaman aşımı: Torrent #{TaskId} için ChangePickerAsync uygulanamadı.", taskId);
+                return isCurrentlySequential;
+            }
+
             _sequentialTasks[taskId] = newSequentialState;
 
             if (wasRunning)

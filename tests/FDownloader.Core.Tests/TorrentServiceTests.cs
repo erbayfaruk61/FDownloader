@@ -218,6 +218,8 @@ public class TorrentServiceTests : IDisposable
         Assert.True(seq1);
         Assert.True(_torrentService.IsSequentialDownload(300));
 
+        await Task.Delay(100);
+
         // Sıralı indirmeyi kapat
         var seq2 = await _torrentService.ToggleSequentialDownloadAsync(300);
         Assert.False(seq2);
