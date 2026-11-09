@@ -928,9 +928,14 @@ public sealed class TorrentService : IAsyncDisposable
                     {
                         var hex = magnet.InfoHashes.V1OrV2.ToHex();
                         var cachedTorrent = Path.Combine(_cacheDirectory, $"{hex}.torrent");
+                        var engineMetaTorrent = Path.Combine(_cacheDirectory, "metadata", $"{hex}.torrent");
                         if (File.Exists(cachedTorrent))
                         {
                             torrent = await MonoTorrent.Torrent.LoadAsync(cachedTorrent);
+                        }
+                        else if (File.Exists(engineMetaTorrent))
+                        {
+                            torrent = await MonoTorrent.Torrent.LoadAsync(engineMetaTorrent);
                         }
                         else
                         {
@@ -940,12 +945,23 @@ public sealed class TorrentService : IAsyncDisposable
                                 mgr = await _engine.AddAsync(magnet, _downloadDirectory, CreateTorrentSettings());
                             }
 
+                            if (_settings.EnableFallbackTrackers)
+                            {
+                                foreach (var tracker in DefaultFallbackTrackers)
+                                {
+                                    if (Uri.TryCreate(tracker, UriKind.Absolute, out var uri))
+                                    {
+                                        try { await mgr.TrackerManager.AddTrackerAsync(uri); } catch { }
+                                    }
+                                }
+                            }
+
                             if (mgr.State != TorrentState.Starting && mgr.State != TorrentState.Downloading && mgr.State != TorrentState.Metadata)
                             {
                                 await mgr.StartAsync();
                             }
 
-                            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
                             try
                             {
                                 await mgr.WaitForMetadataAsync(cts.Token);
@@ -960,7 +976,7 @@ public sealed class TorrentService : IAsyncDisposable
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogDebug(ex, "Magnet linki incelenirken hata: {Clean}", clean);
+                    _logger.LogWarning(ex, "Magnet linki incelenirken hata: {Clean}", clean);
                 }
             }
             else if (clean.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||

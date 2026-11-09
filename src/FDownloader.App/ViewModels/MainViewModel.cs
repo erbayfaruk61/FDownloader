@@ -4768,7 +4768,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-                if (!IsAddDialogOpen && !IsSiteGrabberDialogOpen && !IsSettingsDialogOpen)
+                if (!IsSiteGrabberDialogOpen && !IsSettingsDialogOpen)
 
 
 
@@ -4780,7 +4780,19 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-                    OpenAddDialogWithUrl(e.Url, e.UrlType);
+                    if (!IsAddDialogOpen || !string.Equals(AddDialogUrl, e.Url, StringComparison.OrdinalIgnoreCase))
+
+
+
+                    {
+
+
+
+                        OpenAddDialogWithUrl(e.Url, e.UrlType);
+
+
+
+                    }
 
 
 
