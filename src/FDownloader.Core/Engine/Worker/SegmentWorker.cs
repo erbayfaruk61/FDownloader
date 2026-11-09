@@ -256,6 +256,15 @@ public sealed class SegmentWorker
                 break;
             }
         }
+
+        // Segmentin eksiksiz indirildiğini kesin olarak doğrula (erken bağlantı kopmalarını önle)
+        if (_segment.EndByte > 0 && _segment.EndByte < long.MaxValue && _segment.TotalBytes > 0)
+        {
+            if (_segment.DownloadedBytes < _segment.TotalBytes)
+            {
+                throw new IOException($"Segment {_segment.Index} akışı sunucu tarafından beklenenden erken kapatıldı! İndirilen: {_segment.DownloadedBytes:N0}/{_segment.TotalBytes:N0} byte");
+            }
+        }
     }
 
     private HttpRequestMessage BuildRequest(long from, long to)

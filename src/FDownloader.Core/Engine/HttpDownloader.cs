@@ -423,9 +423,9 @@ public sealed class HttpDownloader : IDisposable
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (workerResults.Any(success => !success) || _task.Segments.Any(s => s.Status != SegmentStatus.Completed))
+            if (workerResults.Any(success => !success) || _task.Segments.Any(s => s.Status != SegmentStatus.Completed) || (_task.TotalBytes > 0 && _task.DownloadedBytes < _task.TotalBytes))
             {
-                throw new InvalidOperationException("Segmentlerin biri veya birkaçı indirilemedi.");
+                throw new InvalidOperationException($"Segmentlerin biri veya birkaçı eksik kaldı ({_task.DownloadedBytes:N0}/{_task.TotalBytes:N0} byte).");
             }
 
             // 5. ADIM: Tamamlama ve Atomic Rename

@@ -9,7 +9,9 @@ public class NetworkSecurityTests
 {
     [Theory]
     [InlineData("https://example.com/login", "https://example.com/download.zip", true)]
-    [InlineData("https://example.com/login", "https://cdn.example.com/file.zip", false)]
+    [InlineData("https://example.com/login", "https://cdn.example.com/file.zip", true)] // Subdomain aynı kök alan adı
+    [InlineData("https://cold-1.gofile.io/download", "https://gofile.io/login", true)]
+    [InlineData("https://example.com/login", "https://other.com/file.zip", false)]
     [InlineData("https://auth.bank.com", "https://malicious.org/phish", false)]
     [InlineData("https://example.com/file", "http://example.com/file", false)] // HTTPS -> HTTP downgrade engeli
     [InlineData("http://example.com/file", "https://example.com/file", true)]  // HTTP -> HTTPS upgrade izinli

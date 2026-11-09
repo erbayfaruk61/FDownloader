@@ -18,8 +18,51 @@ public static class NetworkSecurityPolicy
             return false;
         }
 
-        // 2. Host (Domain) aynı mı kontrol et (Cross-domain koruması)
-        return string.Equals(originalUri.Host, targetUri.Host, StringComparison.OrdinalIgnoreCase);
+        // 2. Host (Domain) aynı veya aynı kök/alt alan adına (same-site/subdomain) mı bağlı kontrol et
+        return IsSameDomainOrSubdomain(originalUri.Host, targetUri.Host);
+    }
+
+    /// <summary>
+    /// İki host'un aynı domain, birbirinin alt alanı (subdomain) veya aynı kök alana (apex domain) bağlı olup olmadığını kontrol eder.
+    /// </summary>
+    public static bool IsSameDomainOrSubdomain(string hostA, string hostB)
+    {
+        if (string.IsNullOrWhiteSpace(hostA) || string.IsNullOrWhiteSpace(hostB))
+            return false;
+
+        hostA = hostA.Trim().ToLowerInvariant();
+        hostB = hostB.Trim().ToLowerInvariant();
+
+        if (hostA == hostB)
+            return true;
+
+        if (hostA.EndsWith("." + hostB) || hostB.EndsWith("." + hostA))
+            return true;
+
+        var rootA = GetRootDomain(hostA);
+        var rootB = GetRootDomain(hostB);
+        return !string.IsNullOrEmpty(rootA) && rootA == rootB;
+    }
+
+    /// <summary>
+    /// Host adresinin kök alan adını (apex domain) ayıklar (örn. cold-1.gofile.io -> gofile.io).
+    /// </summary>
+    public static string GetRootDomain(string host)
+    {
+        if (System.Net.IPAddress.TryParse(host, out _))
+            return host;
+
+        var parts = host.Split('.', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length <= 2)
+            return host;
+
+        string secondToLast = parts[^2];
+        if (parts.Length >= 3 && (secondToLast is "com" or "net" or "org" or "gov" or "edu" or "co") && parts[^1].Length <= 3)
+        {
+            return $"{parts[^3]}.{parts[^2]}.{parts[^1]}";
+        }
+
+        return $"{parts[^2]}.{parts[^1]}";
     }
 
     /// <summary>
