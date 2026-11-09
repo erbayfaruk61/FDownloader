@@ -102,9 +102,9 @@ public sealed class QueueAndSchedulerTests : IDisposable
         // task1 tamamlandığında kuyruk tetiklenmeli ve task3 aktif (Connecting veya Downloading) olmalı
         _eventBus.Publish(new TaskCompletedEvent(task1.Id, task1.FinalFilePath, 1000, TimeSpan.FromSeconds(1)));
 
-        // ProcessQueueAsync asenkron çalıştığından kuyruktaki görevin başlamasını güvenle bekle
+        // ProcessQueueAsync ve olay işleyicileri asenkron çalıştığından güvenle bekle
         var timeout1 = DateTime.UtcNow.AddSeconds(5);
-        while (task3.Status == DownloadStatus.Queued && DateTime.UtcNow < timeout1)
+        while ((task3.Status == DownloadStatus.Queued || task1.Status != DownloadStatus.Completed) && DateTime.UtcNow < timeout1)
         {
             await Task.Delay(25);
         }

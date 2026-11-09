@@ -148,6 +148,23 @@ public sealed class DownloadManager : IAsyncDisposable
                     _logger.LogInformation("Görev #{TaskId} tamamlandı ve SQLite veritabanına kaydedildi: {File}", task.Id, task.FileName);
                 }
             }
+
+            lock (_httpDownloaders)
+            {
+                if (_httpDownloaders.Remove(e.TaskId, out var dl))
+                {
+                    dl.Dispose();
+                }
+            }
+            lock (_mediaCtsList)
+            {
+                if (_mediaCtsList.Remove(e.TaskId, out var mCts))
+                {
+                    try { mCts.Cancel(); } catch { }
+                    mCts.Dispose();
+                }
+            }
+
             _ = ProcessQueueAsync();
             Scheduler.NotifyAllDownloadsCompleted();
         });
