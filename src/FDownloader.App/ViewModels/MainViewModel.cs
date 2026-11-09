@@ -3725,31 +3725,22 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
         UpdateLimitDisplays();
 
-        // P6-01: İlk Açılış Sihirbazı kontrolü
-
-        var firstRunCompletedStr = _downloadManager.GetSetting(SettingKeyFirstRunCompleted);
-
-        if (bool.TryParse(firstRunCompletedStr, out var frc) && frc)
-
+        // P6-01: İlk Açılış Sihirbazı kontrolü (UI thread üzerinde pencere ve bağlam yüklendikten hemen sonra tetikle)
+        Dispatcher.UIThread.Post(() =>
         {
-
-            IsFirstRunWizardCompleted = true;
-
-            IsFirstRunWizardOpen = false;
-
-        }
-
-        else
-
-        {
-
-            IsFirstRunWizardCompleted = false;
-
-            IsFirstRunWizardOpen = true;
-
-            FirstRunWizardStep = 1;
-
-        }
+            var firstRunCompletedStr = _downloadManager.GetSetting(SettingKeyFirstRunCompleted);
+            if (bool.TryParse(firstRunCompletedStr, out var frc) && frc)
+            {
+                IsFirstRunWizardCompleted = true;
+                IsFirstRunWizardOpen = false;
+            }
+            else
+            {
+                IsFirstRunWizardCompleted = false;
+                IsFirstRunWizardOpen = true;
+                FirstRunWizardStep = 1;
+            }
+        });
 
     }
 
