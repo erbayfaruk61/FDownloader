@@ -716,10 +716,15 @@ public sealed class TorrentService : IAsyncDisposable
                 try
                 {
                     await manager.StopAsync();
+                    var stopTimeout = DateTime.UtcNow.AddSeconds(3);
+                    while (manager.State != TorrentState.Stopped && DateTime.UtcNow < stopTimeout)
+                    {
+                        await Task.Delay(25);
+                    }
                 }
-                catch (IOException ex)
+                catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "StopAsync sırasında fresume erişim çakışması oluştu, devam ediliyor.");
+                    _logger.LogWarning(ex, "StopAsync sırasında geçici hata alındı, devam ediliyor.");
                 }
             }
 

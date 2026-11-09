@@ -222,6 +222,8 @@ public class TorrentServiceTests : IDisposable
         var seq2 = await _torrentService.ToggleSequentialDownloadAsync(300);
         Assert.False(seq2);
         Assert.False(_torrentService.IsSequentialDownload(300));
+
+        await _torrentService.RemoveTorrentAsync(300, deleteFiles: false);
     }
 
     [Fact]
