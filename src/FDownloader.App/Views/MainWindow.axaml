@@ -1148,7 +1148,7 @@
                     <Border Background="{Binding ThemeWindowBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="6" Padding="12,8">
                         <StackPanel Spacing="4">
                             <TextBlock Text="{Binding AddDialogStatusText}" FontWeight="Medium" Foreground="{DynamicResource SystemBaseHighColor}" />
-                            <TextBlock Text="Video veya ses bağlantılarında MP4 veya MP3 formatı seçebilirsiniz." FontSize="11" Foreground="{Binding ThemeTextSecondary}" />
+                            <TextBlock Text="Video veya ses bağlantılarında MP4 veya MP3 formatı seçebilirsiniz." FontSize="11" Foreground="{Binding ThemeTextSecondary}" IsVisible="{Binding AddDialogIsMediaDetected}" />
                         </StackPanel>
                     </Border>
 
