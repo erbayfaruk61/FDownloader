@@ -15138,69 +15138,56 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
     private async Task CheckForUpdatesSilentlyAsync()
-
-
-
     {
-
-
-
         try
-
-
-
         {
-
-
+            // Pencerenin ve bileşenlerin sorunsuz yüklenmesi için başlangıçta 2.5 saniye bekle
+            await Task.Delay(2500);
 
             var info = await _updateService.CheckForUpdatesAsync();
-
-
-
             if (info != null)
-
-
-
             {
-
-
-
-                Dispatcher.UIThread.Post(() =>
-
-
-
+                _availableUpdateInfo = info;
+                await Dispatcher.UIThread.InvokeAsync(async () =>
                 {
-
-
-
                     IsUpdateAvailable = true;
-
-
-
                     UpdateVersionText = $"v{info.TargetFullRelease.Version}";
-
-
-
+                    UpdateTargetVersion = $"v{info.TargetFullRelease.Version}";
                     UpdateStatusText = $"Yeni sürüm mevcut ({UpdateVersionText}).";
 
-
-
+                    // İlk kurulum sihirbazı açık değilse doğrudan açılışta kullanıcıya sor
+                    if (!IsFirstRunWizardOpen)
+                    {
+                        await OpenUpdateDialogAsync();
+                    }
                 });
-
-
-
             }
+            else
+            {
+                // Canlı GitHub Releases kontrolü (Hem kurulu hem taşınabilir/geliştirici modları için)
+                var latest = await _updateService.FetchLatestGitHubReleaseAsync();
+                if (latest != null && !string.IsNullOrWhiteSpace(latest.TagName) &&
+                    !latest.TagName.TrimStart('v').Equals(AppVersionText.TrimStart('v'), StringComparison.OrdinalIgnoreCase))
+                {
+                    await Dispatcher.UIThread.InvokeAsync(async () =>
+                    {
+                        IsUpdateAvailable = true;
+                        UpdateVersionText = latest.TagName;
+                        UpdateTargetVersion = latest.TagName;
+                        UpdateReleaseTitle = latest.Name;
+                        UpdateReleaseDate = latest.PublishedAt?.ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.InvariantCulture) ?? "";
+                        UpdateChangelog = latest.Body;
+                        UpdateStatusText = $"Yeni GitHub sürümü mevcut ({latest.TagName}).";
 
-
-
+                        if (!IsFirstRunWizardOpen)
+                        {
+                            await OpenUpdateDialogAsync();
+                        }
+                    });
+                }
+            }
         }
-
-
-
         catch { }
-
-
-
     }
 
 
