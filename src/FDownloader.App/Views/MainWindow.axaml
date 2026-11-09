@@ -1191,6 +1191,18 @@
                         </StackPanel>
                     </Border>
 
+                    <!-- Magnet Meta Verisi Yükleniyor Göstergesi -->
+                    <Border Background="{Binding ThemeSpeedGraphInnerBg}" BorderBrush="{Binding ThemeBorderColor}" CornerRadius="8" Padding="12,10" IsVisible="{Binding AddDialogIsTorrentResolving}" BorderThickness="1">
+                        <StackPanel Spacing="6">
+                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <TextBlock Text="⏳" FontSize="14" VerticalAlignment="Center" />
+                                <TextBlock Text="Eşlerden dosya listesi (meta verisi) taranıyor..." FontWeight="SemiBold" FontSize="12" Foreground="{Binding ThemeAccentFg}" VerticalAlignment="Center" />
+                            </StackPanel>
+                            <ProgressBar IsIndeterminate="True" Height="4" HorizontalAlignment="Stretch" Foreground="{Binding ThemeAccentBg}" />
+                            <TextBlock Text="Dosyaları seçmek için birkaç saniye bekleyebilir veya doğrudan 'İndirmeyi Başlat' diyebilirsiniz." FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                        </StackPanel>
+                    </Border>
+
                     <!-- Torrent Dosya Listesi ve Seçim Kutuları -->
                     <Border Background="{Binding ThemeWindowBg}" BorderBrush="{Binding ThemeBorderColor}" CornerRadius="8" Padding="12" IsVisible="{Binding AddDialogHasTorrentFiles}" BorderThickness="1">
                         <StackPanel Spacing="8">

@@ -1110,6 +1110,9 @@ public sealed class DownloadManager : IAsyncDisposable
         string? userAgent = null)
         => _torrentService.InspectTorrentFilesAsync(sourceUrlOrPath, cookies, referrer, userAgent);
 
+    public Task CleanUnattachedTorrentManagersAsync()
+        => _torrentService.CleanUnattachedManagersAsync();
+
     public Task<bool> ToggleTorrentSequentialDownloadAsync(long taskId)
         => _torrentService.ToggleSequentialDownloadAsync(taskId);
 

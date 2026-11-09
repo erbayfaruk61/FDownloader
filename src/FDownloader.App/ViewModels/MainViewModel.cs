@@ -476,6 +476,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
     [ObservableProperty] private bool _addDialogHasTorrentFiles = false;
+    [ObservableProperty] private bool _addDialogIsTorrentResolving = false;
 
 
 
@@ -13934,6 +13935,11 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         int requestId = Interlocked.Increment(ref _torrentInspectCounter);
         AddDialogTorrentFiles.Clear();
         AddDialogHasTorrentFiles = false;
+        AddDialogIsTorrentResolving = pathOrUrl.StartsWith("magnet:", StringComparison.OrdinalIgnoreCase);
+        if (AddDialogIsTorrentResolving)
+        {
+            AddDialogStatusText = "🔄 Eşlerden dosya listesi (meta verisi) taranıyor... Bekleyebilir veya doğrudan 'İndirmeyi Başlat' diyebilirsiniz.";
+        }
         try
         {
             var files = await _downloadManager.InspectTorrentFilesAsync(
@@ -13952,64 +13958,28 @@ public partial class MainViewModel : ViewModelBase, IDisposable
                 AddDialogHasTorrentFiles = true;
                 UpdateAddDialogDiskSpace();
                 AddDialogStatusText = $"{files.Count} adet dosya listelendi. İndirmek istediklerinizi seçebilirsiniz.";
-
-
-
             }
-
-
-
             else
-
-
-
             {
-
-
-
                 UpdateAddDialogDiskSpace();
-
-
-
                 AddDialogStatusText = pathOrUrl.StartsWith("magnet:", StringComparison.OrdinalIgnoreCase)
-
-
-
                     ? "Magnet linki hazır (Dosya listesi indirme başladığında eşlerden alınacaktır)."
-
-
-
                     : "BitTorrent indirmesi hazır.";
-
-
-
             }
-
-
-
         }
-
-
-
         catch (Exception ex)
-
-
-
         {
-
-
-
-            AddDialogStatusText = $"Torrent dosyaları okunamadı: {ex.Message}";
-
-
-
+            if (requestId != _torrentInspectCounter) return;
+            AddDialogStatusText = $"Hata: {ex.Message}";
         }
-
-
-
+        finally
+        {
+            if (requestId == _torrentInspectCounter)
+            {
+                AddDialogIsTorrentResolving = false;
+            }
+        }
     }
-
-
 
     public void UpdateAddDialogDiskSpace()
 
@@ -14336,37 +14306,15 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
     public void CancelAddDownload()
-
-
-
     {
-
-
-
         IsAddDialogOpen = false;
-
-
-
         AddDialogTorrentFiles.Clear();
-
-
-
         AddDialogHasTorrentFiles = false;
-
-
-
+        AddDialogIsTorrentResolving = false;
         AddDialogHasDiskWarning = false;
-
-
-
         AddDialogDiskWarningText = string.Empty;
-
-
-
         AddDialogTorrentSelectedSizeText = string.Empty;
-
-
-
+        _ = _downloadManager.CleanUnattachedTorrentManagersAsync();
     }
 
 

@@ -604,6 +604,33 @@ public sealed class TorrentService : IAsyncDisposable
     }
 
     /// <summary>
+    /// Aktif görevlere bağlanmamış (örneğin dosya ön inceleme aşamasında eklenip iptal edilmiş)
+    /// motor yöneticilerini temizler.
+    /// </summary>
+    public async Task CleanUnattachedManagersAsync()
+    {
+        List<TorrentManager> unattached;
+        lock (_activeManagers)
+        {
+            var activeSet = new HashSet<TorrentManager>(_activeManagers.Values);
+            unattached = _engine.Torrents.Where(m => !activeSet.Contains(m)).ToList();
+        }
+
+        foreach (var mgr in unattached)
+        {
+            try
+            {
+                if (mgr.State != TorrentState.Stopped)
+                {
+                    await mgr.StopAsync();
+                }
+                await _engine.RemoveAsync(mgr);
+            }
+            catch { }
+        }
+    }
+
+    /// <summary>
     /// Torrent için sıralı indirmeyi (Streaming/Sequential) açar veya kapatır.
     /// Açıkken parçalar baştan sona sırayla indirilir, böylece video indirilirken medya oynatıcıda izlenebilir.
     /// </summary>
@@ -865,12 +892,17 @@ public sealed class TorrentService : IAsyncDisposable
             else if (clean.StartsWith("magnet:", StringComparison.OrdinalIgnoreCase))
             {
                 string enrichedMagnet = clean;
-                if (!enrichedMagnet.Contains("tr=", StringComparison.OrdinalIgnoreCase))
+                if (_settings.EnableFallbackTrackers)
                 {
                     var sb = new System.Text.StringBuilder(enrichedMagnet);
                     foreach (var tracker in DefaultFallbackTrackers)
                     {
-                        sb.Append("&tr=").Append(Uri.EscapeDataString(tracker));
+                        var escaped = Uri.EscapeDataString(tracker);
+                        if (!enrichedMagnet.Contains(escaped, StringComparison.OrdinalIgnoreCase) &&
+                            !enrichedMagnet.Contains(tracker, StringComparison.OrdinalIgnoreCase))
+                        {
+                            sb.Append("&tr=").Append(escaped);
+                        }
                     }
                     enrichedMagnet = sb.ToString();
                 }
@@ -899,6 +931,30 @@ public sealed class TorrentService : IAsyncDisposable
                         if (File.Exists(cachedTorrent))
                         {
                             torrent = await MonoTorrent.Torrent.LoadAsync(cachedTorrent);
+                        }
+                        else
+                        {
+                            // Eşlerden (DHT ve Trackers) meta verisini ön inceleme için çek
+                            if (mgr == null)
+                            {
+                                mgr = await _engine.AddAsync(magnet, _downloadDirectory, CreateTorrentSettings());
+                            }
+
+                            if (mgr.State != TorrentState.Starting && mgr.State != TorrentState.Downloading && mgr.State != TorrentState.Metadata)
+                            {
+                                await mgr.StartAsync();
+                            }
+
+                            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                            try
+                            {
+                                await mgr.WaitForMetadataAsync(cts.Token);
+                                if (mgr.Torrent != null)
+                                {
+                                    torrent = mgr.Torrent;
+                                }
+                            }
+                            catch (OperationCanceledException) { }
                         }
                     }
                 }
