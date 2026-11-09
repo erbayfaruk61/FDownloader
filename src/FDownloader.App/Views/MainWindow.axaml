@@ -1794,8 +1794,8 @@
                                             <TextBlock Text="{Binding Loc[Settings.LanguageDesc], FallbackValue='Uygulama arayüzünün görüntüleneceği dili seçin (Türkçe / English).'}" FontSize="11" Foreground="{Binding ThemeTextSecondary}" />
 
                                             <StackPanel Orientation="Horizontal" Spacing="16" Margin="0,4,0,0">
-                                                <RadioButton Content="🇹🇷 Türkçe" IsChecked="{Binding IsLanguageTurkish, Mode=TwoWay}" FontWeight="SemiBold" FontSize="12" />
-                                                <RadioButton Content="🇬🇧 English" IsChecked="{Binding IsLanguageEnglish, Mode=TwoWay}" FontWeight="SemiBold" FontSize="12" />
+                                                <RadioButton Content="TR - Türkçe" IsChecked="{Binding IsLanguageTurkish, Mode=TwoWay}" FontWeight="SemiBold" FontSize="12" />
+                                                <RadioButton Content="EN - English" IsChecked="{Binding IsLanguageEnglish, Mode=TwoWay}" FontWeight="SemiBold" FontSize="12" />
                                             </StackPanel>
                                         </StackPanel>
                                     </Border>
@@ -2748,8 +2748,8 @@
                         <!-- Adım İndikatörü ve Dil Seçimi -->
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="0,0,4,0">
-                                <RadioButton Content="🇹🇷" IsChecked="{Binding IsLanguageTurkish, Mode=TwoWay}" ToolTip.Tip="Türkçe" FontSize="12" />
-                                <RadioButton Content="🇬🇧" IsChecked="{Binding IsLanguageEnglish, Mode=TwoWay}" ToolTip.Tip="English" FontSize="12" />
+                                <RadioButton Content="TR" IsChecked="{Binding IsLanguageTurkish, Mode=TwoWay}" ToolTip.Tip="Türkçe" FontSize="11" FontWeight="Bold" />
+                                <RadioButton Content="EN" IsChecked="{Binding IsLanguageEnglish, Mode=TwoWay}" ToolTip.Tip="English" FontSize="11" FontWeight="Bold" />
                             </StackPanel>
                             <Border Background="{Binding ThemeSpeedGraphInnerBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="8" Padding="12,6" VerticalAlignment="Center">
                                 <TextBlock Text="{Binding FirstRunWizardStepIndicatorText}" FontWeight="Bold" FontSize="12" Foreground="{Binding ThemeAccentFg}" />
@@ -2769,16 +2769,16 @@
 
                                     <!-- Tema Seçim Butonları -->
                                     <UniformGrid Columns="2" Rows="2" Margin="0,6,0,0">
-                                        <RadioButton Content="🌊 Okyanus Mavisi (Koyu)" IsChecked="{Binding IsThemeOceanBlue}" Margin="4" FontWeight="SemiBold" FontSize="12" />
-                                        <RadioButton Content="🔮 Siber Mor (Koyu)" IsChecked="{Binding IsThemeCyberPurple}" Margin="4" FontWeight="SemiBold" FontSize="12" />
-                                        <RadioButton Content="🌪️ Platin Gri (Açık/Modern)" IsChecked="{Binding IsThemePlatinumGray}" Margin="4" FontWeight="SemiBold" FontSize="12" />
-                                        <RadioButton Content="☀️ Sade &amp; Aydınlık (Açık)" IsChecked="{Binding IsThemeLightClean}" Margin="4" FontWeight="SemiBold" FontSize="12" />
+                                        <RadioButton Content="{Binding Loc[Wizard.ThemeOceanBlue], FallbackValue='🌊 Okyanus Mavisi (Koyu)'}" IsChecked="{Binding IsThemeOceanBlue}" Margin="4" FontWeight="SemiBold" FontSize="12" />
+                                        <RadioButton Content="{Binding Loc[Wizard.ThemeCyberPurple], FallbackValue='🔮 Siber Mor (Koyu)'}" IsChecked="{Binding IsThemeCyberPurple}" Margin="4" FontWeight="SemiBold" FontSize="12" />
+                                        <RadioButton Content="{Binding Loc[Wizard.ThemePlatinumGray], FallbackValue='🌪️ Platin Gri (Açık/Modern)'}" IsChecked="{Binding IsThemePlatinumGray}" Margin="4" FontWeight="SemiBold" FontSize="12" />
+                                        <RadioButton Content="{Binding Loc[Wizard.ThemeLightClean], FallbackValue='☀️ Sade &amp; Aydınlık (Açık)'}" IsChecked="{Binding IsThemeLightClean}" Margin="4" FontWeight="SemiBold" FontSize="12" />
                                     </UniformGrid>
                                 </StackPanel>
                             </Border>
 
                             <Border Background="#1010B981" BorderBrush="#3010B981" BorderThickness="1" CornerRadius="8" Padding="12,10">
-                                <TextBlock Text="💡 İpucu: Seçtiğiniz temayı ve renkleri dilediğiniz zaman Ayarlar > Görünüm sekmesinden değiştirebilirsiniz." FontSize="11" Foreground="#10B981" TextWrapping="Wrap" />
+                                <TextBlock Text="{Binding Loc[Wizard.ThemeTip], FallbackValue='💡 İpucu: Seçtiğiniz temayı ve renkleri dilediğiniz zaman Ayarlar > Görünüm sekmesinden değiştirebilirsiniz.'}" FontSize="11" Foreground="#10B981" TextWrapping="Wrap" />
                             </Border>
                         </StackPanel>
 
@@ -2791,7 +2791,7 @@
                                     <TextBlock Text="{Binding Loc[Wizard.DefaultFolderDesc], FallbackValue='İndirilen tüm dosyaların ve torrent verilerinin kaydedileceği ana dizin:'}" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
                                     <Grid ColumnDefinitions="*, Auto" Margin="0,4,0,0">
                                         <TextBox Grid.Column="0" Text="{Binding SettingsDefaultSaveDirectory}" Height="34" VerticalContentAlignment="Center" FontSize="12" />
-                                        <Button Grid.Column="1" Command="{Binding BrowseSettingsDefaultSaveDirectoryCommand}" Content="📁 Değiştir..." Margin="8,0,0,0" Height="34" Padding="12,0" FontWeight="SemiBold" />
+                                        <Button Grid.Column="1" Command="{Binding BrowseSettingsDefaultSaveDirectoryCommand}" Content="{Binding Loc[Wizard.Browse], FallbackValue='📁 Değiştir...'}" Margin="8,0,0,0" Height="34" Padding="12,0" FontWeight="SemiBold" />
                                     </Grid>
                                 </StackPanel>
                             </Border>
@@ -2831,29 +2831,29 @@
                                 <StackPanel Spacing="10">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <TextBlock Text="🧩" FontSize="16" VerticalAlignment="Center" />
-                                        <TextBlock Text="Tarayıcı Yakalayıcı Eklentisi (Chrome, Edge, Brave, Opera, Firefox)" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" Foreground="{Binding ThemeForeground}" />
+                                        <TextBlock Text="{Binding Loc[Wizard.ExtTitle], FallbackValue='Tarayıcı Yakalayıcı Eklentisi (Chrome, Edge, Brave, Opera, Firefox)'}" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" Foreground="{Binding ThemeForeground}" />
                                     </StackPanel>
-                                    <TextBlock Text="Web tarayıcınızda tıkladığınız video ve indirmelerin otomatik olarak FDownloader'a aktarılması için eklentiyi yükleyebilirsiniz." FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                    <TextBlock Text="{Binding Loc[Wizard.BrowserExtensionDesc], FallbackValue='Web tarayıcınızda tıkladığınız video ve indirmelerin otomatik olarak FDownloader\'a aktarılması için eklentiyi yükleyebilirsiniz.'}" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource SystemBaseMediumColor}" />
 
                                     <!-- 3 Adımlı Rehber -->
                                     <Border Background="{Binding ThemeSpeedGraphInnerBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="8" Padding="12">
                                         <StackPanel Spacing="8">
-                                            <TextBlock Text="1️⃣ 'Eklenti Klasörünü Aç' butonuna tıklayın ve klasör yolunu kopyalayın." FontSize="11" Foreground="{Binding ThemeForeground}" />
-                                            <TextBlock Text="2️⃣ Tarayıcınızda 'chrome://extensions' adresini açıp 'Geliştirici modu'nu aktif edin." FontSize="11" Foreground="{Binding ThemeForeground}" />
-                                            <TextBlock Text="3️⃣ 'Paketlenmemiş öğe yükle' diyerek açılan klasörü seçin." FontSize="11" Foreground="{Binding ThemeForeground}" />
+                                            <TextBlock Text="{Binding Loc[Wizard.ExtStep1], FallbackValue='1. \'Eklenti Klasörünü Aç\' butonuna tıklayın ve klasör yolunu kopyalayın.'}" FontSize="11" Foreground="{Binding ThemeForeground}" />
+                                            <TextBlock Text="{Binding Loc[Wizard.ExtStep2], FallbackValue='2. Tarayıcınızda \'chrome://extensions\' adresini açıp \'Geliştirici modu\'nu aktif edin.'}" FontSize="11" Foreground="{Binding ThemeForeground}" />
+                                            <TextBlock Text="{Binding Loc[Wizard.ExtStep3], FallbackValue='3. \'Paketlenmemiş öğe yükle\' diyerek açılan klasörü seçin.'}" FontSize="11" Foreground="{Binding ThemeForeground}" />
                                         </StackPanel>
                                     </Border>
 
                                     <!-- Butonlar -->
                                     <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
-                                        <Button Command="{Binding OpenBrowserExtensionFolderCommand}" Content="📂 Eklenti Klasörünü Aç" Height="34" Padding="12,0" FontWeight="SemiBold" />
-                                        <Button Command="{Binding CopyBrowserExtensionPathCommand}" Content="📋 Klasör Yolunu Kopyala" Height="34" Padding="12,0" />
+                                        <Button Command="{Binding OpenBrowserExtensionFolderCommand}" Content="{Binding Loc[Wizard.OpenExtFolder], FallbackValue='📂 Eklenti Klasörünü Aç'}" Height="34" Padding="12,0" FontWeight="SemiBold" />
+                                        <Button Command="{Binding CopyBrowserExtensionPathCommand}" Content="{Binding Loc[Wizard.CopyExtPath], FallbackValue='📋 Klasör Yolunu Kopyala'}" Height="34" Padding="12,0" />
                                     </StackPanel>
                                 </StackPanel>
                             </Border>
 
                             <Border Background="#1538BDF8" BorderBrush="#3038BDF8" BorderThickness="1" CornerRadius="8" Padding="12,10">
-                                <TextBlock Text="ℹ️ Eklentiyi daha sonra kurmak isterseniz bu adımı atlayabilir, dilediğiniz zaman Ayarlar > Tarayıcı sekmesinden kurabilirsiniz." FontSize="11" Foreground="#38BDF8" TextWrapping="Wrap" />
+                                <TextBlock Text="{Binding Loc[Wizard.ExtTip], FallbackValue='ℹ️ Eklentiyi daha sonra kurmak isterseniz bu adımı atlayabilir, dilediğiniz zaman Ayarlar > Tarayıcı sekmesinden kurabilirsiniz.'}" FontSize="11" Foreground="#38BDF8" TextWrapping="Wrap" />
                             </Border>
                         </StackPanel>
                     </Grid>

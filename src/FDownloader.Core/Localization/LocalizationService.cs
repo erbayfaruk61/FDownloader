@@ -848,7 +848,7 @@ public sealed class LocalizationService : INotifyPropertyChanged
 
         ["Wizard.Previous"] = "◀ Geri",
 
-        ["Wizard.Complete"] = "Finish 🚀",
+        ["Wizard.Complete"] = "Tamamla 🚀",
 
         // Dinamik Butonlar ve İpuçları
 
@@ -1020,11 +1020,13 @@ public sealed class LocalizationService : INotifyPropertyChanged
 
         ["Wizard.ExtTitle"] = "Tarayıcı Yakalayıcı Eklentisi (Chrome, Edge, Brave, Opera, Firefox)",
 
-        ["Wizard.ExtStep1"] = "1️⃣ 'Eklenti Klasörünü Aç' butonuna tıklayın ve klasör yolunu kopyalayın.",
-
-        ["Wizard.ExtStep2"] = "2️⃣ Tarayıcınızda 'chrome://extensions' adresini açıp 'Geliştirici modu'nu aktif edin.",
-
-        ["Wizard.ExtStep3"] = "3️⃣ 'Paketlenmemiş öğe yükle' diyerek açılan klasörü seçin.",
+        ["Wizard.ThemeOceanBlue"] = "🌊 Okyanus Mavisi (Koyu)",
+        ["Wizard.ThemeCyberPurple"] = "🔮 Siber Mor (Koyu)",
+        ["Wizard.ThemePlatinumGray"] = "🌪️ Platin Gri (Açık/Modern)",
+        ["Wizard.ThemeLightClean"] = "☀️ Sade & Aydınlık (Açık)",
+        ["Wizard.ExtStep1"] = "1. 'Eklenti Klasörünü Aç' butonuna tıklayın ve klasör yolunu kopyalayın.",
+        ["Wizard.ExtStep2"] = "2. Tarayıcınızda 'chrome://extensions' adresini açıp 'Geliştirici modu'nu aktif edin.",
+        ["Wizard.ExtStep3"] = "3. 'Paketlenmemiş öğe yükle' diyerek açılan klasörü seçin.",
 
         ["Wizard.OpenExtFolder"] = "📂 Eklenti Klasörünü Aç",
 
@@ -1880,11 +1882,13 @@ public sealed class LocalizationService : INotifyPropertyChanged
 
         ["Wizard.ExtTitle"] = "Browser Grabber Extension (Chrome, Edge, Brave, Opera, Firefox)",
 
-        ["Wizard.ExtStep1"] = "1️⃣ Click 'Open Extension Folder' and copy the folder path.",
-
-        ["Wizard.ExtStep2"] = "2️⃣ Open 'chrome://extensions' in your browser and enable 'Developer mode'.",
-
-        ["Wizard.ExtStep3"] = "3️⃣ Click 'Load unpacked' and select the extension folder.",
+        ["Wizard.ThemeOceanBlue"] = "🌊 Ocean Blue (Dark)",
+        ["Wizard.ThemeCyberPurple"] = "🔮 Cyber Purple (Dark)",
+        ["Wizard.ThemePlatinumGray"] = "🌪️ Platinum Gray (Light)",
+        ["Wizard.ThemeLightClean"] = "☀️ Clean & Bright (Light)",
+        ["Wizard.ExtStep1"] = "1. Click 'Open Extension Folder' and copy the folder path.",
+        ["Wizard.ExtStep2"] = "2. Open 'chrome://extensions' in your browser and enable 'Developer mode'.",
+        ["Wizard.ExtStep3"] = "3. Click 'Load unpacked' and select the extension folder.",
 
         ["Wizard.OpenExtFolder"] = "📂 Open Extension Folder",
 
