@@ -35,6 +35,7 @@ $RECYCLE.BIN/
 tools/browser-extension/dist/
 dist/
 Releases/
+publish/
 
 ## Excluded Folders & Working Notes
 .agents/
