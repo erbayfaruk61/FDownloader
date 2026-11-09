@@ -7907,114 +7907,44 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
     private async Task ExecuteDeleteAsync(bool deleteFromDisk)
-
-
-
     {
-
-
-
         IsDeleteConfirmDialogOpen = false;
-
-
-
         var items = _pendingDeleteItems.ToList();
-
-
-
         _pendingDeleteItems.Clear();
 
-
-
+        // 1. Arayüzden anında kaldır (Kullanıcı hiçbir bekleme veya donma hissetmesin)
         foreach (var target in items)
-
-
-
         {
-
-
-
-            try
-
-
-
-            {
-
-
-
-                await _downloadManager.RemoveTaskAsync(target.Id, deleteFile: deleteFromDisk);
-
-
-
-            }
-
-
-
-            catch { }
-
-
-
-            if (deleteFromDisk)
-
-
-
-            {
-
-
-
-                try
-
-
-
-                {
-
-
-
-                    DeleteLocalFilesForDownload(target);
-
-
-
-                }
-
-
-
-                catch { }
-
-
-
-            }
-
-
-
-            // Hata olsun veya olmasın seçilen öğeyi arayüz listesinden mutlaka kaldır
-
-
-
             Downloads.Remove(target);
-
-
-
             SelectedDownloads.Remove(target);
-
-
-
         }
-
-
 
         if (SelectedDownload != null && (items.Contains(SelectedDownload) || !Downloads.Contains(SelectedDownload)))
-
-
-
         {
-
-
-
             SelectedDownload = null;
-
-
-
         }
+
+        // 2. Arka plan motor, veritabanı ve dosya temizliğini async yürüt
+        _ = Task.Run(async () =>
+        {
+            foreach (var target in items)
+            {
+                try
+                {
+                    await _downloadManager.RemoveTaskAsync(target.Id, deleteFile: deleteFromDisk);
+                }
+                catch { }
+
+                if (deleteFromDisk)
+                {
+                    try
+                    {
+                        DeleteLocalFilesForDownload(target);
+                    }
+                    catch { }
+                }
+            }
+        });
 
 
 

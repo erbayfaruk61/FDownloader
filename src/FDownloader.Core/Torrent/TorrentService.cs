@@ -588,7 +588,7 @@ public sealed class TorrentService : IAsyncDisposable
                 if (manager.State != TorrentState.Stopped)
                 {
                     await manager.StopAsync();
-                    var stopTimeout = DateTimeOffset.UtcNow.AddSeconds(4);
+                    var stopTimeout = DateTimeOffset.UtcNow.AddSeconds(1);
                     while (manager.State != TorrentState.Stopped && DateTimeOffset.UtcNow < stopTimeout)
                     {
                         await Task.Delay(50);

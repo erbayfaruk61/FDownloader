@@ -923,17 +923,6 @@ public sealed class DownloadManager : IAsyncDisposable
     /// </summary>
     public async Task RemoveTaskAsync(long taskId, bool deleteFile = false)
     {
-        try
-        {
-            await PauseTaskAsync(taskId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Görev duraklatılırken hata alındı (#{TaskId}), kaldırmaya devam ediliyor.", taskId);
-        }
-
-        _mediaService.StopDownload(taskId);
-
         DownloadTask? task;
         lock (_lock)
         {
@@ -951,6 +940,20 @@ public sealed class DownloadManager : IAsyncDisposable
         }
 
         task ??= _repository.GetTask(taskId);
+
+        if (task != null && task.Status != DownloadStatus.Paused && task.Status != DownloadStatus.Completed && task.Status != DownloadStatus.Failed)
+        {
+            try
+            {
+                await PauseTaskAsync(taskId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Görev duraklatılırken hata alındı (#{TaskId}), kaldırmaya devam ediliyor.", taskId);
+            }
+        }
+
+        _mediaService.StopDownload(taskId);
 
         if (deleteFile && task != null)
         {
