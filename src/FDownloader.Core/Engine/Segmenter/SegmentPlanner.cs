@@ -77,16 +77,64 @@ public static class SegmentPlanner
         segments.Where(s => s.Status != SegmentStatus.Completed);
 
     /// <summary>
+    /// Henüz indirilmemiş (DownloadedBytes == 0 ve Pending/Paused) ardışık komşu segmentleri birleştirir.
+    /// Aşırı bölünmüş veya rate limit alan indirmelerin sunucu bağlantı yükünü azaltır.
+    /// </summary>
+    /// <returns>Birleştirme sonucu segment sayısı azaldıysa true.</returns>
+    public static bool ConsolidatePendingSegments(List<Segment> segments, int targetMaxCount = 8)
+    {
+        lock (segments)
+        {
+            if (segments.Count <= targetMaxCount) return false;
+
+            bool anyMerged = false;
+            // Henüz başlanmamış veya 0 byte indirilmiş parçaları sırala
+            var unstarted = segments
+                .Where(s => s.Status != SegmentStatus.Completed && s.Status != SegmentStatus.Downloading && s.DownloadedBytes == 0)
+                .OrderBy(s => s.StartByte)
+                .ToList();
+
+            for (int i = 0; i < unstarted.Count - 1 && segments.Count > targetMaxCount; i++)
+            {
+                var cur = unstarted[i];
+                var nxt = unstarted[i + 1];
+
+                // Ardışık bitişik iki parça mı?
+                if (cur.EndByte + 1 == nxt.StartByte)
+                {
+                    cur.EndByte = nxt.EndByte;
+                    segments.Remove(nxt);
+                    unstarted.RemoveAt(i + 1);
+                    anyMerged = true;
+                    i--; // Bir sonrakiyle tekrar birleşebilir mi dene
+                }
+            }
+
+            // Index numaralarını ardışık olarak yeniden düzenle
+            for (int i = 0; i < segments.Count; i++)
+            {
+                segments[i].Index = i;
+            }
+
+            return anyMerged;
+        }
+    }
+
+    /// <summary>
     /// Dinamik bölme: En büyük tamamlanmamış ve aktif indirilen segmenti ikiye böler.
     /// Boşta kalan (idle) worker'ların yardım etmesi (work-stealing) için çağrılır.
     /// </summary>
     /// <returns>Yeni oluşturulan segment; bölme mümkün değilse null.</returns>
     public static Segment? SplitLargestActiveSegment(
         List<Segment> segments,
-        long minSplitSizeBytes = 1024 * 1024) // 1 MB minimum
+        long minSplitSizeBytes = 10 * 1024 * 1024, // En az 10 MB
+        int maxSegments = 16)
     {
         lock (segments)
         {
+            // Segment sayısı sınırını kontrol et (aşırı parça bölünmesini engeller)
+            if (segments.Count >= maxSegments) return null;
+
             var candidate = segments
                 .Where(s => s.Status == SegmentStatus.Downloading && s.RemainingBytes >= minSplitSizeBytes * 2)
                 .OrderByDescending(s => s.RemainingBytes)

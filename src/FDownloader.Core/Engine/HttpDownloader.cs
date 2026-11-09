@@ -305,7 +305,33 @@ public sealed class HttpDownloader : IDisposable
             using var progressCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             var progressReportingTask = StartProgressReportingLoopAsync(progressCts.Token);
 
-            int concurrency = Math.Clamp(_task.SegmentCount > 0 ? _task.SegmentCount : 8, 1, 16);
+            int concurrency = Math.Clamp(_task.SegmentCount > 0 ? _task.SegmentCount : 8, 1, 16);
+            if (_task.TotalBytes > 0 && _task.TotalBytes < 15L * 1024 * 1024)
+            {
+                concurrency = Math.Min(concurrency, 2);
+            }
+            else if (_task.TotalBytes > 0 && _task.TotalBytes < 100L * 1024 * 1024)
+            {
+                concurrency = Math.Min(concurrency, 4);
+            }
+
+            if (_task.Segments.Count > concurrency * 2)
+            {
+                if (SegmentPlanner.ConsolidatePendingSegments(_task.Segments, targetMaxCount: concurrency * 2))
+                {
+                    try
+                    {
+                        _repository.ReplaceSegmentsForTask(_task.Id, _task.Segments);
+                        _logger.LogInformation("Aşırı bölünmüş parçalar birleştirildi: Görev #{Id}, Yeni segment sayısı: {Count}", _task.Id, _task.Segments.Count);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Segment konsolidasyonu kaydedilemedi");
+                    }
+                }
+            }
+
+            int rateLimitDetections = 0;
             if (!_task.SupportsRange || _task.TotalBytes <= 0)
             {
                 concurrency = 1; // Range desteksiz veya boyutu bilinmeyen indirmeler tek bağlantı
@@ -327,10 +353,10 @@ public sealed class HttpDownloader : IDisposable
                             {
                                 segmentToDownload.Status = SegmentStatus.Downloading;
                             }
-                            else if (_task.SupportsRange && _task.TotalBytes > 0)
+                            else if (_task.SupportsRange && _task.TotalBytes > 0 && Volatile.Read(ref rateLimitDetections) == 0)
                             {
                                 // 2. Boşta kalan (idle) worker: Aktif en büyük parçayı böl ve yardım et (Work-Stealing)
-                                segmentToDownload = SegmentPlanner.SplitLargestActiveSegment(_task.Segments, minSplitSizeBytes: 512 * 1024);
+                                segmentToDownload = SegmentPlanner.SplitLargestActiveSegment(_task.Segments, minSplitSizeBytes: Math.Max(15L * 1024 * 1024, _task.TotalBytes / 200), maxSegments: Math.Clamp(concurrency * 2, 8, 16));
                                 if (segmentToDownload != null)
                                 {
                                     segmentToDownload.Status = SegmentStatus.Downloading;
@@ -364,7 +390,12 @@ public sealed class HttpDownloader : IDisposable
                             userAgent: _task.UserAgent,
                             referer: _task.Referer,
                             cookies: _task.Cookies,
-                            speedLimiter: _speedLimiter);
+                            speedLimiter: _speedLimiter,
+                            onRateLimitDetected: () =>
+                            {
+                                Interlocked.Increment(ref rateLimitDetections);
+                                _logger.LogWarning("Sunucudan HTTP 429 Rate Limit algılandı. Dinamik bölme durduruldu, bağlantılar optimize ediliyor.");
+                            });
 
                         worker.BytesWritten += bytes =>
                         {

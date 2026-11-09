@@ -33,6 +33,9 @@ public sealed class SegmentWorker
 
     private const int ReadBufferSize = 65536; // 64 KB — ağ okuma tamponu
 
+    private readonly Action? _onRateLimitDetected;
+    private int _rateLimitRetryCount = 0;
+
     public SegmentWorker(
         Segment segment,
         string url,
@@ -45,7 +48,8 @@ public sealed class SegmentWorker
         string? userAgent = null,
         string? referer = null,
         string? cookies = null,
-        SpeedLimiter? speedLimiter = null)
+        SpeedLimiter? speedLimiter = null,
+        Action? onRateLimitDetected = null)
     {
         _segment = segment;
         _url = url;
@@ -59,6 +63,7 @@ public sealed class SegmentWorker
         _referer = referer;
         _cookies = cookies;
         _speedLimiter = speedLimiter;
+        _onRateLimitDetected = onRateLimitDetected;
         _speedCalc = new SpeedCalculator();
     }
 
@@ -112,23 +117,31 @@ public sealed class SegmentWorker
 
                 _segment.RetryCount++;
 
-                if (attempt >= _maxRetries)
-                {
-                    _segment.Status = SegmentStatus.Failed;
-                    _logger.LogError(rawEx, "Segment {Index} maksimum deneme ({Max}) aşıldı", _segment.Index, _maxRetries);
-                    throw classified;
-                }
-
                 // 429 TooManyRequests: Retry-After başlığına uy
                 TimeSpan delay;
-                if (classified.Kind == DownloadErrorKind.TooManyRequests && classified.RetryAfter.HasValue)
+                if (classified.Kind == DownloadErrorKind.TooManyRequests)
                 {
-                    delay = classified.RetryAfter.Value;
+                    _onRateLimitDetected?.Invoke();
+                    delay = classified.RetryAfter ?? TimeSpan.FromSeconds(10);
                     _logger.LogWarning("Segment {Index} 429 Rate Limit aldı. Retry-After süresi ({Delay}sn) bekleniyor",
                         _segment.Index, delay.TotalSeconds);
+
+                    // 429 bir ağ çökmesi değil, geçici hız sınırıdır; attempt hakkını tüketme
+                    if (_rateLimitRetryCount < 10)
+                    {
+                        _rateLimitRetryCount++;
+                        attempt = Math.Max(-1, attempt - 1);
+                    }
                 }
                 else
                 {
+                    if (attempt >= _maxRetries)
+                    {
+                        _segment.Status = SegmentStatus.Failed;
+                        _logger.LogError(rawEx, "Segment {Index} maksimum deneme ({Max}) aşıldı", _segment.Index, _maxRetries);
+                        throw classified;
+                    }
+
                     delay = ExponentialBackoff(attempt);
                     _logger.LogWarning(rawEx,
                         "Segment {Index} geçici hata (deneme {Attempt}/{Max}), {Delay}sn sonra yeniden deniyor",

@@ -184,6 +184,42 @@ public sealed class DownloadRepository
         tx.Commit();
     }
 
+    /// <summary>Görevin mevcut segmentlerini silip verilen yeni segment listesini kaydeder (konsolidasyon/birleştirme için).</summary>
+    public void ReplaceSegmentsForTask(long taskId, IEnumerable<Domain.Segment> segments)
+    {
+        using var tx = _db.BeginTransaction();
+        using (var delCmd = _db.CreateCommand())
+        {
+            delCmd.Transaction = tx;
+            delCmd.CommandText = "DELETE FROM Segments WHERE TaskId = @TaskId;";
+            delCmd.Parameters.AddWithValue("@TaskId", taskId);
+            delCmd.ExecuteNonQuery();
+        }
+
+        using (var insCmd = _db.CreateCommand())
+        {
+            insCmd.Transaction = tx;
+            insCmd.CommandText = @"
+                INSERT INTO Segments (TaskId, Idx, StartByte, EndByte, DownloadedBytes, Status, RetryCount)
+                VALUES (@TaskId, @Idx, @Start, @End, @Downloaded, @Status, @Retry);
+                SELECT last_insert_rowid();";
+
+            foreach (var seg in segments)
+            {
+                insCmd.Parameters.Clear();
+                insCmd.Parameters.AddWithValue("@TaskId", taskId);
+                insCmd.Parameters.AddWithValue("@Idx", seg.Index);
+                insCmd.Parameters.AddWithValue("@Start", seg.StartByte);
+                insCmd.Parameters.AddWithValue("@End", seg.EndByte);
+                insCmd.Parameters.AddWithValue("@Downloaded", seg.DownloadedBytes);
+                insCmd.Parameters.AddWithValue("@Status", (int)seg.Status);
+                insCmd.Parameters.AddWithValue("@Retry", seg.RetryCount);
+                seg.Id = Convert.ToInt64(insCmd.ExecuteScalar());
+            }
+        }
+        tx.Commit();
+    }
+
     /// <summary>Segment ilerleme checkpoint'i — toplu güncelleme (performans için).</summary>
     public void SaveSegmentProgress(IEnumerable<Domain.Segment> segments)
     {
