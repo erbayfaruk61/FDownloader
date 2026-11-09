@@ -2268,7 +2268,7 @@
 
         <!-- ─── P6-07 MODAL: ⚠️ AKTİF İNDİRME ÇIKIŞ ONAY DİYALOĞU ───────────── -->
         <Border Background="#80000000" IsVisible="{Binding IsExitConfirmDialogOpen}">
-            <Border Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="12" Width="560" Padding="22" HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 10 30 0 #40000000">
+            <Border Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="12" Width="600" Padding="22" HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 10 30 0 #40000000">
                 <StackPanel Spacing="16">
                     <Grid ColumnDefinitions="*, Auto">
                         <StackPanel Orientation="Horizontal" Spacing="8">
@@ -2280,11 +2280,11 @@
 
                     <TextBlock Text="{Binding ExitConfirmMessage}" TextWrapping="Wrap" FontSize="13" LineHeight="20" />
 
-                    <WrapPanel HorizontalAlignment="Right" Margin="0,12,0,0">
-                        <Button Command="{Binding CancelExitDialogCommand}" Content="{Binding Loc[Common.Cancel]}" Padding="14,7" Height="36" Margin="0,0,10,0" />
-                        <Button Command="{Binding MinimizeToTrayFromExitDialogCommand}" Content="{Binding Loc[ExitConfirm.MinimizeToTray]}" Background="{Binding ThemeAccentBg}" Foreground="{Binding ThemeAccentFg}" Padding="14,7" Height="36" Margin="0,0,10,0" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,12,0,0">
+                        <Button Command="{Binding CancelExitDialogCommand}" Content="{Binding Loc[Common.Cancel]}" Padding="14,7" Height="36" />
+                        <Button Command="{Binding MinimizeToTrayFromExitDialogCommand}" Content="{Binding Loc[ExitConfirm.MinimizeToTray]}" Background="{Binding ThemeAccentBg}" Foreground="{Binding ThemeAccentFg}" Padding="14,7" Height="36" />
                         <Button Command="{Binding ConfirmExitAppCommand}" Content="{Binding Loc[ExitConfirm.ExitAnyway]}" Background="#EF4444" Foreground="White" FontWeight="Bold" Padding="14,7" Height="36" />
-                    </WrapPanel>
+                    </StackPanel>
                 </StackPanel>
             </Border>
         </Border>

@@ -994,7 +994,7 @@ public sealed class LocalizationService : INotifyPropertyChanged
 
         ["ExitConfirm.Message"] = "Şu anda devam eden {0} adet indirme bulunuyor. Uygulamadan çıkarsanız indirmeler duraklatılacak.\n\nNe yapmak istersiniz?",
 
-        ["ExitConfirm.MinimizeToTray"] = "Tepsiye Küçült",
+        ["ExitConfirm.MinimizeToTray"] = "Arka Planda Devam Et",
 
         ["ExitConfirm.ExitAnyway"] = "Yine de Çık",
 
@@ -1856,7 +1856,7 @@ public sealed class LocalizationService : INotifyPropertyChanged
 
         ["ExitConfirm.Message"] = "There are currently {0} active download(s). If you exit, the downloads will be paused.\n\nWhat would you like to do?",
 
-        ["ExitConfirm.MinimizeToTray"] = "Minimize to Tray",
+        ["ExitConfirm.MinimizeToTray"] = "Keep Running in Background",
 
         ["ExitConfirm.ExitAnyway"] = "Exit Anyway",
 
