@@ -3026,16 +3026,80 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
         IsArchivePasswordVisible = !IsArchivePasswordVisible;
 
-
-
         OnPropertyChanged(nameof(ArchivePasswordChar));
-
-
 
         OnPropertyChanged(nameof(ArchivePasswordVisibilityIcon));
 
+    }
 
+    private const string SettingKeyArchiveSavedPasswords = "Archive.SavedPasswords";
+    public ObservableCollection<string> SavedArchivePasswords { get; } = new();
+    [ObservableProperty] private bool _hasSavedArchivePasswords = false;
+    [ObservableProperty] private bool _rememberArchivePassword = true;
 
+    public void LoadSavedArchivePasswords()
+    {
+        try
+        {
+            SavedArchivePasswords.Clear();
+            var json = _downloadManager.GetSetting(SettingKeyArchiveSavedPasswords);
+            if (!string.IsNullOrWhiteSpace(json))
+            {
+                var list = System.Text.Json.JsonSerializer.Deserialize<List<string>>(json);
+                if (list != null)
+                {
+                    foreach (var item in list.Where(s => !string.IsNullOrWhiteSpace(s)))
+                    {
+                        SavedArchivePasswords.Add(item);
+                    }
+                }
+            }
+        }
+        catch { }
+        HasSavedArchivePasswords = SavedArchivePasswords.Count > 0;
+    }
+
+    public void PersistArchivePassword(string password)
+    {
+        if (string.IsNullOrWhiteSpace(password)) return;
+        try
+        {
+            var trimmed = password.Trim();
+            var existing = SavedArchivePasswords.ToList();
+            existing.RemoveAll(p => string.Equals(p, trimmed, StringComparison.Ordinal));
+            existing.Insert(0, trimmed);
+            if (existing.Count > 30) existing = existing.Take(30).ToList();
+
+            SavedArchivePasswords.Clear();
+            foreach (var p in existing) SavedArchivePasswords.Add(p);
+            HasSavedArchivePasswords = SavedArchivePasswords.Count > 0;
+
+            var json = System.Text.Json.JsonSerializer.Serialize(existing);
+            _downloadManager.SetSetting(SettingKeyArchiveSavedPasswords, json);
+        }
+        catch { }
+    }
+
+    [RelayCommand]
+    public void SelectSavedArchivePassword(string? pwd)
+    {
+        if (string.IsNullOrEmpty(pwd)) return;
+        ArchivePasswordInput = pwd;
+        ArchivePasswordErrorMessage = null;
+    }
+
+    [RelayCommand]
+    public void DeleteSavedArchivePassword(string? pwd)
+    {
+        if (string.IsNullOrEmpty(pwd)) return;
+        try
+        {
+            SavedArchivePasswords.Remove(pwd);
+            HasSavedArchivePasswords = SavedArchivePasswords.Count > 0;
+            var json = System.Text.Json.JsonSerializer.Serialize(SavedArchivePasswords.ToList());
+            _downloadManager.SetSetting(SettingKeyArchiveSavedPasswords, json);
+        }
+        catch { }
     }
 
 
@@ -3581,12 +3645,9 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
         if (bool.TryParse(_downloadManager.GetSetting(SettingKeyDeleteArchiveAfterExtract), out var delArch))
-
-
-
             DeleteArchiveAfterExtract = delArch;
 
-
+        LoadSavedArchivePasswords();
 
         var showSugStr = _downloadManager.GetSetting(SettingKeyShowSuggestions);
 
@@ -4432,21 +4493,30 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
                         var result = await _downloadManager.ArchiveExtractor.ExtractAsync(
-
-
-
                             e.FilePath,
-
-
-
                             createSubfolder: ExtractArchivesToSubfolder);
 
+                        string? autoMatchedPassword = null;
+                        if (!result.Success && result.IsPasswordProtected)
+                        {
+                            var savedPwds = SavedArchivePasswords.ToList();
+                            foreach (var pwd in savedPwds)
+                            {
+                                var tryResult = await _downloadManager.ArchiveExtractor.ExtractAsync(
+                                    e.FilePath,
+                                    createSubfolder: ExtractArchivesToSubfolder,
+                                    password: pwd);
 
+                                if (tryResult.Success)
+                                {
+                                    result = tryResult;
+                                    autoMatchedPassword = pwd;
+                                    break;
+                                }
+                            }
+                        }
 
                         Dispatcher.UIThread.Post(() =>
-
-
-
                         {
 
 
@@ -4459,7 +4529,19 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-                                ShowNotification("📚 Arşiv Çıkarıldı", $"{result.ExtractedFilesCount} dosya klasöre başarıyla açıldı.", result.ExtractedDirectory, "📚", _currentCompletionSound, true);
+                                var notifMsg = autoMatchedPassword != null
+                                    ? $"{result.ExtractedFilesCount} dosya kayıtlı parola ('{autoMatchedPassword}') ile otomatik açıldı."
+                                    : $"{result.ExtractedFilesCount} dosya klasöre başarıyla açıldı.";
+
+                                ShowNotification("📚 Arşiv Çıkarıldı", notifMsg, result.ExtractedDirectory, "📚", _currentCompletionSound, true);
+
+                                if (autoMatchedPassword != null)
+                                {
+                                    FDownloader.Core.Logging.AppFileLoggerProvider.AppendLog(
+                                        Microsoft.Extensions.Logging.LogLevel.Information,
+                                        "Archive",
+                                        $"Arşiv kayıtlı parola ('{autoMatchedPassword}') ile otomatik olarak başarıyla çıkarıldı: {Path.GetFileName(e.FilePath)}");
+                                }
 
                                 if (DeleteArchiveAfterExtract && File.Exists(e.FilePath))
                                 {
@@ -8629,29 +8711,35 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
             var result = await _downloadManager.ArchiveExtractor.ExtractAsync(
-
-
-
                 path,
-
-
-
                 createSubfolder: ExtractArchivesToSubfolder);
 
+            string? autoMatchedPassword = null;
+            if (!result.Success && result.IsPasswordProtected)
+            {
+                var savedPwds = SavedArchivePasswords.ToList();
+                foreach (var pwd in savedPwds)
+                {
+                    var tryResult = await _downloadManager.ArchiveExtractor.ExtractAsync(
+                        path,
+                        createSubfolder: ExtractArchivesToSubfolder,
+                        password: pwd);
 
+                    if (tryResult.Success)
+                    {
+                        result = tryResult;
+                        autoMatchedPassword = pwd;
+                        break;
+                    }
+                }
+            }
 
             if (result.Success)
-
-
-
             {
-
-
-
-                ShowNotification("📚 Arşiv Başarıyla Çıkarıldı", $"{result.ExtractedFilesCount} dosya klasöre çıkarıldı.", result.ExtractedDirectory, "📚", _currentCompletionSound, true);
-
-
-
+                var notifMsg = autoMatchedPassword != null
+                    ? $"{result.ExtractedFilesCount} dosya kayıtlı parola ('{autoMatchedPassword}') ile açıldı."
+                    : $"{result.ExtractedFilesCount} dosya klasöre çıkarıldı.";
+                ShowNotification("📚 Arşiv Başarıyla Çıkarıldı", notifMsg, result.ExtractedDirectory, "📚", _currentCompletionSound, true);
             }
 
 
@@ -8886,12 +8974,11 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
         if (result.Success)
-
-
-
         {
-
-
+            if (RememberArchivePassword && !string.IsNullOrWhiteSpace(pwd))
+            {
+                PersistArchivePassword(pwd);
+            }
 
             IsArchivePasswordDialogOpen = false;
 

@@ -413,6 +413,16 @@ public class ArchiveExtractorService
                     }
                 }
 
+                FlattenSingleSubfolderIfRedundant(finalDirectory);
+
+                try
+                {
+                    var di = new DirectoryInfo(finalDirectory);
+                    var files = di.GetFiles("*", SearchOption.AllDirectories);
+                    count = files.Length;
+                }
+                catch { }
+
                 _logger?.LogInformation("7-Zip ile arşiv başarıyla çıkarıldı: {Path} -> {Dir} ({Count} dosya)", archivePath, finalDirectory, count);
                 return new ArchiveExtractionResult(true, finalDirectory, count, null);
             }
@@ -552,6 +562,12 @@ public class ArchiveExtractorService
             return new ArchiveExtractionResult(false, null, 0, "Arşiv parola korumalı veya şifreli dosya açılamadı. Lütfen parolayı girerek deneyin.", IsPasswordProtected: true);
         }
 
+        FlattenSingleSubfolderIfRedundant(finalDirectory);
+
+        actualFiles = Directory.Exists(finalDirectory)
+            ? Directory.GetFiles(finalDirectory, "*", SearchOption.AllDirectories)
+            : Array.Empty<string>();
+
         _logger?.LogInformation("Arşiv başarıyla çıkarıldı: {ArchivePath} -> {FinalDir} ({Count} dosya)",
             archivePath, finalDirectory, actualFiles.Length > 0 ? actualFiles.Length : extractedCount);
 
@@ -576,6 +592,45 @@ public class ArchiveExtractorService
             || msg.Contains("bad password", StringComparison.OrdinalIgnoreCase)
             || msg.Contains("crc", StringComparison.OrdinalIgnoreCase)
             || msg.Contains("checksum", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Eğer ayıklanan hedef klasör içinde sadece tek bir alt klasör bulunuyorsa ve kök dizinde başka dosya yoksa,
+    /// iç içe çift klasör yapısını düzleştirir (örn: C:\Downloads\App\App\files -> C:\Downloads\App\files).
+    /// </summary>
+    private static void FlattenSingleSubfolderIfRedundant(string targetDir)
+    {
+        try
+        {
+            if (!Directory.Exists(targetDir)) return;
+            var di = new DirectoryInfo(targetDir);
+            var files = di.GetFiles();
+            var dirs = di.GetDirectories();
+
+            if (files.Length == 0 && dirs.Length == 1)
+            {
+                var singleSubdir = dirs[0];
+                var tempMovePath = Path.Combine(targetDir, "__fdownloader_flatten_tmp__" + Guid.NewGuid().ToString("N"));
+                Directory.Move(singleSubdir.FullName, tempMovePath);
+
+                var tempDi = new DirectoryInfo(tempMovePath);
+                foreach (var f in tempDi.GetFiles())
+                {
+                    var dest = Path.Combine(targetDir, f.Name);
+                    if (File.Exists(dest)) File.Delete(dest);
+                    File.Move(f.FullName, dest);
+                }
+                foreach (var d in tempDi.GetDirectories())
+                {
+                    var dest = Path.Combine(targetDir, d.Name);
+                    if (Directory.Exists(dest)) Directory.Delete(dest, true);
+                    Directory.Move(d.FullName, dest);
+                }
+
+                try { Directory.Delete(tempMovePath, true); } catch { }
+            }
+        }
+        catch { }
     }
 
     private static string FormatTurkishErrorMessage(Exception ex)
