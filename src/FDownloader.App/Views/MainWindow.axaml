@@ -413,9 +413,9 @@
                                         <Thumb Classes="colResizer" Tag="Peers" DragDelta="OnColumnThumbDragDelta" DoubleTapped="OnColumnThumbDoubleTapped" ToolTip.Tip="Genişliği değiştirmek için sürükleyin, sıfırlamak için çift tıklayın" />
                                     </Grid>
 
-                                    <!-- 9: Durum (Sağa Yapışık) -->
+                                    <!-- 9: Durum (Sütun Sağa Genişletilmiş, İçerik Sola Yaslı) -->
                                     <Grid Grid.Column="9" MinWidth="110" IsVisible="{Binding ShowColStatus}">
-                                        <TextBlock Text="{Binding Loc[Column.Status], FallbackValue='Durum'}" FontWeight="SemiBold" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="4,0,10,0" />
+                                        <TextBlock Text="{Binding Loc[Column.Status], FallbackValue='Durum'}" FontWeight="SemiBold" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="6,0,10,0" />
                                     </Grid>
                                 </Grid>
                             </Border>
@@ -705,9 +705,9 @@
                                                 <TextBlock Text="{Binding PeersDisplay}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                                             </Border>
 
-                                            <!-- 9: Durum Metni (Sağa Yapışık) -->
+                                            <!-- 9: Durum Metni (Sütun Sağa Genişletilmiş, İçerik Sola Yaslı) -->
                                             <Border Grid.Column="9" MinWidth="110" IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).ShowColStatus}" VerticalAlignment="Center" ClipToBounds="True" Padding="6,0,10,0">
-                                                <TextBlock Text="{Binding StatusDisplay}" ToolTip.Tip="{Binding StatusDisplay}" FontWeight="Medium" VerticalAlignment="Center" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding StatusDisplay}" ToolTip.Tip="{Binding StatusDisplay}" FontWeight="Medium" VerticalAlignment="Center" HorizontalAlignment="Left" TextTrimming="CharacterEllipsis" />
                                             </Border>
                                         </Grid>
                                         </Border>
