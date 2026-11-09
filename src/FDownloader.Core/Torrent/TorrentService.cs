@@ -268,8 +268,24 @@ public sealed class TorrentService : IAsyncDisposable
             var existing = _engine.Torrents.FirstOrDefault(m => m.InfoHashes == magnetLink.InfoHashes);
             if (existing != null)
             {
-                _logger.LogInformation("Torrent motorunda mevcut yönetici güvenle yeniden kullanılıyor: {InfoHash}", magnetLink.InfoHashes.V1OrV2.ToHex());
-                manager = existing;
+                if (existing.State == TorrentState.Stopping)
+                {
+                    _logger.LogInformation("Torrent yöneticisi Stopping durumunda, Stopped olması bekleniyor: {InfoHash}", magnetLink.InfoHashes.V1OrV2.ToHex());
+                    while (existing.State == TorrentState.Stopping)
+                    {
+                        await Task.Delay(50, cancellationToken);
+                    }
+                }
+
+                if (!_engine.Torrents.Contains(existing))
+                {
+                    manager = await _engine.AddAsync(magnetLink, saveDirectory, CreateTorrentSettings());
+                }
+                else
+                {
+                    _logger.LogInformation("Torrent motorunda mevcut yönetici güvenle yeniden kullanılıyor: {InfoHash}", magnetLink.InfoHashes.V1OrV2.ToHex());
+                    manager = existing;
+                }
             }
             else
             {
@@ -281,7 +297,21 @@ public sealed class TorrentService : IAsyncDisposable
             var torrent = await MonoTorrent.Torrent.LoadAsync(cleanSource);
             try { File.Copy(cleanSource, localCachePath, overwrite: true); } catch { }
             var existing = _engine.Torrents.FirstOrDefault(m => m.InfoHashes == torrent.InfoHashes);
-            manager = existing ?? await _engine.AddAsync(torrent, saveDirectory, CreateTorrentSettings());
+            if (existing != null)
+            {
+                if (existing.State == TorrentState.Stopping)
+                {
+                    while (existing.State == TorrentState.Stopping)
+                    {
+                        await Task.Delay(50, cancellationToken);
+                    }
+                }
+                manager = _engine.Torrents.Contains(existing) ? existing : await _engine.AddAsync(torrent, saveDirectory, CreateTorrentSettings());
+            }
+            else
+            {
+                manager = await _engine.AddAsync(torrent, saveDirectory, CreateTorrentSettings());
+            }
         }
         else if (cleanSource.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
                  cleanSource.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
@@ -356,15 +386,27 @@ public sealed class TorrentService : IAsyncDisposable
 
         if (startImmediately)
         {
-            await manager.StartAsync();
+            if (manager.State == TorrentState.Stopping)
+            {
+                while (manager.State == TorrentState.Stopping)
+                {
+                    await Task.Delay(50, cancellationToken);
+                }
+            }
+
+            if (manager.State == TorrentState.Stopped || manager.State == TorrentState.Paused)
+            {
+                await manager.StartAsync();
+            }
+
             if (manager.TrackerManager != null)
             {
                 try { _ = manager.TrackerManager.AnnounceAsync(CancellationToken.None); } catch { }
             }
-        if (_settings.EnableDht)
-        {
-            try { _ = manager.DhtAnnounceAsync(); } catch { }
-        }
+            if (_settings.EnableDht)
+            {
+                try { _ = manager.DhtAnnounceAsync(); } catch { }
+            }
             _eventBus.Publish(new TaskStartedEvent(taskId));
             _logger.LogInformation("Torrent başlatıldı: Task #{TaskId}, İsim: {Name}", taskId, manager.Torrent?.Name ?? "Magnet");
         }
@@ -484,7 +526,17 @@ public sealed class TorrentService : IAsyncDisposable
         {
             try
             {
-                await manager.StartAsync();
+                if (manager.State == TorrentState.Stopping)
+                {
+                    while (manager.State == TorrentState.Stopping)
+                    {
+                        await Task.Delay(50);
+                    }
+                }
+                if (manager.State == TorrentState.Stopped || manager.State == TorrentState.Paused)
+                {
+                    await manager.StartAsync();
+                }
                 _eventBus.Publish(new TaskResumedEvent(taskId));
                 return true;
             }
@@ -620,11 +672,18 @@ public sealed class TorrentService : IAsyncDisposable
         {
             try
             {
-                if (mgr.State != TorrentState.Stopped)
+                if (mgr.State != TorrentState.Stopped && mgr.State != TorrentState.Stopping)
                 {
                     await mgr.StopAsync();
                 }
-                await _engine.RemoveAsync(mgr);
+                while (mgr.State == TorrentState.Stopping)
+                {
+                    await Task.Delay(50);
+                }
+                if (_engine.Torrents.Contains(mgr))
+                {
+                    await _engine.RemoveAsync(mgr);
+                }
             }
             catch { }
         }
@@ -956,7 +1015,15 @@ public sealed class TorrentService : IAsyncDisposable
                                 }
                             }
 
-                            if (mgr.State != TorrentState.Starting && mgr.State != TorrentState.Downloading && mgr.State != TorrentState.Metadata)
+                            if (mgr.State == TorrentState.Stopping)
+                            {
+                                while (mgr.State == TorrentState.Stopping)
+                                {
+                                    await Task.Delay(50);
+                                }
+                            }
+
+                            if (mgr.State == TorrentState.Stopped)
                             {
                                 await mgr.StartAsync();
                             }

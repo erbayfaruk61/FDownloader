@@ -10948,10 +10948,6 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-        AddDialogUrl = url;
-
-
-
         AddDialogReferrer = null;
 
 
@@ -10965,7 +10961,38 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
         IsAddDialogOpen = true;
-        // AnalyzeAddUrl(url) handled by AddDialogUrl property change
+
+
+
+        if (!string.Equals(AddDialogUrl, url, StringComparison.Ordinal))
+
+
+
+        {
+
+
+
+            AddDialogUrl = url;
+
+
+
+        }
+
+
+
+        else
+
+
+
+        {
+
+
+
+            AnalyzeAddUrl(url);
+
+
+
+        }
 
 
 
@@ -14320,6 +14347,8 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     public void CancelAddDownload()
     {
         IsAddDialogOpen = false;
+        AddDialogUrl = string.Empty;
+        AddDialogTitle = string.Empty;
         AddDialogTorrentFiles.Clear();
         AddDialogHasTorrentFiles = false;
         AddDialogIsTorrentResolving = false;
