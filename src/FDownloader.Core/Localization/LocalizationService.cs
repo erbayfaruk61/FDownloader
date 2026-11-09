@@ -598,7 +598,25 @@ public sealed class LocalizationService : INotifyPropertyChanged
 
         ["Settings.AboutCheckUpdates"] = "Güncellemeleri Şimdi Denetle",
 
-        ["Settings.AboutDownloadUpdate"] = "Yeni Sürümü İndir ve Yeniden Başlat",
+        ["Settings.AboutDownloadUpdate"] = "Yeni Sürümü İncele & Güncelle",
+
+        ["Update.DialogTitle"] = "Yeni Güncelleme Mevcut!",
+
+        ["Update.CurrentVersion"] = "Mevcut Sürüm:",
+
+        ["Update.TargetVersion"] = "Yeni Sürüm:",
+
+        ["Update.ChangelogTitle"] = "Neler Değişti? (Sürüm Notları)",
+
+        ["Update.Later"] = "Daha Sonra",
+
+        ["Update.InstallNow"] = "Güncellemeyi İndir ve Kur",
+
+        ["Update.LoadingNotes"] = "Sürüm notları GitHub üzerinden alınıyor...",
+
+        ["Update.Installing"] = "Güncelleme indiriliyor...",
+
+        ["Update.Restarting"] = "Güncelleme hazır, uygulama yeniden başlatılıyor...",
 
         ["Settings.AboutChannel"] = "📦 Dağıtım Kanalı:",
 
@@ -1460,7 +1478,25 @@ public sealed class LocalizationService : INotifyPropertyChanged
 
         ["Settings.AboutCheckUpdates"] = "Check for Updates Now",
 
-        ["Settings.AboutDownloadUpdate"] = "Download Update and Restart",
+        ["Settings.AboutDownloadUpdate"] = "Review & Install Update",
+
+        ["Update.DialogTitle"] = "New Update Available!",
+
+        ["Update.CurrentVersion"] = "Current Version:",
+
+        ["Update.TargetVersion"] = "New Version:",
+
+        ["Update.ChangelogTitle"] = "What's New? (Release Notes)",
+
+        ["Update.Later"] = "Later",
+
+        ["Update.InstallNow"] = "Download & Install Update",
+
+        ["Update.LoadingNotes"] = "Fetching release notes from GitHub...",
+
+        ["Update.Installing"] = "Downloading update...",
+
+        ["Update.Restarting"] = "Update ready, restarting application...",
 
         ["Settings.AboutChannel"] = "📦 Distribution Channel:",
 

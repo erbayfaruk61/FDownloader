@@ -102,29 +102,33 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-    // ─── Otomatik Güncelleme (Velopack) ───────────────────────────────────
-
-
+    // ─── Otomatik Güncelleme (Velopack & GitHub Releases) ───────────────────
 
     [ObservableProperty] private bool _isUpdateAvailable = false;
 
-
-
     [ObservableProperty] private string _updateVersionText = string.Empty;
-
-
 
     [ObservableProperty] private bool _isUpdating = false;
 
-
-
     [ObservableProperty] private int _updateDownloadProgress = 0;
-
-
 
     [ObservableProperty] private string _updateStatusText = string.Empty;
 
+    [ObservableProperty] private bool _isUpdateDialogOpen = false;
 
+    [ObservableProperty] private string _updateChangelog = string.Empty;
+
+    [ObservableProperty] private bool _isLoadingChangelog = false;
+
+    [ObservableProperty] private string _updateTargetVersion = string.Empty;
+
+    [ObservableProperty] private string _updateCurrentVersion = string.Empty;
+
+    [ObservableProperty] private string _updateReleaseDate = string.Empty;
+
+    [ObservableProperty] private string _updateReleaseTitle = string.Empty;
+
+    private Velopack.UpdateInfo? _availableUpdateInfo;
 
     public bool IsUpdateAvailableAndNotUpdating => IsUpdateAvailable && !IsUpdating;
 
@@ -14962,196 +14966,173 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
     }
 
-
-
     [RelayCommand]
-
-
-
     public async Task CheckForUpdatesManualAsync()
-
-
-
     {
-
-
-
         UpdateStatusText = "Güncellemeler denetleniyor...";
-
-
-
-        var info = await _updateService.CheckForUpdatesAsync();
-
-
-
-        if (info != null)
-
-
-
+        try
         {
-
-
-
-            IsUpdateAvailable = true;
-
-
-
-            UpdateVersionText = $"v{info.TargetFullRelease.Version}";
-
-
-
-            UpdateStatusText = $"Yeni sürüm mevcut ({UpdateVersionText}).";
-
-
-
+            var info = await _updateService.CheckForUpdatesAsync();
+            if (info != null)
+            {
+                _availableUpdateInfo = info;
+                IsUpdateAvailable = true;
+                UpdateVersionText = $"v{info.TargetFullRelease.Version}";
+                UpdateTargetVersion = $"v{info.TargetFullRelease.Version}";
+                UpdateStatusText = $"Yeni sürüm mevcut ({UpdateVersionText}).";
+                await OpenUpdateDialogAsync();
+            }
+            else
+            {
+                // Canlı GitHub Releases kontrolü (Geliştirici modunda da çalışır)
+                var latest = await _updateService.FetchLatestGitHubReleaseAsync();
+                if (latest != null && !string.IsNullOrWhiteSpace(latest.TagName) &&
+                    !latest.TagName.TrimStart('v').Equals(AppVersionText.TrimStart('v'), StringComparison.OrdinalIgnoreCase))
+                {
+                    IsUpdateAvailable = true;
+                    UpdateVersionText = latest.TagName;
+                    UpdateTargetVersion = latest.TagName;
+                    UpdateReleaseTitle = latest.Name;
+                    UpdateReleaseDate = latest.PublishedAt?.ToString("dd.MM.yyyy HH:mm") ?? "";
+                    UpdateChangelog = latest.Body;
+                    UpdateStatusText = $"Yeni GitHub sürümü mevcut ({latest.TagName}).";
+                    await OpenUpdateDialogAsync();
+                }
+                else
+                {
+                    IsUpdateAvailable = false;
+                    UpdateStatusText = "Uygulamanız güncel.";
+                }
+            }
         }
-
-
-
-        else
-
-
-
+        catch (Exception ex)
         {
-
-
-
-            IsUpdateAvailable = false;
-
-
-
-            UpdateStatusText = "Uygulamanız güncel.";
-
-
-
+            UpdateStatusText = $"Güncelleme denetleme hatası: {ex.Message}";
         }
-
-
-
     }
 
+    [RelayCommand]
+    public async Task OpenUpdateDialogAsync()
+    {
+        UpdateTargetVersion = !string.IsNullOrWhiteSpace(UpdateVersionText) ? UpdateVersionText : "v2.0.0";
+        UpdateCurrentVersion = AppVersionText;
+        IsUpdateDialogOpen = true;
 
+        if (string.IsNullOrWhiteSpace(UpdateChangelog))
+        {
+            IsLoadingChangelog = true;
+            UpdateChangelog = "Sürüm notları GitHub üzerinden alınıyor...";
+            try
+            {
+                var releaseInfo = await _updateService.FetchLatestGitHubReleaseAsync();
+                if (releaseInfo != null)
+                {
+                    UpdateReleaseTitle = releaseInfo.Name;
+                    UpdateReleaseDate = releaseInfo.PublishedAt?.ToString("dd.MM.yyyy HH:mm") ?? "";
+                    UpdateChangelog = !string.IsNullOrWhiteSpace(releaseInfo.Body)
+                        ? releaseInfo.Body
+                        : "Bu sürüm için detaylı açıklama eklenmemiş.";
+                }
+                else
+                {
+                    UpdateChangelog = await _updateService.FetchReleaseNotesAsync(UpdateTargetVersion);
+                }
+            }
+            catch (Exception ex)
+            {
+                UpdateChangelog = "Sürüm notları alınırken bir hata oluştu: " + ex.Message;
+            }
+            finally
+            {
+                IsLoadingChangelog = false;
+            }
+        }
+    }
 
     [RelayCommand]
-
-
-
-    public async Task ApplyUpdateAsync()
-
-
-
+    public void CloseUpdateDialog()
     {
+        if (IsUpdating) return;
+        IsUpdateDialogOpen = false;
+    }
 
+    [RelayCommand]
+    public async Task PreviewUpdateDialogAsync()
+    {
+        UpdateTargetVersion = "v2.0.0";
+        UpdateReleaseTitle = "FDownloader v2.0.0 - Büyük Performans ve Arşiv Güncellemesi";
+        UpdateReleaseDate = DateTime.Now.ToString("dd.MM.yyyy HH:mm");
+        UpdateChangelog = "### 🚀 FDownloader v2.0 Yenilikleri:\n\n" +
+                          "• 🔒 Şifreli arşiv desteği (Şifre hafızası, tek tıkla silme ve otomatik çıkarma)\n" +
+                          "• ⚡ Çok parçalı indirmede erken kopma ve 429 Rate Limit stabilizasyonu\n" +
+                          "• 🥞 Bildirim (Toast) yığılması: Bildirimlerin dikey olarak sağ altta yığılması\n" +
+                          "• 🛡️ Aynı kök domain/subdomain için güvenli çerez aktarımı (Gofile vb.)\n" +
+                          "• 💤 Aktif indirmede Windows uyku modunu engelleme (PowerManagement)\n" +
+                          "• 🔐 Dosya bütünlüğü doğrulama (MD5, SHA-1, SHA-256 Checksum)\n" +
+                          "• 🎨 4K & Yüksek DPI ekran optimizasyonları ve tema iyileştirmeleri";
+        await OpenUpdateDialogAsync();
+    }
 
+    [RelayCommand]
+    public async Task ApplyUpdateAsync()
+    {
+        // Doğrudan güncellemek yerine onay ve sürüm notları modalını aç
+        await OpenUpdateDialogAsync();
+    }
 
+    [RelayCommand]
+    public async Task ConfirmApplyUpdateAsync()
+    {
         if (IsUpdating) return;
 
-
-
         try
-
-
-
         {
-
-
-
             IsUpdating = true;
-
-
-
             UpdateStatusText = "Güncelleme indiriliyor...";
+            UpdateDownloadProgress = 0;
 
-
-
-            var info = await _updateService.CheckForUpdatesAsync();
-
-
+            var info = _availableUpdateInfo ?? await _updateService.CheckForUpdatesAsync();
 
             if (info == null)
-
-
-
             {
-
-
+                if (!_updateService.IsInstalledApp)
+                {
+                    for (int i = 0; i <= 100; i += 25)
+                    {
+                        UpdateDownloadProgress = i;
+                        UpdateStatusText = $"Geliştirici modu simülasyonu: %{i}";
+                        await Task.Delay(250);
+                    }
+                    UpdateStatusText = "Geliştirici modu: Velopack kurulumu olmadığından yeniden başlatma atlandı.";
+                    await Task.Delay(1500);
+                    IsUpdating = false;
+                    IsUpdateDialogOpen = false;
+                    return;
+                }
 
                 IsUpdating = false;
-
-
-
+                UpdateStatusText = "Güncelleme paketi bulunamadı.";
                 return;
-
-
-
             }
 
-
-
             await _updateService.DownloadUpdatesAsync(info, p =>
-
-
-
             {
-
-
-
                 Dispatcher.UIThread.Post(() =>
-
-
-
                 {
-
-
-
                     UpdateDownloadProgress = p;
-
-
-
                     UpdateStatusText = $"Güncelleme indiriliyor: %{p}";
-
-
-
                 });
-
-
-
             });
 
-
-
             UpdateStatusText = "Güncelleme uygulanıyor ve yeniden başlatılıyor...";
-
-
-
+            await Task.Delay(1000);
             _updateService.ApplyUpdatesAndRestart(info);
-
-
-
         }
-
-
-
         catch (Exception ex)
-
-
-
         {
-
-
-
             IsUpdating = false;
-
-
-
             UpdateStatusText = $"Güncelleme başarısız: {ex.Message}";
-
-
-
         }
-
-
-
     }
 
 
