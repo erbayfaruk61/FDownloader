@@ -245,16 +245,21 @@ public sealed class TorrentService : IAsyncDisposable
         else if (cleanSource.StartsWith("magnet:", StringComparison.OrdinalIgnoreCase))
         {
             string enrichedMagnet = cleanSource;
-            // Eğer magnet linkinde tracker bilgisi yoksa veya eksikse, global fallback tracker'ları ekle
-            if (_settings.EnableFallbackTrackers && !enrichedMagnet.Contains("tr=", StringComparison.OrdinalIgnoreCase))
+            // Magnet linkine global açık izleyicileri (fallback trackers) eksiksiz ekle
+            if (_settings.EnableFallbackTrackers)
             {
                 var sb = new System.Text.StringBuilder(enrichedMagnet);
                 foreach (var tracker in DefaultFallbackTrackers)
                 {
-                    sb.Append("&tr=").Append(Uri.EscapeDataString(tracker));
+                    var escaped = Uri.EscapeDataString(tracker);
+                    if (!enrichedMagnet.Contains(escaped, StringComparison.OrdinalIgnoreCase) &&
+                        !enrichedMagnet.Contains(tracker, StringComparison.OrdinalIgnoreCase))
+                    {
+                        sb.Append("&tr=").Append(escaped);
+                    }
                 }
                 enrichedMagnet = sb.ToString();
-                _logger.LogInformation("Magnet linkine varsayılan açık izleyiciler (trackers) eklendi: Task #{TaskId}", taskId);
+                _logger.LogInformation("Magnet linki global izleyicilerle (trackers) zenginleştirildi: Task #{TaskId}", taskId);
             }
 
             var magnetLink = MagnetLink.Parse(enrichedMagnet);
@@ -528,10 +533,15 @@ public sealed class TorrentService : IAsyncDisposable
 
             try
             {
-                // Torrent'i 3 saniye içinde nazikçe durdur
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
-                var stopTask = manager.StopAsync();
-                await System.Threading.Tasks.Task.WhenAny(stopTask, System.Threading.Tasks.Task.Delay(3000, cts.Token));
+                if (manager.State != TorrentState.Stopped)
+                {
+                    await manager.StopAsync();
+                    var stopTimeout = DateTimeOffset.UtcNow.AddSeconds(4);
+                    while (manager.State != TorrentState.Stopped && DateTimeOffset.UtcNow < stopTimeout)
+                    {
+                        await Task.Delay(50);
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -540,7 +550,25 @@ public sealed class TorrentService : IAsyncDisposable
 
             try
             {
-                await _engine.RemoveAsync(manager);
+                if (manager.State == TorrentState.Stopped)
+                {
+                    await _engine.RemoveAsync(manager);
+                }
+                else
+                {
+                    _ = Task.Run(async () =>
+                    {
+                        var stopTimeout = DateTimeOffset.UtcNow.AddSeconds(10);
+                        while (manager.State != TorrentState.Stopped && DateTimeOffset.UtcNow < stopTimeout)
+                        {
+                            await Task.Delay(100);
+                        }
+                        if (manager.State == TorrentState.Stopped)
+                        {
+                            try { await _engine.RemoveAsync(manager); } catch { }
+                        }
+                    });
+                }
             }
             catch (Exception ex)
             {
