@@ -386,6 +386,15 @@ public class TorrentServiceTests : IDisposable
     }
 
     [Fact]
+    public void InfoHashes_EqualityCheck()
+    {
+        var m1 = MagnetLink.Parse("magnet:?xt=urn:btih:dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c");
+        var m2 = MagnetLink.Parse("magnet:?xt=urn:btih:dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c&dn=Test");
+        Assert.True(m1.InfoHashes.Equals(m2.InfoHashes));
+        Assert.True(m1.InfoHashes == m2.InfoHashes);
+    }
+
+    [Fact]
     public async Task SeedRatioLimit_WhenConfigured_SettingsAreAppliedAndReported()
     {
         var settings = new AppTorrentSettings
@@ -410,5 +419,19 @@ public class TorrentServiceTests : IDisposable
         Assert.True(_torrentService.Settings.StopSeedingWhenRatioReached);
 
         await _torrentService.RemoveTorrentAsync(900, deleteFiles: false);
+    }
+
+    [Fact]
+    public async Task InspectTorrentFilesAsync_FollowedBy_AddAndStartTorrentAsync_DoesNotThrowAlreadyRegistered()
+    {
+        var magnet = "magnet:?xt=urn:btih:342992b8d0c3eb1499b9cf9abf284ec0ef23ed95&dn=ubuntu-24.04-desktop-amd64.iso";
+        // 1. First inspect the files (this may time out or succeed)
+        await _torrentService.InspectTorrentFilesAsync(magnet);
+
+        // 2. Then add and start the torrent
+        var manager = await _torrentService.AddAndStartTorrentAsync(950, magnet, _downloadDir);
+        Assert.NotNull(manager);
+
+        await _torrentService.RemoveTorrentAsync(950, deleteFiles: false);
     }
 }

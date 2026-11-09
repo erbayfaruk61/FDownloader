@@ -232,13 +232,15 @@ public sealed class TorrentService : IAsyncDisposable
         if (File.Exists(localCachePath))
         {
             var torrent = await MonoTorrent.Torrent.LoadAsync(localCachePath);
-            manager = await _engine.AddAsync(torrent, saveDirectory, CreateTorrentSettings());
+            var existing = _engine.Torrents.FirstOrDefault(m => m.InfoHashes == torrent.InfoHashes);
+            manager = existing ?? await _engine.AddAsync(torrent, saveDirectory, CreateTorrentSettings());
         }
         else if (File.Exists(urlCachedFile))
         {
             var torrent = await MonoTorrent.Torrent.LoadAsync(urlCachedFile);
             try { File.Copy(urlCachedFile, localCachePath, overwrite: true); } catch { }
-            manager = await _engine.AddAsync(torrent, saveDirectory, CreateTorrentSettings());
+            var existing = _engine.Torrents.FirstOrDefault(m => m.InfoHashes == torrent.InfoHashes);
+            manager = existing ?? await _engine.AddAsync(torrent, saveDirectory, CreateTorrentSettings());
         }
         else if (cleanSource.StartsWith("magnet:", StringComparison.OrdinalIgnoreCase))
         {
@@ -257,29 +259,24 @@ public sealed class TorrentService : IAsyncDisposable
 
             var magnetLink = MagnetLink.Parse(enrichedMagnet);
 
-            // Önceki geçici metadata sorgusu kalıntılarını motor üzerinden temizle
+            // Motor içinde bu InfoHash zaten kayıtlıysa yeniden AddAsync çağırmak yerine mevcut olanı güvenle yeniden kullan
             var existing = _engine.Torrents.FirstOrDefault(m => m.InfoHashes == magnetLink.InfoHashes);
             if (existing != null)
             {
-                try
-                {
-                    if (existing.State != TorrentState.Stopped)
-                    {
-                        await existing.StopAsync();
-                    }
-                    await _engine.RemoveAsync(existing);
-                }
-                catch { }
+                _logger.LogInformation("Torrent motorunda mevcut yönetici güvenle yeniden kullanılıyor: {InfoHash}", magnetLink.InfoHashes.V1OrV2.ToHex());
+                manager = existing;
             }
-
-            manager = await _engine.AddAsync(magnetLink, saveDirectory, CreateTorrentSettings());
-
+            else
+            {
+                manager = await _engine.AddAsync(magnetLink, saveDirectory, CreateTorrentSettings());
+            }
         }
         else if (File.Exists(cleanSource))
         {
             var torrent = await MonoTorrent.Torrent.LoadAsync(cleanSource);
             try { File.Copy(cleanSource, localCachePath, overwrite: true); } catch { }
-            manager = await _engine.AddAsync(torrent, saveDirectory, CreateTorrentSettings());
+            var existing = _engine.Torrents.FirstOrDefault(m => m.InfoHashes == torrent.InfoHashes);
+            manager = existing ?? await _engine.AddAsync(torrent, saveDirectory, CreateTorrentSettings());
         }
         else if (cleanSource.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
                  cleanSource.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
@@ -869,43 +866,11 @@ public sealed class TorrentService : IAsyncDisposable
                     }
                     else
                     {
-                        bool isTemp = false;
-                        try
+                        var hex = magnet.InfoHashes.V1OrV2.ToHex();
+                        var cachedTorrent = Path.Combine(_cacheDirectory, $"{hex}.torrent");
+                        if (File.Exists(cachedTorrent))
                         {
-                            if (mgr == null)
-                            {
-                                var tempDir = Path.Combine(Path.GetTempPath(), "FDownloader_Meta");
-                                Directory.CreateDirectory(tempDir);
-                                mgr = await _engine.AddAsync(magnet, tempDir);
-                                isTemp = true;
-                            }
-
-                            if (mgr.State != TorrentState.Starting && mgr.State != TorrentState.Downloading && mgr.State != TorrentState.Metadata)
-                            {
-                                await mgr.StartAsync();
-                            }
-
-                            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-                            await mgr.WaitForMetadataAsync(cts.Token);
-                            if (mgr.Torrent != null)
-                            {
-                                torrent = mgr.Torrent;
-                            }
-                        }
-                        catch (OperationCanceledException)
-                        {
-                        }
-                        finally
-                        {
-                            if (isTemp && mgr != null && mgr.Torrent == null)
-                            {
-                                try
-                                {
-                                    await mgr.StopAsync();
-                                    await _engine.RemoveAsync(mgr);
-                                }
-                                catch { }
-                            }
+                            torrent = await MonoTorrent.Torrent.LoadAsync(cachedTorrent);
                         }
                     }
                 }
