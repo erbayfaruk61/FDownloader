@@ -155,17 +155,17 @@ public class ArchiveExtractorService
             return new ArchiveExtractionResult(false, null, 0, $"Arşiv dosyası bulunamadı: {archivePath}");
         }
 
-        return await Task.Run(() =>
+        var baseDirectory = targetDirectory ?? Path.GetDirectoryName(archivePath) ?? ".";
+        var finalDirectory = baseDirectory;
+
+        if (createSubfolder)
         {
-            var baseDirectory = targetDirectory ?? Path.GetDirectoryName(archivePath) ?? ".";
-            var finalDirectory = baseDirectory;
+            var folderName = GetCleanArchiveFolderName(archivePath);
+            finalDirectory = Path.Combine(baseDirectory, folderName);
+        }
 
-            if (createSubfolder)
-            {
-                var folderName = GetCleanArchiveFolderName(archivePath);
-                finalDirectory = Path.Combine(baseDirectory, folderName);
-            }
-
+        var result = await Task.Run(() =>
+        {
             Directory.CreateDirectory(finalDirectory);
 
             var sevenZipExe = Find7zExecutable();
@@ -265,6 +265,20 @@ public class ArchiveExtractorService
             _logger?.LogWarning(lastCryptoEx, "Arşiv şifreli veya parola hatalı: {ArchivePath}", archivePath);
             return new ArchiveExtractionResult(false, null, 0, "Girilen arşiv parolası hatalı veya geçersiz. Lütfen parolayı kontrol edip tekrar deneyin.", IsPasswordProtected: true);
         }, cancellationToken);
+
+        if (!result.Success && createSubfolder && Directory.Exists(finalDirectory))
+        {
+            try
+            {
+                if (!Directory.EnumerateFileSystemEntries(finalDirectory).Any())
+                {
+                    Directory.Delete(finalDirectory, false);
+                }
+            }
+            catch { }
+        }
+
+        return result;
     }
 
     public static string? Find7zExecutable()
@@ -312,6 +326,7 @@ public class ArchiveExtractorService
             var psi = new System.Diagnostics.ProcessStartInfo
             {
                 FileName = sevenZipExe,
+                RedirectStandardInput = true,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -327,6 +342,10 @@ public class ArchiveExtractorService
             {
                 psi.ArgumentList.Add($"-p{password}");
             }
+            else
+            {
+                psi.ArgumentList.Add("-p");
+            }
 
             using var proc = System.Diagnostics.Process.Start(psi);
             if (proc == null)
@@ -334,14 +353,24 @@ public class ArchiveExtractorService
                 return new ArchiveExtractionResult(false, null, 0, "7-Zip başlatılamadı.");
             }
 
+            try { proc.StandardInput.Close(); } catch { }
+
             using var reg = cancellationToken.Register(() =>
             {
                 try { proc.Kill(); } catch { }
             });
 
-            var output = proc.StandardOutput.ReadToEnd();
-            var error = proc.StandardError.ReadToEnd();
-            proc.WaitForExit();
+            var outputTask = proc.StandardOutput.ReadToEndAsync();
+            var errorTask = proc.StandardError.ReadToEndAsync();
+
+            if (!proc.WaitForExit(60000))
+            {
+                try { proc.Kill(); } catch { }
+                return new ArchiveExtractionResult(false, null, 0, "7-Zip işlemi zaman aşımına uğradı.");
+            }
+
+            var output = outputTask.GetAwaiter().GetResult();
+            var error = errorTask.GetAwaiter().GetResult();
 
             if (proc.ExitCode == 0)
             {

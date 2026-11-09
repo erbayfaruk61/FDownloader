@@ -4461,20 +4461,24 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
                                 ShowNotification("📚 Arşiv Çıkarıldı", $"{result.ExtractedFilesCount} dosya klasöre başarıyla açıldı.", result.ExtractedDirectory, "📚", _currentCompletionSound, true);
 
-
-
                                 if (DeleteArchiveAfterExtract && File.Exists(e.FilePath))
-
-
-
                                 {
-
-
-
-                                    try { File.Delete(e.FilePath); } catch { }
-
-
-
+                                    try
+                                    {
+                                        File.Delete(e.FilePath);
+                                        FDownloader.Core.Logging.AppFileLoggerProvider.AppendLog(
+                                            Microsoft.Extensions.Logging.LogLevel.Information,
+                                            "Archive",
+                                            $"Arşiv başarıyla çıkarıldıktan sonra orijinal dosya silindi: {Path.GetFileName(e.FilePath)}");
+                                    }
+                                    catch (Exception delEx)
+                                    {
+                                        FDownloader.Core.Logging.AppFileLoggerProvider.AppendLog(
+                                            Microsoft.Extensions.Logging.LogLevel.Warning,
+                                            "Archive",
+                                            $"Arşiv çıkarıldı fakat orijinal dosya silinemedi: {Path.GetFileName(e.FilePath)}",
+                                            delEx);
+                                    }
                                 }
 
 
@@ -8749,6 +8753,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
         IsArchivePasswordDialogOpen = true;
+        RequestBringToFront?.Invoke();
 
 
 
@@ -8894,20 +8899,24 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
             ShowNotification("📚 Arşiv Başarıyla Çıkarıldı", $"{result.ExtractedFilesCount} dosya klasöre çıkarıldı.", result.ExtractedDirectory, "📚", _currentCompletionSound, true);
 
-
-
             if (DeleteArchiveAfterExtract && File.Exists(path))
-
-
-
             {
-
-
-
-                try { File.Delete(path); } catch { }
-
-
-
+                try
+                {
+                    File.Delete(path);
+                    FDownloader.Core.Logging.AppFileLoggerProvider.AppendLog(
+                        Microsoft.Extensions.Logging.LogLevel.Information,
+                        "Archive",
+                        $"Arşiv başarıyla çıkarıldıktan sonra orijinal dosya silindi: {Path.GetFileName(path)}");
+                }
+                catch (Exception delEx)
+                {
+                    FDownloader.Core.Logging.AppFileLoggerProvider.AppendLog(
+                        Microsoft.Extensions.Logging.LogLevel.Warning,
+                        "Archive",
+                        $"Arşiv çıkarıldı fakat orijinal dosya silinemedi: {Path.GetFileName(path)}",
+                        delEx);
+                }
             }
 
 
