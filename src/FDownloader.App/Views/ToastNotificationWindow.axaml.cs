@@ -10,6 +10,10 @@ namespace FDownloader.App.Views;
 
 public partial class ToastNotificationWindow : Window
 {
+    private static readonly List<ToastNotificationWindow> ActiveToasts = new();
+    private static readonly object SyncLock = new();
+    private const int MaxVisibleToasts = 5;
+
     private readonly string? _filePath;
     private readonly DispatcherTimer _autoCloseTimer;
     private readonly CompletionSound _sound = CompletionSound.Notify;
@@ -22,6 +26,16 @@ public partial class ToastNotificationWindow : Window
         {
             _autoCloseTimer.Stop();
             Close();
+        };
+
+        Closed += (_, _) =>
+        {
+            _autoCloseTimer.Stop();
+            lock (SyncLock)
+            {
+                ActiveToasts.Remove(this);
+            }
+            RepositionAll();
         };
     }
 
@@ -80,9 +94,24 @@ public partial class ToastNotificationWindow : Window
 
         Opened += (_, _) =>
         {
-            PositionAtBottomRight();
-            Dispatcher.UIThread.Post(PositionAtBottomRight, DispatcherPriority.Loaded);
-            if (sound != CompletionSound.Sessiz)
+            lock (SyncLock)
+            {
+                if (!ActiveToasts.Contains(this))
+                {
+                    ActiveToasts.Add(this);
+                }
+                while (ActiveToasts.Count > MaxVisibleToasts)
+                {
+                    var oldest = ActiveToasts[0];
+                    ActiveToasts.RemoveAt(0);
+                    try { oldest.Close(); } catch { }
+                }
+            }
+
+            RepositionAll();
+            Dispatcher.UIThread.Post(RepositionAll, DispatcherPriority.Loaded);
+
+            if (_sound != CompletionSound.Sessiz)
             {
                 PlayCompletionSound();
             }
@@ -95,27 +124,47 @@ public partial class ToastNotificationWindow : Window
     {
     }
 
-    private void PositionAtBottomRight()
+    public static void RepositionAll()
     {
-        try
+        Dispatcher.UIThread.Post(() =>
         {
-            var screen = Screens.Primary ?? Screens.All.FirstOrDefault();
-            if (screen != null)
+            lock (SyncLock)
             {
+                ActiveToasts.RemoveAll(t => !t.IsVisible);
+                if (ActiveToasts.Count == 0) return;
+
+                var firstToast = ActiveToasts.FirstOrDefault();
+                var screen = firstToast?.Screens.Primary ?? firstToast?.Screens.All.FirstOrDefault();
+                if (screen == null) return;
+
                 var wa = screen.WorkingArea;
                 double scale = screen.Scaling;
-                UpdateLayout();
-
-                double actualWidth = Bounds.Width > 0 ? Bounds.Width : Width;
-                double actualHeight = Bounds.Height > 0 ? Bounds.Height : 95;
-                int winWidth = (int)(actualWidth * scale);
-                int winHeight = (int)(actualHeight * scale);
                 int margin = (int)(20 * scale);
+                int spacing = (int)(10 * scale);
 
-                Position = new PixelPoint(wa.Right - winWidth - margin, wa.Bottom - winHeight - margin);
+                int currentBottom = wa.Bottom - margin;
+
+                for (int i = 0; i < ActiveToasts.Count; i++)
+                {
+                    var toast = ActiveToasts[i];
+                    try
+                    {
+                        toast.UpdateLayout();
+                        double actualWidth = toast.Bounds.Width > 0 ? toast.Bounds.Width : toast.Width;
+                        double actualHeight = toast.Bounds.Height > 0 ? toast.Bounds.Height : 95;
+                        int winWidth = (int)(actualWidth * scale);
+                        int winHeight = (int)(actualHeight * scale);
+
+                        int x = wa.Right - winWidth - margin;
+                        int y = currentBottom - winHeight;
+
+                        toast.Position = new PixelPoint(x, y);
+                        currentBottom = y - spacing;
+                    }
+                    catch { }
+                }
             }
-        }
-        catch { }
+        }, DispatcherPriority.Render);
     }
 
     private void PlayCompletionSound()
