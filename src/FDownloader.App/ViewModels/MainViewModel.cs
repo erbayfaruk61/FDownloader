@@ -286,7 +286,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-    [ObservableProperty] private double _colPeersWidth = 70;
+    [ObservableProperty] private double _colPeersWidth = 150;
 
 
 
@@ -4458,7 +4458,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-                                ShowNotification("📦 Arşiv Çıkarıldı", $"{result.ExtractedFilesCount} dosya klasöre başarıyla açıldı.", result.ExtractedDirectory, "📦", _currentCompletionSound, true);
+                                ShowNotification("📚 Arşiv Çıkarıldı", $"{result.ExtractedFilesCount} dosya klasöre başarıyla açıldı.", result.ExtractedDirectory, "📚", _currentCompletionSound, true);
 
 
 
@@ -7705,7 +7705,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-            case "Peers": ColPeersWidth = 85; break;
+            case "Peers": ColPeersWidth = 150; break;
 
 
 
@@ -7757,7 +7757,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-        ColPeersWidth = 85;
+        ColPeersWidth = 150;
 
 
 
@@ -8653,7 +8653,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-            ShowNotification("📦 Arşiv Bulunamadı", "Belirtilen dosya mevcut değil veya desteklenen bir arşiv formatı değil.", path, "⚠️", CompletionSound.Sessiz, true);
+            ShowNotification("📚 Arşiv Bulunamadı", "Belirtilen dosya mevcut değil veya desteklenen bir arşiv formatı değil.", path, "⚠️", CompletionSound.Sessiz, true);
 
 
 
@@ -8677,7 +8677,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-            ShowNotification("📦 Arşiv Çıkarılıyor...", $"{name} hedef klasöre açılıyor...", path, "⏳", CompletionSound.Sessiz, true);
+            ShowNotification("📚 Arşiv Çıkarılıyor...", $"{name} hedef klasöre açılıyor...", path, "⏳", CompletionSound.Sessiz, true);
 
 
 
@@ -8701,7 +8701,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-                ShowNotification("📦 Arşiv Başarıyla Çıkarıldı", $"{result.ExtractedFilesCount} dosya klasöre çıkarıldı.", result.ExtractedDirectory, "📦", _currentCompletionSound, true);
+                ShowNotification("📚 Arşiv Başarıyla Çıkarıldı", $"{result.ExtractedFilesCount} dosya klasöre çıkarıldı.", result.ExtractedDirectory, "📚", _currentCompletionSound, true);
 
 
 
@@ -8949,7 +8949,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-            ShowNotification("📦 Arşiv Başarıyla Çıkarıldı", $"{result.ExtractedFilesCount} dosya klasöre çıkarıldı.", result.ExtractedDirectory, "📦", _currentCompletionSound, true);
+            ShowNotification("📚 Arşiv Başarıyla Çıkarıldı", $"{result.ExtractedFilesCount} dosya klasöre çıkarıldı.", result.ExtractedDirectory, "📚", _currentCompletionSound, true);
 
 
 

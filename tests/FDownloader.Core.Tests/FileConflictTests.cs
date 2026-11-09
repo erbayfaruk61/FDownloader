@@ -56,9 +56,9 @@ public class FileConflictTests
     {
         Assert.Equal("🎬", DownloadCategory.Video.ToCategoryIcon());
         Assert.Equal("🎵", DownloadCategory.Music.ToCategoryIcon());
-        Assert.Equal("📦", DownloadCategory.Archive.ToCategoryIcon());
+        Assert.Equal("📚", DownloadCategory.Archive.ToCategoryIcon());
         Assert.Equal("📄", DownloadCategory.Document.ToCategoryIcon());
-        Assert.Equal("⚙️", DownloadCategory.Program.ToCategoryIcon());
+        Assert.Equal("📦", DownloadCategory.Program.ToCategoryIcon());
     }
 }
 

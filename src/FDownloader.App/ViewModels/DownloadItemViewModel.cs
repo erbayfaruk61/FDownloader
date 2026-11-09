@@ -677,9 +677,9 @@ partial void OnTotalBytesChanged(long value)
 
                 DownloadCategory.Document => "📄",
 
-                DownloadCategory.Archive => "📦",
+                DownloadCategory.Archive => "📚",
 
-                DownloadCategory.Program => "⚙️",
+                DownloadCategory.Program => "📦",
 
                 DownloadCategory.Image => "🖼️",
 

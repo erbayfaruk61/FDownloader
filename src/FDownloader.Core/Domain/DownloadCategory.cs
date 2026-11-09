@@ -118,8 +118,8 @@ public static class DownloadCategoryExtensions
         DownloadCategory.Video => "🎬",
         DownloadCategory.Music => "🎵",
         DownloadCategory.Document => "📄",
-        DownloadCategory.Archive => "📦",
-        DownloadCategory.Program => "⚙️",
+        DownloadCategory.Archive => "📚",
+        DownloadCategory.Program => "📦",
         DownloadCategory.Image => "🖼️",
         DownloadCategory.Torrent => "🧲",
         _ => "📄"
@@ -130,8 +130,8 @@ public static class DownloadCategoryExtensions
         DownloadCategory.Video => "Video Dosyası",
         DownloadCategory.Music => "Müzik / Ses Dosyası",
         DownloadCategory.Document => "Belge",
-        DownloadCategory.Archive => "Sıkıştırılmış Arşiv",
-        DownloadCategory.Program => "Uygulama / Kurulum",
+        DownloadCategory.Archive => "Sıkıştırılmış Arşiv (WinRAR/Zip)",
+        DownloadCategory.Program => "Uygulama / Kurulum Paketi",
         DownloadCategory.Image => "Resim / Görsel",
         DownloadCategory.Torrent => "BitTorrent Dosyası",
         _ => "Genel Dosya"

@@ -786,7 +786,7 @@ public sealed class LocalizationService : INotifyPropertyChanged
 
         ["Category.Music"] = "🎵 Ses & MP3",
 
-        ["Category.Archive"] = "📦 Sıkıştırılmış",
+        ["Category.Archive"] = "📚 Sıkıştırılmış",
 
         ["Category.Document"] = "📄 Belgeler",
 
@@ -1648,7 +1648,7 @@ public sealed class LocalizationService : INotifyPropertyChanged
 
         ["Category.Music"] = "🎵 Audio & MP3",
 
-        ["Category.Archive"] = "📦 Compressed",
+        ["Category.Archive"] = "📚 Compressed",
 
         ["Category.Document"] = "📄 Documents",
 

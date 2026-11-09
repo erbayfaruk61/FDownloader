@@ -326,7 +326,7 @@
                             <ListBoxItem Content="{Binding Loc[Category.Torrent], FallbackValue='🌊 Torrent'}" />
                             <ListBoxItem Content="{Binding Loc[Category.Video], FallbackValue='🎬 Videolar'}" />
                             <ListBoxItem Content="{Binding Loc[Category.Music], FallbackValue='🎵 Ses &amp; MP3'}" />
-                            <ListBoxItem Content="{Binding Loc[Category.Archive], FallbackValue='📦 Sıkıştırılmış'}" />
+                            <ListBoxItem Content="{Binding Loc[Category.Archive], FallbackValue='📚 Sıkıştırılmış'}" />
                             <ListBoxItem Content="{Binding Loc[Category.Document], FallbackValue='📄 Belgeler'}" />
                         </ListBox>
                     </StackPanel>
@@ -338,7 +338,7 @@
                     <!-- İNDİRME LİSTESİ TABLOSU (ÇOKLU SEÇİM & SAĞ TIK MENÜLÜ) -->
                     <Border Grid.Row="0" Margin="8,8,8,4">
                         <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                            <Grid RowDefinitions="Auto, *">
+                            <Grid RowDefinitions="Auto, *" MinWidth="{Binding $parent[ScrollViewer].Bounds.Width}">
                                 <!-- Tablo Başlıkları (Sağ Tık ile Sütun Gizle/Göster & Tutamaçlarla Boyutlandır) -->
                                 <Border Grid.Row="0" Background="{Binding ThemeTableHeaderBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1,1,1,0" CornerRadius="6,6,0,0" Padding="10,6">
                                 <Border.ContextMenu>
@@ -358,7 +358,7 @@
                                     </ContextMenu>
                                 </Border.ContextMenu>
 
-                                <Grid ColumnDefinitions="32, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto">
+                                <Grid ColumnDefinitions="32, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, *">
                                     <!-- 0: Durum -->
                                     <Grid Grid.Column="0" Width="32">
                                         <TextBlock Text="{Binding Loc[Column.Status], FallbackValue='Durum'}" FontSize="10" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
@@ -408,15 +408,14 @@
                                     </Grid>
 
                                     <!-- 8: Eşler -->
-                                    <Grid Grid.Column="8" Width="{Binding ColPeersWidth}" IsVisible="{Binding ShowColPeers}">
+                                    <Grid Grid.Column="8" Width="{Binding ColPeersWidth}" MinWidth="130" IsVisible="{Binding ShowColPeers}">
                                         <TextBlock Text="{Binding Loc[Column.Peers], FallbackValue='Eşler'}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0" />
                                         <Thumb Classes="colResizer" Tag="Peers" DragDelta="OnColumnThumbDragDelta" DoubleTapped="OnColumnThumbDoubleTapped" ToolTip.Tip="Genişliği değiştirmek için sürükleyin, sıfırlamak için çift tıklayın" />
                                     </Grid>
 
-                                    <!-- 9: Durum -->
-                                    <Grid Grid.Column="9" Width="{Binding ColStatusWidth}" IsVisible="{Binding ShowColStatus}">
-                                        <TextBlock Text="Durum" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0" />
-                                        <Thumb Classes="colResizer" Tag="Status" DragDelta="OnColumnThumbDragDelta" DoubleTapped="OnColumnThumbDoubleTapped" ToolTip.Tip="Genişliği değiştirmek için sürükleyin, sıfırlamak için çift tıklayın" />
+                                    <!-- 9: Durum (Sağa Yapışık) -->
+                                    <Grid Grid.Column="9" MinWidth="110" IsVisible="{Binding ShowColStatus}">
+                                        <TextBlock Text="{Binding Loc[Column.Status], FallbackValue='Durum'}" FontWeight="SemiBold" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="4,0,10,0" />
                                     </Grid>
                                 </Grid>
                             </Border>
@@ -510,7 +509,7 @@
                                                 </MenuItem>
                                                 <MenuItem Header="Arşivi Klasöre Çıkart" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).ExtractArchiveCommand}" CommandParameter="{Binding}" IsVisible="{Binding IsArchiveFile}">
                                                     <MenuItem.Icon>
-                                                        <TextBlock Text="📦" VerticalAlignment="Center" />
+                                                        <TextBlock Text="📚" VerticalAlignment="Center" />
                                                     </MenuItem.Icon>
                                                 </MenuItem>
                                                 <MenuItem Header="Torrent İçeriğini İndir..." Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).StartTorrentPayloadCommand}" CommandParameter="{Binding}" IsVisible="{Binding IsDownloadedTorrentFile}">
@@ -606,7 +605,7 @@
                                     <DataTemplate DataType="vm:DownloadItemViewModel">
                                         <!-- Satır Hücreleri (Sütunlar Arası Asla Taşmaz, Hata/Kopma Durumunda Sarı-Turuncu Vurgulu) -->
                                         <Border Classes="downloadRow" Background="{Binding RowBackground}" BorderBrush="{Binding RowBorderBrush}" BorderThickness="1" CornerRadius="6" Margin="0,1" Padding="2,2">
-                                            <Grid ColumnDefinitions="32, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto" HorizontalAlignment="Left" Background="Transparent">
+                                            <Grid ColumnDefinitions="32, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, *" HorizontalAlignment="Stretch" Background="Transparent">
 
                                             <!-- 0: En Solda Durum Rozeti -->
                                             <Border Grid.Column="0" Width="32" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -702,13 +701,13 @@
                                             </Border>
 
                                             <!-- 8: Eşler (Torrent) -->
-                                            <Border Grid.Column="8" Width="{Binding $parent[Window].((vm:MainViewModel)DataContext).ColPeersWidth}" IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).ShowColPeers}" VerticalAlignment="Center" ClipToBounds="True" Padding="6,0,10,0">
+                                            <Border Grid.Column="8" Width="{Binding $parent[Window].((vm:MainViewModel)DataContext).ColPeersWidth}" MinWidth="130" IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).ShowColPeers}" VerticalAlignment="Center" ClipToBounds="True" Padding="6,0,10,0">
                                                 <TextBlock Text="{Binding PeersDisplay}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                                             </Border>
 
-                                            <!-- 9: Durum Metni -->
-                                            <Border Grid.Column="9" Width="{Binding $parent[Window].((vm:MainViewModel)DataContext).ColStatusWidth}" IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).ShowColStatus}" VerticalAlignment="Center" ClipToBounds="True" Padding="6,0,10,0">
-                                                <TextBlock Text="{Binding StatusDisplay}" ToolTip.Tip="{Binding StatusDisplay}" FontWeight="Medium" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                            <!-- 9: Durum Metni (Sağa Yapışık) -->
+                                            <Border Grid.Column="9" MinWidth="110" IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).ShowColStatus}" VerticalAlignment="Center" ClipToBounds="True" Padding="6,0,10,0">
+                                                <TextBlock Text="{Binding StatusDisplay}" ToolTip.Tip="{Binding StatusDisplay}" FontWeight="Medium" VerticalAlignment="Center" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" />
                                             </Border>
                                         </Grid>
                                         </Border>
@@ -1449,7 +1448,7 @@
                                     <Border Background="{DynamicResource SystemChromeLowColor}" CornerRadius="8" Padding="14">
                                         <StackPanel Spacing="10">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <TextBlock Text="📦" FontSize="14" VerticalAlignment="Center" />
+                                                <TextBlock Text="📚" FontSize="14" VerticalAlignment="Center" />
                                                 <TextBlock Text="{Binding Loc[Settings.AutoExtractTitle], FallbackValue='Otomatik Arşiv Çıkarma (Auto-Extract):'}" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
                                             </StackPanel>
 
@@ -2380,7 +2379,7 @@
                     <!-- Dosya Adı Rozeti -->
                     <Border Background="{DynamicResource SystemChromeLowColor}" CornerRadius="6" Padding="10,8">
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="📦" FontSize="13" VerticalAlignment="Center" />
+                            <TextBlock Text="📚" FontSize="13" VerticalAlignment="Center" />
                             <TextBlock Text="{Binding ArchivePasswordFileName}" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                         </StackPanel>
                     </Border>
