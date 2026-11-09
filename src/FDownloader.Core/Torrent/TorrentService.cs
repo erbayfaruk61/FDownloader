@@ -26,6 +26,7 @@ public sealed class TorrentService : IAsyncDisposable
     private readonly Dictionary<long, TorrentManager> _activeManagers = new();
     private readonly Dictionary<long, TorrentDetails> _lastKnownDetails = new();
     private readonly HashSet<long> _metadataNotifiedTasks = new();
+    private readonly HashSet<long> _completedNotifiedTasks = new();
     private readonly ConcurrentDictionary<long, bool> _sequentialTasks = new();
     private readonly Dictionary<long, List<(int Index, Priority Priority)>> _pendingFilePriorities = new();
     private readonly string _downloadDirectory;
@@ -506,6 +507,7 @@ public sealed class TorrentService : IAsyncDisposable
             _activeManagers.Remove(taskId, out manager);
             _lastKnownDetails.Remove(taskId);
             _metadataNotifiedTasks.Remove(taskId);
+            _completedNotifiedTasks.Remove(taskId);
         }
 
         if (manager != null)
@@ -656,7 +658,11 @@ public sealed class TorrentService : IAsyncDisposable
             try
             {
                 _logger.LogInformation("Torrent #{TaskId} için zorla hash doğrulaması başlatılıyor.", taskId);
-                await manager.HashCheckAsync(autoStart: true);
+                lock (_activeManagers)
+        {
+            _completedNotifiedTasks.Remove(taskId);
+        }
+        await manager.HashCheckAsync(autoStart: true);
             }
             catch (Exception ex)
             {
@@ -1181,8 +1187,18 @@ public sealed class TorrentService : IAsyncDisposable
                         ));
                     }
 
+                    bool shouldNotifyCompleted = false;
                     if (manager.Complete)
                     {
+                        lock (_activeManagers)
+                        {
+                            if (!_completedNotifiedTasks.Contains(taskId))
+                            {
+                                _completedNotifiedTasks.Add(taskId);
+                                shouldNotifyCompleted = true;
+                            }
+                        }
+
                         var ratio = (manager.Torrent?.Size > 0) ? (double)manager.Monitor.DataBytesSent / manager.Torrent.Size : 0;
                         if (_settings.StopSeedingWhenRatioReached && _settings.SeedRatioLimit > 0 && ratio >= _settings.SeedRatioLimit && manager.State == TorrentState.Seeding)
                         {
@@ -1204,12 +1220,16 @@ public sealed class TorrentService : IAsyncDisposable
                             finalTorrentPath = Path.Combine(manager.SavePath, manager.Files[0].Path);
                         }
 
-                        _eventBus.Publish(new TaskCompletedEvent(
-                            taskId,
-                            finalTorrentPath,
-                            totalSize,
-                            TimeSpan.Zero
-                        ));
+                        if (shouldNotifyCompleted)
+                        {
+                            _eventBus.Publish(new TaskCompletedEvent(
+                                taskId,
+                                finalTorrentPath,
+                                totalSize,
+                                TimeSpan.Zero
+                            ));
+                            _logger.LogInformation("Torrent indirmesi tamamlandı bildirildi: Task #{TaskId}, Yol: {Path}", taskId, finalTorrentPath);
+                        }
                     }
                 }
             }

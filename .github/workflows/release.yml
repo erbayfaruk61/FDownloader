@@ -48,6 +48,9 @@ jobs:
           if ($ffmpegCmd) { Copy-Item $ffmpegCmd.Source ./publish/tools/ffmpeg/ffmpeg.exe }
           $ffprobeCmd = Get-Command ffprobe.exe -ErrorAction SilentlyContinue
           if ($ffprobeCmd) { Copy-Item $ffprobeCmd.Source ./publish/tools/ffmpeg/ffprobe.exe }
+          if (Test-Path tools/7z) {
+            Copy-Item -Recurse -Force tools/7z ./publish/tools/7z
+          }
           if (Test-Path tools/browser-extension) {
             Copy-Item -Recurse -Force tools/browser-extension ./publish/tools/browser-extension
           }

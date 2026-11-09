@@ -2752,7 +2752,7 @@
                                 <RadioButton Content="🇬🇧" IsChecked="{Binding IsLanguageEnglish, Mode=TwoWay}" ToolTip.Tip="English" FontSize="12" />
                             </StackPanel>
                             <Border Background="{Binding ThemeSpeedGraphInnerBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="8" Padding="12,6" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding FirstRunWizardStep, StringFormat='Adım {0} / 3'}" FontWeight="Bold" FontSize="12" Foreground="{Binding ThemeAccentFg}" />
+                                <TextBlock Text="{Binding FirstRunWizardStepIndicatorText}" FontWeight="Bold" FontSize="12" Foreground="{Binding ThemeAccentFg}" />
                             </Border>
                         </StackPanel>
                     </Grid>
@@ -2760,7 +2760,7 @@
                     <!-- Adım İçerikleri -->
                     <Grid Grid.Row="1" MinHeight="290">
                         <!-- ADIM 1: Hoş Geldiniz & Tema / Görünüm Seçimi -->
-                        <StackPanel Spacing="16" IsVisible="{Binding FirstRunWizardStep, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=1}">
+                        <StackPanel Spacing="16" IsVisible="{Binding IsFirstRunWizardStep1}">
                             <Border Background="{DynamicResource SystemChromeLowColor}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="10" Padding="16">
                                 <StackPanel Spacing="10">
                                     <TextBlock Text="{Binding Loc[Wizard.Step1Title], FallbackValue='Hoş Geldiniz! 🌟'}" FontSize="15" FontWeight="Bold" Foreground="{Binding ThemeForeground}" />
@@ -2783,7 +2783,7 @@
                         </StackPanel>
 
                         <!-- ADIM 2: Klasör & Windows Başlangıç Tercihleri -->
-                        <StackPanel Spacing="14" IsVisible="{Binding FirstRunWizardStep, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=2}">
+                        <StackPanel Spacing="14" IsVisible="{Binding IsFirstRunWizardStep2}">
                             <!-- Kayıt Klasörü -->
                             <Border Background="{DynamicResource SystemChromeLowColor}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="10" Padding="14">
                                 <StackPanel Spacing="8">
@@ -2826,7 +2826,7 @@
                         </StackPanel>
 
                         <!-- ADIM 3: Tarayıcı Eklentisi Rehberi -->
-                        <StackPanel Spacing="14" IsVisible="{Binding FirstRunWizardStep, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=3}">
+                        <StackPanel Spacing="14" IsVisible="{Binding IsFirstRunWizardStep3}">
                             <Border Background="{DynamicResource SystemChromeLowColor}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="10" Padding="14">
                                 <StackPanel Spacing="10">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
@@ -2863,10 +2863,10 @@
                         <Button Grid.Column="0" Command="{Binding SkipFirstRunWizardCommand}" Content="{Binding Loc[Wizard.Skip], FallbackValue='Sihirbazı Atla'}" Background="Transparent" BorderThickness="0" FontSize="12" Foreground="{DynamicResource SystemBaseMediumColor}" />
                         
                         <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
-                            <Button Command="{Binding PreviousFirstRunWizardStepCommand}" Content="{Binding Loc[Wizard.Previous], FallbackValue='◀ Geri'}" Width="85" Height="34" IsVisible="{Binding FirstRunWizardStep, Converter={x:Static ObjectConverters.NotEqual}, ConverterParameter=1}" />
+                            <Button Command="{Binding PreviousFirstRunWizardStepCommand}" Content="{Binding Loc[Wizard.Previous], FallbackValue='◀ Geri'}" Width="85" Height="34" IsVisible="{Binding CanGoBackFirstRunWizard}" />
                             
                             <Button Command="{Binding NextFirstRunWizardStepCommand}"
-                                    Content="{Binding FirstRunWizardStep, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=3, StringFormat='Tamamla 🚀'}"
+                                    Content="{Binding FirstRunWizardNextButtonText}"
                                     Background="{Binding ThemeAccentBg}"
                                     Foreground="{Binding ThemeAccentFg}"
                                     FontWeight="Bold"

@@ -392,9 +392,14 @@ public class ArchiveExtractorService
             if (combinedOut.Contains("Wrong password", StringComparison.OrdinalIgnoreCase) ||
                 combinedOut.Contains("Cannot open encrypted", StringComparison.OrdinalIgnoreCase) ||
                 combinedOut.Contains("Can not open encrypted", StringComparison.OrdinalIgnoreCase) ||
-                combinedOut.Contains("Enter password", StringComparison.OrdinalIgnoreCase))
+                combinedOut.Contains("Enter password", StringComparison.OrdinalIgnoreCase) ||
+                combinedOut.Contains("Data Error in encrypted file", StringComparison.OrdinalIgnoreCase) ||
+                combinedOut.Contains("CRC Failed in encrypted file", StringComparison.OrdinalIgnoreCase) ||
+                combinedOut.Contains("encrypted file", StringComparison.OrdinalIgnoreCase) ||
+                combinedOut.Contains("Headers Error", StringComparison.OrdinalIgnoreCase) ||
+                combinedOut.Contains("is encrypted", StringComparison.OrdinalIgnoreCase))
             {
-                return new ArchiveExtractionResult(false, null, 0, "Girilen arşiv parolası hatalı veya geçersiz. Lütfen parolayı kontrol edip tekrar deneyin.", IsPasswordProtected: true);
+                return new ArchiveExtractionResult(false, null, 0, "Girilen arşiv parolası hatalı veya parola gerekiyor.", IsPasswordProtected: true);
             }
 
             return new ArchiveExtractionResult(false, null, 0, "7-Zip çıkarma hatası: " + (string.IsNullOrWhiteSpace(error) ? output : error));
@@ -500,16 +505,35 @@ public class ArchiveExtractorService
             entry.WriteToDirectory(finalDirectory, extractionOptions);
         }
 
-        _logger?.LogInformation("Arşiv başarıyla çıkarıldı: {ArchivePath} -> {FinalDir} ({Count} dosya)",
-            archivePath, finalDirectory, extractedCount);
+        var actualFiles = Directory.Exists(finalDirectory)
+            ? Directory.GetFiles(finalDirectory, "*", SearchOption.AllDirectories)
+            : Array.Empty<string>();
 
-        return new ArchiveExtractionResult(true, finalDirectory, extractedCount, null);
+        long actualBytes = 0;
+        try
+        {
+            actualBytes = actualFiles.Sum(f => new FileInfo(f).Length);
+        }
+        catch { }
+
+        // Eğer arşiv boş değilse (> 1KB) ama çıkan dosya yoksa veya çıkan tüm dosyalar 0 bayt ise:
+        if (archiveFileSize > 1024 && (actualFiles.Length == 0 || actualBytes == 0))
+        {
+            _logger?.LogWarning("Arşiv çıkarıldı gibi göründü ancak hedef klasörde geçerli dosya bulunamadı. Şifreli arşiv şüphesi: {ArchivePath}", archivePath);
+            return new ArchiveExtractionResult(false, null, 0, "Arşiv parola korumalı veya şifreli dosya açılamadı. Lütfen parolayı girerek deneyin.", IsPasswordProtected: true);
+        }
+
+        _logger?.LogInformation("Arşiv başarıyla çıkarıldı: {ArchivePath} -> {FinalDir} ({Count} dosya)",
+            archivePath, finalDirectory, actualFiles.Length > 0 ? actualFiles.Length : extractedCount);
+
+        return new ArchiveExtractionResult(true, finalDirectory, actualFiles.Length > 0 ? actualFiles.Length : extractedCount, null);
     }
 
     private static bool IsPasswordOrCryptoException(Exception ex)
     {
         if (ex is SharpCompress.Common.CryptographicException) return true;
         if (ex is System.Security.Cryptography.CryptographicException) return true;
+        if (ex is NotSupportedException) return true;
 
         var msg = ex.Message ?? "";
         return msg.Contains("password", StringComparison.OrdinalIgnoreCase)

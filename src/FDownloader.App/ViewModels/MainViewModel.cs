@@ -4492,25 +4492,14 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
                             else if (result.IsPasswordProtected)
-
-
-
                             {
-
-
-
                                 ShowNotification("🔒 Şifreli Arşiv", "Arşivi klasöre çıkartabilmek için parola gerekiyor.", e.FilePath, "🔒", CompletionSound.Sessiz, true);
-
-
-
                                 PromptArchivePassword(e.FilePath);
-
-
-
                             }
-
-
-
+                            else
+                            {
+                                ShowNotification("⚠️ Arşiv Hatası", result.ErrorMessage ?? "Arşiv açılırken bir hata oluştu.", e.FilePath, "⚠️", CompletionSound.Sessiz, true);
+                            }
                         });
 
 
