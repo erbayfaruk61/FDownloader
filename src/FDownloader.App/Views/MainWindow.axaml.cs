@@ -202,6 +202,14 @@ public partial class MainWindow : Window
 
     public void RequestExit()
     {
+        if (DataContext is MainViewModel vm)
+        {
+            if (!vm.TryRequestAppExit())
+            {
+                BringToFront();
+                return;
+            }
+        }
         _isExplicitExit = true;
         Close();
     }
