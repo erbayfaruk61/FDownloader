@@ -384,4 +384,31 @@ public class TorrentServiceTests : IDisposable
         Assert.Contains("doc.pdf", inspected[0].Path);
         Assert.True(inspected[0].Length > 0);
     }
+
+    [Fact]
+    public async Task SeedRatioLimit_WhenConfigured_SettingsAreAppliedAndReported()
+    {
+        var settings = new AppTorrentSettings
+        {
+            SeedRatioLimit = 1.5,
+            StopSeedingWhenRatioReached = true
+        };
+        await _torrentService.ApplySettingsAsync(settings);
+
+        var torrentPath = await CreateSampleTorrentFileAsync(
+            "test_ratio",
+            ("file.bin", "sample content")
+        );
+
+        var manager = await _torrentService.AddAndStartTorrentAsync(900, torrentPath, _downloadDir);
+        Assert.NotNull(manager);
+
+        var details = _torrentService.GetTorrentDetails(900);
+        Assert.NotNull(details);
+        Assert.Equal(0, details.ShareRatio);
+        Assert.Equal(1.5, _torrentService.Settings.SeedRatioLimit);
+        Assert.True(_torrentService.Settings.StopSeedingWhenRatioReached);
+
+        await _torrentService.RemoveTorrentAsync(900, deleteFiles: false);
+    }
 }

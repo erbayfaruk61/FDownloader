@@ -138,5 +138,54 @@ public class LosslessResumeTests : IDisposable
 
         Assert.Equal(expectedHash, actualHash);
     }
+
+    [Fact]
+    public async Task ScenarioA1_NoRangeServer_DownloadsAsSingleStreamSuccessfully()
+    {
+        var task = new DownloadTask
+        {
+            OriginalUrl = $"{_server.BaseUrl}no-range",
+            FileName = "norange_test.bin",
+            SaveDirectory = _testDir,
+            SegmentCount = 8 // Range desteksiz sunucuda 1 parçaya indirgenmeli
+        };
+
+        _repository.AddTask(task);
+
+        var downloader = new HttpDownloader(
+            task,
+            _repository,
+            _eventBus,
+            _httpClient,
+            NullLoggerFactory.Instance);
+
+        var tcs = new TaskCompletionSource<bool>();
+        _eventBus.Subscribe<TaskCompletedEvent>(e =>
+        {
+            if (e.TaskId == task.Id) tcs.TrySetResult(true);
+        });
+        _eventBus.Subscribe<TaskFailedEvent>(e =>
+        {
+            if (e.TaskId == task.Id) tcs.TrySetException(new Exception($"İndirme başarısız: {e.Reason}"));
+        });
+
+        downloader.Start();
+
+        var completed = await System.Threading.Tasks.Task.WhenAny(tcs.Task, System.Threading.Tasks.Task.Delay(15000));
+        Assert.True(completed == tcs.Task, "No-range tek parçalı indirme zaman aşımına uğradı!");
+        Assert.True(await tcs.Task);
+
+        Assert.False(task.SupportsRange, "Sunucu range desteklemediği için SupportsRange false olmalıdır");
+        Assert.Equal(1, task.SegmentCount);
+        Assert.Equal(DownloadStatus.Completed, task.Status);
+
+        var finalPath = Path.Combine(_testDir, task.FileName);
+        Assert.True(File.Exists(finalPath));
+        var downloadedBytes = await File.ReadAllBytesAsync(finalPath);
+        Assert.Equal(TestHttpServer.NormalContent.Length, downloadedBytes.Length);
+        Assert.Equal(TestHttpServer.NormalContent, downloadedBytes);
+
+        downloader.Dispose();
+    }
 }
 
