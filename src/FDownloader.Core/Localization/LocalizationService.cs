@@ -618,6 +618,10 @@ public sealed class LocalizationService : INotifyPropertyChanged
 
         ["Update.Restarting"] = "Güncelleme hazır, uygulama yeniden başlatılıyor...",
 
+        ["Update.LatestVersionInstalled"] = "Kurulu Sürüm: {0} (En Güncel Sürüm)",
+
+        ["Update.UpToDate"] = "Uygulamanız güncel durumda.",
+
         ["Settings.AboutChannel"] = "📦 Dağıtım Kanalı:",
 
         ["Settings.AboutContact"] = "✉️ Hata ve Geliştirme Bildirimleri:",
@@ -1497,6 +1501,10 @@ public sealed class LocalizationService : INotifyPropertyChanged
         ["Update.Installing"] = "Downloading update...",
 
         ["Update.Restarting"] = "Update ready, restarting application...",
+
+        ["Update.LatestVersionInstalled"] = "Installed Version: {0} (Latest Version)",
+
+        ["Update.UpToDate"] = "Your application is up to date.",
 
         ["Settings.AboutChannel"] = "📦 Distribution Channel:",
 

@@ -2949,10 +2949,10 @@
                     <Grid Grid.Row="0" ColumnDefinitions="*, Auto" Margin="0,0,0,14">
                         <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                             <Border Width="40" Height="40" CornerRadius="20" Background="#2010B981" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <TextBlock Text="🚀" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding UpdateHeaderIcon}" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
                             <StackPanel VerticalAlignment="Center" Spacing="2">
-                                <TextBlock Text="{Binding Loc[Update.DialogTitle], FallbackValue='Yeni Güncelleme Mevcut!'}" FontSize="17" FontWeight="Bold" Foreground="{Binding ThemeForeground}" />
+                                <TextBlock Text="{Binding UpdateDialogTitle}" FontSize="17" FontWeight="Bold" Foreground="{Binding ThemeForeground}" />
                                 <TextBlock Text="{Binding UpdateReleaseTitle, FallbackValue='FDownloader Güncellemesi'}" FontSize="11" Foreground="{Binding ThemeTextSecondary}" TextTrimming="CharacterEllipsis" MaxWidth="480" />
                             </StackPanel>
                         </StackPanel>
@@ -2961,23 +2961,36 @@
 
                     <!-- Sürüm Karşılaştırma Rozetleri -->
                     <Border Grid.Row="1" Background="{DynamicResource SystemChromeLowColor}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,14">
-                        <Grid ColumnDefinitions="*, Auto, *">
-                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding Loc[Update.CurrentVersion], FallbackValue='Mevcut Sürüm:'}" FontSize="12" Foreground="{Binding ThemeTextSecondary}" VerticalAlignment="Center" />
-                                <Border Background="#334155" CornerRadius="4" Padding="6,2">
-                                    <TextBlock Text="{Binding UpdateCurrentVersion}" FontSize="12" FontWeight="SemiBold" Foreground="White" />
+                        <Panel>
+                            <!-- Güncelleme Mevcutsa: Mevcut Sürüm ➔ Yeni Sürüm -->
+                            <Grid ColumnDefinitions="*, Auto, *" IsVisible="{Binding HasPendingUpdate}">
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Loc[Update.CurrentVersion], FallbackValue='Mevcut Sürüm:'}" FontSize="12" Foreground="{Binding ThemeTextSecondary}" VerticalAlignment="Center" />
+                                    <Border Background="#334155" CornerRadius="4" Padding="6,2">
+                                        <TextBlock Text="{Binding UpdateCurrentVersion}" FontSize="12" FontWeight="SemiBold" Foreground="White" />
+                                    </Border>
+                                </StackPanel>
+
+                                <TextBlock Grid.Column="1" Text="➔" FontSize="16" Foreground="{Binding ThemeTextSecondary}" VerticalAlignment="Center" Margin="12,0" />
+
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                    <TextBlock Text="{Binding Loc[Update.TargetVersion], FallbackValue='Yeni Sürüm:'}" FontSize="12" Foreground="{Binding ThemeTextSecondary}" VerticalAlignment="Center" />
+                                    <Border Background="#10B981" CornerRadius="4" Padding="6,2">
+                                        <TextBlock Text="{Binding UpdateTargetVersion}" FontSize="12" FontWeight="Bold" Foreground="White" />
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Zaten Güncel Durumdaysa: Tek Onay Rozeti -->
+                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" HorizontalAlignment="Center" IsVisible="{Binding !HasPendingUpdate}">
+                                <Border Background="#2010B981" CornerRadius="4" Padding="8,4">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock Text="✔️" FontSize="12" Foreground="#10B981" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding UpToDateBadgeText}" FontSize="12" FontWeight="SemiBold" Foreground="#10B981" VerticalAlignment="Center" />
+                                    </StackPanel>
                                 </Border>
                             </StackPanel>
-
-                            <TextBlock Grid.Column="1" Text="➔" FontSize="16" Foreground="{Binding ThemeTextSecondary}" VerticalAlignment="Center" Margin="12,0" />
-
-                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" HorizontalAlignment="Right">
-                                <TextBlock Text="{Binding Loc[Update.TargetVersion], FallbackValue='Yeni Sürüm:'}" FontSize="12" Foreground="{Binding ThemeTextSecondary}" VerticalAlignment="Center" />
-                                <Border Background="#10B981" CornerRadius="4" Padding="6,2">
-                                    <TextBlock Text="{Binding UpdateTargetVersion}" FontSize="12" FontWeight="Bold" Foreground="White" />
-                                </Border>
-                            </StackPanel>
-                        </Grid>
+                        </Panel>
                     </Border>
 
                     <!-- Değişiklik Listesi (Changelog) -->
@@ -3014,9 +3027,9 @@
                         <Grid ColumnDefinitions="*, Auto, Auto">
                             <TextBlock Grid.Column="0" Text="{Binding UpdateStatusText}" FontSize="11" Foreground="{Binding ThemeTextSecondary}" VerticalAlignment="Center" IsVisible="{Binding !IsUpdating}" TextTrimming="CharacterEllipsis" MaxWidth="320" />
 
-                            <Button Grid.Column="1" Command="{Binding CloseUpdateDialogCommand}" IsVisible="{Binding !IsUpdating}" Content="{Binding Loc[Update.Later], FallbackValue='Daha Sonra'}" Background="Transparent" Foreground="{Binding ThemeTextSecondary}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="6" Padding="16,8" Margin="0,0,10,0" Cursor="Hand" />
+                            <Button Grid.Column="1" Command="{Binding CloseUpdateDialogCommand}" IsVisible="{Binding !IsUpdating}" Content="{Binding UpdateDialogCloseButtonText}" Background="Transparent" Foreground="{Binding ThemeTextSecondary}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="6" Padding="16,8" Margin="0,0,10,0" Cursor="Hand" />
 
-                            <Button Grid.Column="2" Command="{Binding ConfirmApplyUpdateCommand}" IsEnabled="{Binding !IsUpdating}" Background="#10B981" Foreground="White" BorderThickness="0" CornerRadius="6" Padding="18,8" Cursor="Hand">
+                            <Button Grid.Column="2" Command="{Binding ConfirmApplyUpdateCommand}" IsEnabled="{Binding !IsUpdating}" IsVisible="{Binding HasPendingUpdate}" Background="#10B981" Foreground="White" BorderThickness="0" CornerRadius="6" Padding="18,8" Cursor="Hand">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <TextBlock Text="🚀" FontSize="13" VerticalAlignment="Center" />
                                     <TextBlock Text="{Binding Loc[Update.InstallNow], FallbackValue='Güncellemeyi İndir ve Kur'}" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />

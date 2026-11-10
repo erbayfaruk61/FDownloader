@@ -132,56 +132,60 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
     public bool IsUpdateAvailableAndNotUpdating => IsUpdateAvailable && !IsUpdating;
 
+    public bool HasPendingUpdate => IsUpdateAvailable && !IsCurrentVersionUpToDate;
 
+    public bool IsCurrentVersionUpToDate =>
+        !string.IsNullOrWhiteSpace(UpdateTargetVersion) &&
+        !string.IsNullOrWhiteSpace(UpdateCurrentVersion) &&
+        UpdateTargetVersion.TrimStart('v').Equals(UpdateCurrentVersion.TrimStart('v'), StringComparison.OrdinalIgnoreCase);
+
+    public string UpdateDialogTitle => HasPendingUpdate 
+        ? Loc["Update.DialogTitle"] 
+        : Loc["Update.ChangelogTitle"];
+
+    public string UpdateDialogCloseButtonText => HasPendingUpdate
+        ? Loc["Update.Later"]
+        : Loc["Common.Close"];
+
+    public string UpdateHeaderIcon => HasPendingUpdate ? "🚀" : "📋";
+
+    public string UpToDateBadgeText => string.Format(Loc["Update.LatestVersionInstalled"], UpdateCurrentVersion);
 
     public string AppVersionText
-
-
-
     {
-
-
-
         get
-
-
-
         {
-
-
-
             var v = typeof(MainViewModel).Assembly.GetName().Version;
-
-
-
-            return v != null ? $"v{v.Major}.{v.Minor}.{v.Build}" : "v1.5.0";
-
-
-
+            return v != null ? $"v{v.Major}.{v.Minor}.{v.Build}" : "v2.0.0";
         }
-
-
-
     }
-
-
 
     public string WindowTitle => "FDownloader - İndirme Yöneticisi";
 
-
-
     partial void OnIsUpdateAvailableChanged(bool value)
-
-
-
     {
-
-
-
         OnPropertyChanged(nameof(IsUpdateAvailableAndNotUpdating));
+        NotifyUpdateStateProperties();
+    }
 
+    partial void OnUpdateTargetVersionChanged(string value)
+    {
+        NotifyUpdateStateProperties();
+    }
 
+    partial void OnUpdateCurrentVersionChanged(string value)
+    {
+        NotifyUpdateStateProperties();
+    }
 
+    private void NotifyUpdateStateProperties()
+    {
+        OnPropertyChanged(nameof(HasPendingUpdate));
+        OnPropertyChanged(nameof(IsCurrentVersionUpToDate));
+        OnPropertyChanged(nameof(UpdateDialogTitle));
+        OnPropertyChanged(nameof(UpdateDialogCloseButtonText));
+        OnPropertyChanged(nameof(UpdateHeaderIcon));
+        OnPropertyChanged(nameof(UpToDateBadgeText));
     }
 
 
@@ -14975,34 +14979,39 @@ public partial class MainViewModel : ViewModelBase, IDisposable
             var info = await _updateService.CheckForUpdatesAsync();
             if (info != null)
             {
-                _availableUpdateInfo = info;
+                var targetVer = $"v{info.TargetFullRelease.Version}";
+                if (!targetVer.TrimStart('v').Equals(AppVersionText.TrimStart('v'), StringComparison.OrdinalIgnoreCase))
+                {
+                    _availableUpdateInfo = info;
+                    IsUpdateAvailable = true;
+                    UpdateVersionText = targetVer;
+                    UpdateTargetVersion = targetVer;
+                    UpdateStatusText = $"Yeni sürüm mevcut ({UpdateVersionText}).";
+                    await OpenUpdateDialogAsync();
+                    return;
+                }
+            }
+
+            // Canlı GitHub Releases kontrolü (Geliştirici modunda da çalışır)
+            var latest = await _updateService.FetchLatestGitHubReleaseAsync();
+            if (latest != null && !string.IsNullOrWhiteSpace(latest.TagName) &&
+                !latest.TagName.TrimStart('v').Equals(AppVersionText.TrimStart('v'), StringComparison.OrdinalIgnoreCase))
+            {
                 IsUpdateAvailable = true;
-                UpdateVersionText = $"v{info.TargetFullRelease.Version}";
-                UpdateTargetVersion = $"v{info.TargetFullRelease.Version}";
-                UpdateStatusText = $"Yeni sürüm mevcut ({UpdateVersionText}).";
+                UpdateVersionText = latest.TagName;
+                UpdateTargetVersion = latest.TagName;
+                UpdateReleaseTitle = latest.Name;
+                UpdateReleaseDate = latest.PublishedAt?.ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.InvariantCulture) ?? "";
+                UpdateChangelog = latest.Body;
+                UpdateStatusText = $"Yeni GitHub sürümü mevcut ({latest.TagName}).";
                 await OpenUpdateDialogAsync();
             }
             else
             {
-                // Canlı GitHub Releases kontrolü (Geliştirici modunda da çalışır)
-                var latest = await _updateService.FetchLatestGitHubReleaseAsync();
-                if (latest != null && !string.IsNullOrWhiteSpace(latest.TagName) &&
-                    !latest.TagName.TrimStart('v').Equals(AppVersionText.TrimStart('v'), StringComparison.OrdinalIgnoreCase))
-                {
-                    IsUpdateAvailable = true;
-                    UpdateVersionText = latest.TagName;
-                    UpdateTargetVersion = latest.TagName;
-                    UpdateReleaseTitle = latest.Name;
-                    UpdateReleaseDate = latest.PublishedAt?.ToString("dd.MM.yyyy HH:mm") ?? "";
-                    UpdateChangelog = latest.Body;
-                    UpdateStatusText = $"Yeni GitHub sürümü mevcut ({latest.TagName}).";
-                    await OpenUpdateDialogAsync();
-                }
-                else
-                {
-                    IsUpdateAvailable = false;
-                    UpdateStatusText = "Uygulamanız güncel.";
-                }
+                IsUpdateAvailable = false;
+                UpdateCurrentVersion = AppVersionText;
+                UpdateTargetVersion = AppVersionText;
+                UpdateStatusText = Loc["Update.UpToDate"];
             }
         }
         catch (Exception ex)
@@ -15014,8 +15023,22 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     public async Task OpenUpdateDialogAsync()
     {
-        UpdateTargetVersion = !string.IsNullOrWhiteSpace(UpdateVersionText) ? UpdateVersionText : "v2.0.0";
         UpdateCurrentVersion = AppVersionText;
+        if (string.IsNullOrWhiteSpace(UpdateTargetVersion))
+        {
+            UpdateTargetVersion = !string.IsNullOrWhiteSpace(UpdateVersionText) ? UpdateVersionText : AppVersionText;
+        }
+
+        if (IsCurrentVersionUpToDate)
+        {
+            IsUpdateAvailable = false;
+            UpdateStatusText = Loc["Update.UpToDate"];
+        }
+        else if (IsUpdateAvailable)
+        {
+            UpdateStatusText = $"Yeni sürüm mevcut ({UpdateTargetVersion}).";
+        }
+
         IsUpdateDialogOpen = true;
 
         if (string.IsNullOrWhiteSpace(UpdateChangelog))
@@ -15028,7 +15051,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
                 if (releaseInfo != null)
                 {
                     UpdateReleaseTitle = releaseInfo.Name;
-                    UpdateReleaseDate = releaseInfo.PublishedAt?.ToString("dd.MM.yyyy HH:mm") ?? "";
+                    UpdateReleaseDate = releaseInfo.PublishedAt?.ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.InvariantCulture) ?? "";
                     UpdateChangelog = !string.IsNullOrWhiteSpace(releaseInfo.Body)
                         ? releaseInfo.Body
                         : "Bu sürüm için detaylı açıklama eklenmemiş.";
@@ -15059,9 +15082,12 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     public async Task PreviewUpdateDialogAsync()
     {
-        UpdateTargetVersion = "v2.0.0";
-        UpdateReleaseTitle = "FDownloader v2.0.0 - Büyük Performans ve Arşiv Güncellemesi";
-        UpdateReleaseDate = DateTime.Now.ToString("dd.MM.yyyy HH:mm");
+        UpdateCurrentVersion = AppVersionText;
+        UpdateTargetVersion = AppVersionText;
+        IsUpdateAvailable = false;
+        UpdateStatusText = Loc["Update.UpToDate"];
+        UpdateReleaseTitle = $"FDownloader {AppVersionText}";
+        UpdateReleaseDate = DateTime.Now.ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.InvariantCulture);
         UpdateChangelog = "### 🚀 FDownloader v2.0 Yenilikleri:\n\n" +
                           "• 🔒 Şifreli arşiv desteği (Şifre hafızası, tek tıkla silme ve otomatik çıkarma)\n" +
                           "• ⚡ Çok parçalı indirmede erken kopma ve 429 Rate Limit stabilizasyonu\n" +
@@ -15147,20 +15173,25 @@ public partial class MainViewModel : ViewModelBase, IDisposable
             var info = await _updateService.CheckForUpdatesAsync();
             if (info != null)
             {
-                _availableUpdateInfo = info;
-                await Dispatcher.UIThread.InvokeAsync(async () =>
+                var targetVer = $"v{info.TargetFullRelease.Version}";
+                if (!targetVer.TrimStart('v').Equals(AppVersionText.TrimStart('v'), StringComparison.OrdinalIgnoreCase))
                 {
-                    IsUpdateAvailable = true;
-                    UpdateVersionText = $"v{info.TargetFullRelease.Version}";
-                    UpdateTargetVersion = $"v{info.TargetFullRelease.Version}";
-                    UpdateStatusText = $"Yeni sürüm mevcut ({UpdateVersionText}).";
-
-                    // İlk kurulum sihirbazı açık değilse doğrudan açılışta kullanıcıya sor
-                    if (!IsFirstRunWizardOpen)
+                    _availableUpdateInfo = info;
+                    await Dispatcher.UIThread.InvokeAsync(async () =>
                     {
-                        await OpenUpdateDialogAsync();
-                    }
-                });
+                        IsUpdateAvailable = true;
+                        UpdateVersionText = targetVer;
+                        UpdateTargetVersion = targetVer;
+                        UpdateStatusText = $"Yeni sürüm mevcut ({UpdateVersionText}).";
+
+                        // İlk kurulum sihirbazı açık değilse doğrudan açılışta kullanıcıya sor
+                        if (!IsFirstRunWizardOpen)
+                        {
+                            await OpenUpdateDialogAsync();
+                        }
+                    });
+                    return;
+                }
             }
             else
             {
