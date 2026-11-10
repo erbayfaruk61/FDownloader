@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using FDownloader.Core.Domain;
 using FDownloader.Core.Engine.Exceptions;
 using FDownloader.Core.Engine.Probe;

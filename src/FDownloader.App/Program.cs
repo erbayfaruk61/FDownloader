@@ -1,6 +1,7 @@
 using Avalonia;
 using System;
 using System.IO;
+using FDownloader.App.Utilities;
 using Sentry;
 using Velopack;
 
@@ -14,6 +15,9 @@ sealed class Program
     public static void Main(string[] args)
     {
         VelopackApp.Build().Run();
+
+        // Güncelleme sonrası veya açılışta eski versiyondan kalan masaüstü simgesini ve hedefini güncelle
+        DesktopShortcutHelper.UpdateDesktopShortcuts();
 
         // Tekil Oturum (Single Instance) Yönetimi
         using var mutex = new System.Threading.Mutex(true, AppMutexName, out bool isFirstInstance);

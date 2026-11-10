@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using FDownloader.App.Utilities;
 using Velopack;
 using Velopack.Sources;
 
@@ -162,6 +163,8 @@ public sealed class UpdateService
     {
         try
         {
+            // Eski versiyondan kalan masaüstü simgesi ve kısayolunu güncelle
+            DesktopShortcutHelper.UpdateDesktopShortcuts();
             _updateManager.ApplyUpdatesAndRestart(updateInfo);
         }
         catch (Exception ex)
