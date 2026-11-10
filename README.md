@@ -69,19 +69,6 @@ Tarayıcınızdaki indirmelerin ve videoların doğrudan FDownloader tarafından
 
 ---
 
-## 🛠️ Kaynak Koddan Derleme
-
-```powershell
-# Depoyu klonlayın
-git clone https://github.com/erbayfaruk61/FDownloader.git
-cd FDownloader
-
-# Derleyin ve çalıştırın
-dotnet run --project src/FDownloader.App/FDownloader.App.csproj
-```
-
----
-
 ## ⚖️ Yasal Uyarı ve Sorumluluk Reddi
 
 FDownloader, kullanıcılara genel amaçlı dosya ve içerik indirme kolaylığı sağlayan açık kaynaklı bir araçtır. Telif haklarına, fikri mülkiyet yasalarına ve ziyaret edilen web sitelerinin hizmet şartlarına uymak tamamen kullanıcının kendi sorumluluğundadır. FDownloader, DRM veya şifreleme ile korunan içeriklerin aşılmasına yönelik herhangi bir mekanizma içermez ve desteklemez.

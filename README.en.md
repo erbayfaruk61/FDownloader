@@ -19,8 +19,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/erbayfaruk61/FDownloader/releases/latest/download/FDownloader-Setup.exe">
-    <img src="https://img.shields.io/badge/Download_Now-FDownloader--Setup.exe-success?style=for-the-badge&logo=windows&logoColor=white" height="38" alt="Download Windows Installer" />
+  <a href="https://github.com/erbayfaruk61/FDownloader/releases/latest/download/FDownloader-win-Setup.exe">
+    <img src="https://img.shields.io/badge/Download_Now-FDownloader--win--Setup.exe-success?style=for-the-badge&logo=windows&logoColor=white" height="38" alt="Download Windows Installer" />
   </a>
   &nbsp;
   <a href="https://github.com/erbayfaruk61/FDownloader/releases/latest/download/FDownloader-Browser-Extension.zip">
@@ -30,24 +30,27 @@
 
 ---
 
-## 🚀 Key Features (v1.5.7)
+## 🚀 Key Features (v2.0.0)
 
-* ⚡ **High-Speed Multi-Part Downloading:** Segments HTTP/HTTPS connections dynamically to fully utilize available bandwidth; effortlessly resumes interrupted transfers.
-* 🧩 **Smart Media Sniffer (Floating Grabber):** Automatically detects video and audio streams on web pages and displays an overlay grabber button (compatible with platforms supported by yt-dlp).
-* 🖥️ **System Tray & Windows Autostart:** Seamlessly minimizes to the taskbar notification area when closed or minimized; ready to auto-start with Windows.
-* 🔒 **Auto Archive Extractor & Password Support:** Automatically uncompresses ZIP, RAR, 7Z, and TAR archives upon download completion. Supports password-protected archives via embedded 7-Zip engine.
-* 🛡️ **Network Adapter Binding (VPN Kill-Switch):** Locks downloads strictly to a specified physical or VPN network adapter; immediately pauses transfers if the VPN drops.
+* ⚡ **High-Speed Multi-Part Downloading:** Segments HTTP/HTTPS connections dynamically to fully utilize available bandwidth; effortlessly resumes interrupted transfers (Lossless Resume).
+* 🌊 **BitTorrent & Magnet Support:** Full support for Magnet links and `.torrent` files with preview file selection, sequential downloading (streaming mode), and peer tracking.
+* 🎥 **Advanced Media & Video Downloader:** yt-dlp integration supporting 4K/1080p video, live streams/HLS, automatic MP3 extraction, and embedded subtitles.
+* 🧩 **Browser Extension & Floating Grabber:** Sniff downloads and streaming media directly from Chrome, Edge, and Firefox.
+* 🔒 **File Integrity & Hash Verification:** Automatic calculation and one-click verification of MD5, SHA-1, and SHA-256 hashes against expected values.
+* 📦 **Auto Archive Extractor & Password Support:** Automatically extracts ZIP, RAR, 7Z, and TAR archives upon download with password dialog and security filters (Zip-Slip/Zip-Bomb protection).
+* 🛡️ **Network Adapter Binding (VPN Kill-Switch):** Locks downloads strictly to a specified physical or VPN network adapter; immediately pauses transfers if the connection drops.
 * 🕸️ **Site & Gallery Grabber:** Discovers and queues all media, image, audio, or document links from any webpage with a single click.
-* 🌊 **BitTorrent Integration:** Full support for Magnet links and `.torrent` files with preview file selection, sequential downloading (streaming mode), and peer tracking.
-* 🔔 **Interactive Toast Notifications:** Contextual notifications in the bottom-right corner offering immediate "Open File" and "Open Folder" actions.
-* 🔄 **Seamless Auto-Updates:** Powered by Velopack to silently check for GitHub Releases and perform single-click updates.
-* 🎨 **Rich Customizable Themes:** Ocean Blue, Cyber Purple, Platinum Gray, Light Clean, and High Contrast accessibility themes powered by Avalonia UI.
+* 🌙 **Sleep Mode Prevention:** Keeps the computer awake while downloads are active and restores default power behavior when finished.
+* ⏱️ **Scheduler & Smart Speed Limiter:** Schedule downloads at specific times and dynamically constrain download/upload bandwidth.
+* 🔄 **Transparent Updates with Changelog:** Check for new versions, review release notes before updating, and update safely with user confirmation.
+* 🖥️ **System Tray & Clipboard Watcher:** Seamlessly minimizes to the notification area, monitors clipboard links, and auto-starts with Windows.
+* 🎨 **Modern Themes & Multilingual:** Smooth Avalonia UI with dark/light themes, fully localized in Turkish and English.
 
 ---
 
 ## 📥 Quick Installation
 
-1. Download the [Latest Release Installer (FDownloader-Setup.exe)](https://github.com/erbayfaruk61/FDownloader/releases/latest/download/FDownloader-Setup.exe).
+1. Download the [Latest Release Installer (FDownloader-win-Setup.exe)](https://github.com/erbayfaruk61/FDownloader/releases/latest/download/FDownloader-win-Setup.exe).
 2. Run the installer.
 3. Desktop and Start Menu shortcuts are created automatically.
 
@@ -63,19 +66,6 @@ To capture downloads and video streams automatically from Chrome, Edge, Brave, O
    - **Microsoft Edge:** `edge://extensions`
 3. Toggle on **Developer Mode** in the top right.
 4. Click **Load unpacked** in the top left and select the extracted extension folder.
-
----
-
-## 🛠️ Build from Source
-
-```powershell
-# Clone the repository
-git clone https://github.com/erbayfaruk61/FDownloader.git
-cd FDownloader
-
-# Build and run
-dotnet run --project src/FDownloader.App/FDownloader.App.csproj
-```
 
 ---
 
