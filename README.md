@@ -30,18 +30,21 @@
 
 ---
 
-## 🚀 Öne Çıkan Özellikler (v1.5.7)
+## 🚀 Öne Çıkan Özellikler (v2.0.0)
 
-* ⚡ **Çok Kanallı & Parçalı Hızlı İndirme:** HTTP/HTTPS bağlantılarını dinamik parçalara bölerek bant genişliğinizi tam kapasite kullanır; kopan veya duraklatılan indirmeleri sıfır kayıpla sürdürür.
-* 🧩 **Akıllı Medya Yakalayıcısı (Floating Grabber):** Web sayfalarındaki videolarda sağ üstte beliren indirme butonu (yt-dlp tarafından desteklenen sitelerden medya indirme uyumlu). Telif haklarına ve sitelerin kullanım şartlarına uymak kullanıcının sorumluluğundadır.
-* 🖥️ **Sistem Tepsisi (Tray) & Windows Başlangıcı:** Uygulama kapatıldığında veya simge durumuna alındığında bildirim alanına (Tray) küçülür; Windows açılışında otomatik başlatılabilir.
-* 🔒 **Otomatik Arşiv Çözücü & Şifreli Arşiv Desteği:** İndirilen ZIP, RAR, 7Z, TAR dosyalarını indirme biter bitmez otomatik klasöre çıkartır. Şifreli arşivler için parola sorma diyalogu ve gömülü 7-Zip motoru içerir.
-* 🛡️ **Ağ Adaptörü Kilidi (VPN Kill-Switch):** İndirmeleri yalnızca seçtiğiniz fiziksel ağ kartına veya VPN adaptörüne kilitler; VPN kesildiğinde indirmeleri anında güvenle durdurur.
-* 🕸️ **Site & Galeri Yakalayıcı:** Bir web sayfasındaki tüm video, ses, görsel veya doküman linklerini tek tıklamayla tarayıp topluca indirme kuyruğuna ekler.
-* 🌊 **BitTorrent Entegrasyonu:** Magnet linkleri ve `.torrent` dosyaları için ön izlemeli dosya seçimi, sıralı indirme (Streaming modu) ve eş takibi.
-* 🔔 **Akıllı Toast Bildirimleri:** Ekranın sağ alt köşesinde içeriğe göre esneyen, doğrudan "Klasörü Aç" ve "Dosyayı Aç" seçenekleri sunan modern bildirimler.
-* 🔄 **Kesintisiz Otomatik Güncelleme:** Velopack altyapısıyla yeni sürümleri arka planda kontrol eder ve tek tıkla uygulamayı günceller.
-* 🎨 **Kişiselleştirilebilir Zengin Temalar:** Koyu Grafit, Gece Siyahı, Okyanus Mavisi gibi modern renk temaları ve temiz Avalonia UI tasarımı.
+* ⚡ **Çok Kanallı & Parçalı Hızlı İndirme:** Dinamik parçalı motor, tam bant genişliği kullanımı ve kayıpsız indirme devam ettirme (Lossless Resume).
+* 🌊 **BitTorrent & Magnet Desteği:** Magnet linkleri ve `.torrent` dosyaları, sıralı indirme (Streaming modu), ön izlemeli dosya seçimi ve eş takibi.
+* 🎥 **Gelişmiş Medya & Video İndirici:** yt-dlp altyapısıyla 4K/1080p video, canlı yayın/HLS akışları, otomatik MP3 dönüştürme ve altyazı desteği.
+* 🧩 **Tarayıcı Eklentisi & Yüzen Yakalayıcı:** Chrome, Edge ve Firefox üzerinden indirme ve video yakalama (Floating Grabber).
+* 🔒 **Dosya Bütünlüğü & Hash Doğrulama:** İndirilen dosyalar için anlık MD5, SHA-1 ve SHA-256 hesaplama ve eşleştirme kontrolü.
+* 📦 **Otomatik Arşiv Açıcı & Şifre Desteği:** ZIP, RAR, 7Z ve TAR arşivlerini otomatik çıkartma, parola korumalı arşiv çözümü ve güvenlik filtreleri.
+* 🛡️ **Ağ Adaptörü Kilidi & VPN Koruma:** İndirmeleri belirli bir ağ kartına veya VPN'e bağlama; bağlantı koptuğunda indirmeleri güvenle durdurma.
+* 🕸️ **Site & Galeri Yakalayıcı:** Web sayfalarındaki tüm görsel, video, ses ve belgeleri tek tıkla tarayıp toplu indirme.
+* 🌙 **Uyku Modu Engelleme:** Aktif indirmeler devam ederken bilgisayarın uykuya veya beklemeye geçmesini engelleme.
+* ⏱️ **Zamanlayıcı & Akıllı Hız Sınırlayıcı:** Belirli saatlerde otomatik indirme planlama ve dinamik bant genişliği kısıtlama.
+* 🔄 **Onaylı Güncelleme & Sürüm Notları:** Yeni sürümleri denetleme, indirmeden önce değişiklik günlüğünü (Changelog) gösterme ve onaylı güncelleme.
+* 🖥️ **Sistem Tepsisi (Tray) & Pano İzleyici:** Panoya kopyalanan linkleri anında algılama, bildirim alanı entegrasyonu ve Windows ile başlama.
+* 🎨 **Modern Temalar & Çoklu Dil:** Koyu/açık renk temaları, akıcı Avalonia UI arayüzü, Türkçe ve İngilizce dil seçeneği.
 
 ---
 
