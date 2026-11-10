@@ -263,15 +263,20 @@
         logoContainer.style.width = "18px";
         logoContainer.style.height = "18px";
         logoContainer.style.flexShrink = "0";
-
-        // CSP ve iframe kısıtlamalarına takılmayan, sıfır gecikmeli şık vektörel FDownloader logosu
-        logoContainer.innerHTML = `<svg width="18" height="18" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="border-radius:4px;flex-shrink:0;vertical-align:middle;display:block;">
-          <rect width="32" height="32" rx="7" fill="#0A0F1D"/>
-          <path d="M16 4C16 4 23 6 25 13C26 16.5 24.5 19.5 22 22L19 19L17.5 20.5L20.5 23.5C18.5 25.5 15.5 27 12 26C5 24 4 17 4 17C4 17 10 16 16 4Z" fill="#38BDF8"/>
-          <circle cx="17.5" cy="11.5" r="2.5" fill="#FFFFFF"/>
-          <path d="M8 24C8 24 10.5 21.5 12 19.5L13.5 21C11.5 22.5 8 24 8 24Z" fill="#F59E0B"/>
-          <path d="M6 26C6 26 8 24 9.5 22L11 23.5C9 25.5 6 26 6 26Z" fill="#EF4444"/>
-        </svg>`;
+        // Güncel FDownloader logosu
+        const logoImg = document.createElement("img");
+        logoImg.className = "fdown-logo";
+        logoImg.width = 18;
+        logoImg.height = 18;
+        logoImg.alt = "FDownloader";
+        try {
+          logoImg.src = (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getURL)
+            ? chrome.runtime.getURL("icons/icon-48.png")
+            : "icons/icon-48.png";
+        } catch (_) {
+          logoImg.src = "icons/icon-48.png";
+        }
+        logoContainer.appendChild(logoImg);
 
         buttonEl.appendChild(logoContainer);
 
