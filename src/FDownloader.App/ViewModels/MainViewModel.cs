@@ -14966,7 +14966,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
                 UpdateTargetVersion = latest.TagName;
                 UpdateReleaseTitle = latest.Name;
                 UpdateReleaseDate = latest.PublishedAt?.ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.InvariantCulture) ?? "";
-                UpdateChangelog = latest.Body;
+                UpdateChangelog = await _updateService.FetchReleaseNotesAsync(latest.TagName);
                 UpdateStatusText = $"Yeni GitHub sürümü mevcut ({latest.TagName}).";
                 await OpenUpdateDialogAsync();
             }
@@ -15172,7 +15172,8 @@ public partial class MainViewModel : ViewModelBase, IDisposable
                         UpdateTargetVersion = latest.TagName;
                         UpdateReleaseTitle = latest.Name;
                         UpdateReleaseDate = latest.PublishedAt?.ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.InvariantCulture) ?? "";
-                        UpdateChangelog = latest.Body;
+                        // Ham GitHub karşılaştırma linki yerine zengin kullanıcı sürüm notlarını al
+                        UpdateChangelog = await _updateService.FetchReleaseNotesAsync(latest.TagName);
                         UpdateStatusText = $"Yeni GitHub sürümü mevcut ({latest.TagName}).";
 
                         if (!IsFirstRunWizardOpen)

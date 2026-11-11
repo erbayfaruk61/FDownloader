@@ -122,7 +122,7 @@ public sealed class UpdateService
                     if (doc.RootElement.TryGetProperty("body", out var bodyEl))
                     {
                         var body = bodyEl.GetString()?.Trim();
-                        if (!string.IsNullOrWhiteSpace(body) && !body.StartsWith("**Full Changelog**", StringComparison.OrdinalIgnoreCase))
+                        if (!string.IsNullOrWhiteSpace(body) && !body.Contains("Full Changelog", StringComparison.OrdinalIgnoreCase))
                         {
                             return body;
                         }
@@ -136,7 +136,7 @@ public sealed class UpdateService
                 tagToUse = latest.TagName;
             }
 
-            if (!string.IsNullOrWhiteSpace(latest?.Body) && !latest.Body.Trim().StartsWith("**Full Changelog**", StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(latest?.Body) && !latest.Body.Contains("Full Changelog", StringComparison.OrdinalIgnoreCase))
             {
                 return latest.Body.Trim();
             }
