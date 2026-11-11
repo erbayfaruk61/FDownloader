@@ -157,6 +157,14 @@ public sealed class UpdateService
     private static string GetFallbackNotesForVersion(string tag)
     {
         var clean = tag.Trim().TrimStart('v');
+        if (clean.StartsWith("2.0.2", StringComparison.OrdinalIgnoreCase))
+        {
+            return "### 🚀 FDownloader v2.0.2 Yenilikleri:\n\n" +
+                   "• 🎬 Facebook & Reels İndirme Desteği: Facebook videoları, Reels ve watch bağlantıları için yt-dlp destekli akıllı medya tanıma ve indirme altyapısı tamamlandı.\n" +
+                   "• 🔄 Tek Tıkla Canlı Eklenti Güncelleme: Tarayıcı eklentisi güncellendiğinde açılan bildirim penceresinden tek tıkla tarayıcıdaki eklentiyi diskten anında yenileme imkânı.\n" +
+                   "• 🧩 Otomatik Eklenti Sürüm Denetimi: Program açıldığında tarayıcı eklentisi eski ise kullanıcıya otomatik bildirim sunulması ve güncellemeyi kolaylaştıran yönlendirme.\n" +
+                   "• 🛡️ Kararlılık & İndirme İyileştirmeleri: Medya akış analizindeki yönlendirme ve bağlantı hataları giderildi.";
+        }
         if (clean.StartsWith("2.0.1", StringComparison.OrdinalIgnoreCase))
         {
             return "### 🚀 FDownloader v2.0.1 Yenilikleri:\n\n" +

@@ -162,7 +162,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         get
         {
             var v = typeof(MainViewModel).Assembly.GetName().Version;
-            return v != null ? $"v{v.Major}.{v.Minor}.{v.Build}" : "v2.0.1";
+            return v != null ? $"v{v.Major}.{v.Minor}.{v.Build}" : "v2.0.2";
         }
     }
 
