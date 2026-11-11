@@ -2731,7 +2731,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-    public const string TargetExtensionVersion = "1.5.8";
+    public const string TargetExtensionVersion = "2.0.2";
 
 
 
@@ -2784,6 +2784,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
     private DateTime? _lastExtensionHeartbeat;
+    private bool _hasAutoPromptedExtensionUpdate = false;
 
 
 
@@ -11656,47 +11657,23 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
         if (IsVersionOlder(version, targetVersion))
-
-
-
         {
-
-
-
             IsExtensionUpdateAvailable = true;
-            IsExtensionUpdateRequiredModalOpen = true;
-
-
-
+            if (!_hasAutoPromptedExtensionUpdate && !IsFirstRunWizardOpen)
+            {
+                _hasAutoPromptedExtensionUpdate = true;
+                IsExtensionUpdateRequiredModalOpen = true;
+                RequestBringToFront?.Invoke();
+            }
             ExtensionStatusBadgeText = Loc.Get("Extension.UpdateRequired", version, targetVersion);
-
-
-
             ExtensionStatusBadgeBackground = ExtensionStatusColorOutdated;
-
-
-
             ExtensionStatusBadgeForeground = "#FFFFFF";
-
-
-
             ExtensionStatusBadgeToolTip = Loc.Get("Extension.UpdateRequiredTooltip", version, targetVersion);
-
-
-
         }
-
-
-
         else
-
-
-
         {
-
-
-
             IsExtensionUpdateAvailable = false;
+            IsExtensionUpdateRequiredModalOpen = false;
 
 
 
