@@ -340,12 +340,48 @@
       return { isDrm: true, url: null, filename: null };
     }
 
-    const isYouTube = window.location.hostname.includes("youtube.com") || window.location.hostname.includes("youtu.be");
+    const host = window.location.hostname.toLowerCase();
+    const isYouTube = host.includes("youtube.com") || host.includes("youtu.be");
     if (isYouTube) {
       return {
         url: window.location.href,
         filename: document.title ? document.title.replace(/\s*-\s*YouTube$/i, "").trim() + ".mp4" : "YouTube Video.mp4"
       };
+    }
+
+    const isFacebook = host.includes("facebook.com") || host.includes("fb.watch");
+    if (isFacebook) {
+      const src = video.currentSrc || video.src || "";
+      if (src && !src.startsWith("blob:") && !src.startsWith("data:")) {
+        return {
+          url: src,
+          filename: document.title ? document.title.replace(/\s*\|\s*Facebook$/i, "").trim() + ".mp4" : "Facebook Video.mp4"
+        };
+      }
+
+      // En yakın feed / gönderi linkini ara
+      let postLink = null;
+      try {
+        const container = video.closest("div[role='feed'], div[role='article'], div[data-pagelet], div[aria-label*='Video'], div.x1y1aw1k, [data-video-id]") || video.parentElement;
+        if (container) {
+          const a = container.querySelector("a[href*='/watch/'], a[href*='/reel/'], a[href*='/videos/'], a[href*='fb.watch']");
+          if (a && a.href) postLink = a.href;
+        }
+      } catch (e) { }
+
+      return {
+        url: postLink || window.location.href,
+        filename: document.title ? document.title.replace(/\s*\|\s*Facebook$/i, "").trim() + ".mp4" : "Facebook Video.mp4"
+      };
+    }
+
+    const isInstagram = host.includes("instagram.com");
+    if (isInstagram) {
+      const src = video.currentSrc || video.src || "";
+      if (src && !src.startsWith("blob:") && !src.startsWith("data:")) {
+        return { url: src, filename: "Instagram Video.mp4" };
+      }
+      return { url: window.location.href, filename: "Instagram Video.mp4" };
     }
 
     const src = video.currentSrc || video.src || "";
@@ -562,9 +598,80 @@
     video.addEventListener("encrypted", () => {
       video._fdownloader_has_drm = true;
     });
+    video.addEventListener("play", () => {
+      showGrabberForVideo(video);
+    });
     video.addEventListener("mouseenter", () => onVideoMouseMove(video));
     video.addEventListener("mousemove", () => onVideoMouseMove(video));
     video.addEventListener("mouseleave", () => onVideoMouseLeave());
+  }
+
+  let lastGlobalCheckTime = 0;
+  function onGlobalMouseMove(e) {
+    if (!grabberSettings.grabberEnabled) return;
+    if (isDirectlyHoveringButton) return;
+
+    const now = Date.now();
+    if (now - lastGlobalCheckTime < 45) return;
+    lastGlobalCheckTime = now;
+
+    const x = e.clientX;
+    const y = e.clientY;
+
+    let foundVideo = null;
+    try {
+      if (typeof document.elementsFromPoint === "function") {
+        const elements = document.elementsFromPoint(x, y);
+        for (let i = 0; i < elements.length; i++) {
+          const el = elements[i];
+          if (el.tagName === "VIDEO") {
+            foundVideo = el;
+            break;
+          }
+          if (el.querySelector && el.querySelector("video")) {
+            const v = el.querySelector("video");
+            const vr = v.getBoundingClientRect();
+            if (x >= vr.left && x <= vr.right && y >= vr.top && y <= vr.bottom) {
+              foundVideo = v;
+              break;
+            }
+          }
+        }
+      }
+    } catch (_) { }
+
+    if (!foundVideo) {
+      const allVideos = document.querySelectorAll("video");
+      for (let i = 0; i < allVideos.length; i++) {
+        const v = allVideos[i];
+        if (!v.isConnected) continue;
+        const rect = v.getBoundingClientRect();
+        if (rect.width >= 140 && rect.height >= 90) {
+          if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+            foundVideo = v;
+            break;
+          }
+        }
+      }
+    }
+
+    if (foundVideo) {
+      attachVideoListeners(foundVideo);
+      showGrabberForVideo(foundVideo);
+
+      if (inactivityTimer) clearTimeout(inactivityTimer);
+      if (grabberSettings.grabberHoverOnly) {
+        inactivityTimer = setTimeout(() => {
+          if (!isDirectlyHoveringButton) {
+            scheduleHideGrabber();
+          }
+        }, INACTIVITY_TIMEOUT_MS);
+      }
+    } else {
+      if (isHoveringVideoOrButton && !isDirectlyHoveringButton) {
+        scheduleHideGrabber();
+      }
+    }
   }
 
   function scanForVideos() {
@@ -584,6 +691,9 @@
         observer.observe(targetNode, { childList: true, subtree: true });
       } catch (e) { }
     }
+
+    // Katmanları (overlay) delen global fare takibi
+    document.addEventListener("mousemove", onGlobalMouseMove, { passive: true });
   }
 
   if (document.readyState === "loading") {
