@@ -351,19 +351,41 @@
 
     const isFacebook = host.includes("facebook.com") || host.includes("fb.watch");
     if (isFacebook) {
-      // Feed veya sayfa üzerindeki kalıcı Reel/Video URL'sini öncelikle bul
+      // 1. Doğrudan video elementi src veya currentSrc fbcdn / mp4 URL'si içeriyorsa
+      const src = video.currentSrc || video.src || "";
+      if (src && !src.startsWith("blob:") && !src.startsWith("data:")) {
+        return {
+          url: src,
+          filename: document.title ? document.title.replace(/\s*\|\s*Facebook$/i, "").trim() + ".mp4" : "Facebook Video.mp4"
+        };
+      }
+
+      // 2. Feed veya kart üzerindeki kalıcı Reel / Watch / Post video URL'sini bul
       let postLink = null;
       try {
         const container = video.closest("div[role='feed'], div[role='article'], div[data-pagelet], div[aria-label*='Video'], div.x1y1aw1k, [data-video-id], div[data-nosnippet]") || video.parentElement;
         if (container) {
-          const a = container.querySelector("a[href*='/reel/'], a[href*='/watch/'], a[href*='/videos/'], a[href*='fb.watch']");
-          if (a && a.href) postLink = a.href;
+          // Öncelikle sayısal ID içeren net video/reel linklerini ara (örn: /reel/12345 veya /watch/?v=12345)
+          const links = container.querySelectorAll("a[href*='/reel/'], a[href*='/watch/'], a[href*='/videos/'], a[href*='fb.watch']");
+          for (const a of links) {
+            const h = a.href || "";
+            // Hashtag ve arama sayfalarını hariç tut
+            if (h.includes("/hashtag/") || h.includes("/search/")) continue;
+            if (/\/(reel\/\d+|watch\/?\?v=\d+|videos\/\d+|[a-zA-Z0-9\.]+\/videos\/\d+)/.test(h) || h.includes("fb.watch/")) {
+              postLink = h;
+              break;
+            }
+            if (!postLink && !h.includes("/hashtag/")) {
+              postLink = h;
+            }
+          }
         }
       } catch (e) { }
 
-      // Eğer sayfanın kendisi bir Reel veya Watch sayfasıysa doğrudan o URL'yi kullan
+      // 3. Sayfa URL'sinin kendisi geçerli bir video/reel sayfası mı? (Hashtag/Search hariç)
       const loc = window.location.href;
-      const isWatchOrReelPage = loc.includes("/reel/") || loc.includes("/watch/") || loc.includes("/videos/") || loc.includes("fb.watch");
+      const isWatchOrReelPage = (loc.includes("/reel/") || loc.includes("/watch/") || loc.includes("/videos/") || loc.includes("fb.watch")) &&
+                                !loc.includes("/hashtag/") && !loc.includes("/search/");
       const bestMediaUrl = postLink || (isWatchOrReelPage ? loc : null);
 
       if (bestMediaUrl) {
@@ -373,16 +395,23 @@
         };
       }
 
-      const src = video.currentSrc || video.src || "";
-      if (src && !src.startsWith("blob:") && !src.startsWith("data:")) {
-        return {
-          url: src,
-          filename: document.title ? document.title.replace(/\s*\|\s*Facebook$/i, "").trim() + ".mp4" : "Facebook Video.mp4"
-        };
-      }
+      // 4. Blob video ise performans akışındaki en son fbcdn .mp4 kaynağını bul
+      try {
+        const entries = performance.getEntriesByType("resource");
+        for (let i = entries.length - 1; i >= 0; i--) {
+          const entryName = entries[i].name || "";
+          if (entryName.includes("fbcdn.net") && (entryName.includes(".mp4") || entryName.includes("bytestart="))) {
+            return {
+              url: entryName,
+              filename: document.title ? document.title.replace(/\s*\|\s*Facebook$/i, "").trim() + ".mp4" : "Facebook Video.mp4"
+            };
+          }
+        }
+      } catch (_) { }
 
+      // 5. Son çare: Post linki veya mevcut konum
       return {
-        url: window.location.href,
+        url: postLink || window.location.href,
         filename: document.title ? document.title.replace(/\s*\|\s*Facebook$/i, "").trim() + ".mp4" : "Facebook Video.mp4"
       };
     }

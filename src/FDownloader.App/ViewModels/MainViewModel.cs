@@ -11259,7 +11259,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         ShowNotification(
             "🔄 Tarayıcı Eklentisi",
             "Eklentiye anında yenileme sinyali iletildi! Açık olan tarayıcılarda eklenti dosyaları diskten otomatik olarak yenilenir.",
-            "Eklenti Yenileme",
+            null,
             "🔄",
             CompletionSound.Notify);
     }
@@ -11674,7 +11674,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
                 ShowNotification(
                     "🔄 Tarayıcı Eklentisi",
                     $"Tarayıcı eklentisi en güncel sürüme (v{targetVersion}) arka planda otomatik güncellendi.",
-                    "Eklenti Güncelleme",
+                    null,
                     "🧩",
                     CompletionSound.Notify);
             }
@@ -15038,7 +15038,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         ShowNotification(
             "🔄 Eklenti Güncellendi",
             "Tarayıcı eklentinize güncelleme komutu iletildi ve diskteki güncel sürüm etkinleştirildi.",
-            "Eklenti Güncelleme",
+            null,
             "✔️",
             CompletionSound.Notify);
     }
