@@ -107,6 +107,7 @@ public sealed class UpdateService
     /// </summary>
     public async Task<string> FetchReleaseNotesAsync(string? targetTag = null, CancellationToken ct = default)
     {
+        string tagToUse = targetTag ?? "";
         try
         {
             if (!string.IsNullOrWhiteSpace(targetTag))
@@ -120,16 +121,24 @@ public sealed class UpdateService
                     using var doc = JsonDocument.Parse(json);
                     if (doc.RootElement.TryGetProperty("body", out var bodyEl))
                     {
-                        var body = bodyEl.GetString();
-                        if (!string.IsNullOrWhiteSpace(body)) return body;
+                        var body = bodyEl.GetString()?.Trim();
+                        if (!string.IsNullOrWhiteSpace(body) && !body.StartsWith("**Full Changelog**", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return body;
+                        }
                     }
                 }
             }
 
             var latest = await FetchLatestGitHubReleaseAsync(ct);
-            if (!string.IsNullOrWhiteSpace(latest?.Body))
+            if (string.IsNullOrWhiteSpace(tagToUse) && !string.IsNullOrWhiteSpace(latest?.TagName))
             {
-                return latest.Body;
+                tagToUse = latest.TagName;
+            }
+
+            if (!string.IsNullOrWhiteSpace(latest?.Body) && !latest.Body.Trim().StartsWith("**Full Changelog**", StringComparison.OrdinalIgnoreCase))
+            {
+                return latest.Body.Trim();
             }
         }
         catch (Exception ex)
@@ -137,7 +146,36 @@ public sealed class UpdateService
             _logger.LogWarning(ex, "Sürüm notları GitHub'dan alınamadı.");
         }
 
+        if (!string.IsNullOrWhiteSpace(tagToUse))
+        {
+            return GetFallbackNotesForVersion(tagToUse);
+        }
+
         return "Bu sürüm için detaylı değişiklik listesi GitHub üzerinde henüz yayınlanmadı veya internet bağlantısı sağlanamadı.\n\nDeğişiklikleri incelemek için GitHub deposunu ziyaret edebilirsiniz: " + DefaultGitHubRepoUrl;
+    }
+
+    private static string GetFallbackNotesForVersion(string tag)
+    {
+        var clean = tag.Trim().TrimStart('v');
+        if (clean.StartsWith("2.0.1", StringComparison.OrdinalIgnoreCase))
+        {
+            return "### 🚀 FDownloader v2.0.1 Yenilikleri:\n\n" +
+                   "• 🌐 Facebook, Instagram ve Reels Desteği: Katmanları delen akıllı video yakalama motoru ile overlay engelleri aşıldı ve indirme butonu eklendi.\n" +
+                   "• 🔄 Tek Tıkla Canlı Eklenti Yenileme: Ayarlar menüsünden tarayıcıyı kapatmaya gerek kalmadan eklentiyi diskten anında güncelleme imkanı.\n" +
+                   "• 🎨 Çok Çözünürlüklü Resmi Logolar: 16x16, 32x32, 48x48 ve 128x128 boyutlarında orijinal FDownloader ikonları entegre edildi.\n" +
+                   "• 🛡️ Güvenlik ve Kararlılık: Çerez aktarımı ve köprü bağlantı kararlılığı artırıldı.";
+        }
+        if (clean.StartsWith("2.0.0", StringComparison.OrdinalIgnoreCase))
+        {
+            return "### 🚀 FDownloader v2.0.0 Yenilikleri:\n\n" +
+                   "• 🔒 Şifreli arşiv desteği (Şifre hafızası, tek tıkla silme ve otomatik çıkarma)\n" +
+                   "• ⚡ Çok parçalı indirmede erken kopma ve 429 Rate Limit stabilizasyonu\n" +
+                   "• 🥞 Bildirim (Toast) yığılması: Bildirimlerin dikey olarak sağ altta yığılması\n" +
+                   "• 🛡️ Aynı kök domain/subdomain için güvenli çerez aktarımı\n" +
+                   "• 💤 Aktif indirmede Windows uyku modunu engelleme (PowerManagement)\n" +
+                   "• 🔐 Dosya bütünlüğü doğrulama (MD5, SHA-1, SHA-256 Checksum)";
+        }
+        return "• Yeni özellikler ve hata düzeltmeleri yapıldı.\n• Kararlılık ve performans iyileştirmeleri sağlandı.";
     }
 
     /// <summary>

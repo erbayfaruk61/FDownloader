@@ -2966,8 +2966,9 @@
                         <Button Grid.Column="1" Command="{Binding CloseUpdateDialogCommand}" IsVisible="{Binding !IsUpdating}" Content="✕" Background="Transparent" BorderThickness="0" FontSize="16" Foreground="{Binding ThemeTextSecondary}" ToolTip.Tip="Kapat" />
                     </Grid>
 
-                    <!-- Sürüm Karşılaştırma Rozetleri -->
-                    <Border Grid.Row="1" Background="{DynamicResource SystemChromeLowColor}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,14">
+                    <!-- Sürüm Karşılaştırma ve Eklenti Bildirim Alanı -->
+                    <StackPanel Grid.Row="1" Spacing="8" Margin="0,0,0,14">
+                        <Border Background="{DynamicResource SystemChromeLowColor}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="8" Padding="14,10">
                         <Panel>
                             <!-- Güncelleme Mevcutsa: Mevcut Sürüm ➔ Yeni Sürüm -->
                             <Grid ColumnDefinitions="*, Auto, *" IsVisible="{Binding HasPendingUpdate}">
@@ -2999,6 +3000,24 @@
                             </StackPanel>
                         </Panel>
                     </Border>
+
+                    <!-- Eklenti Güncelleme Bildirim ve Hızlı Yenileme Alanı -->
+                    <Border Background="#2038BDF8" BorderBrush="#5038BDF8" BorderThickness="1" CornerRadius="8" Padding="12,8" IsVisible="{Binding HasExtensionUpdate}">
+                        <Grid ColumnDefinitions="Auto, *, Auto">
+                            <TextBlock Text="🧩" FontSize="18" VerticalAlignment="Center" Margin="0,0,10,0" />
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                <TextBlock Text="Tarayıcı Eklentisi Güncellemesi İçerir" FontWeight="Bold" FontSize="12" Foreground="#38BDF8" />
+                                <TextBlock Text="Facebook, Reels ve video yakalama geliştirmeleri için eklenti de güncellenecektir." FontSize="11" Foreground="{Binding ThemeTextSecondary}" />
+                            </StackPanel>
+                            <Button Grid.Column="2" Command="{Binding ReloadBrowserExtensionCommand}" Background="#10B981" Foreground="White" FontWeight="Bold" Padding="10,6" CornerRadius="6" Cursor="Hand" ToolTip.Tip="Eklentiyi şimdi anında yenile">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="🔄" VerticalAlignment="Center" />
+                                    <TextBlock Text="Eklentiyi Yenile" VerticalAlignment="Center" FontSize="11" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </Border>
+                    </StackPanel>
 
                     <!-- Değişiklik Listesi (Changelog) -->
                     <DockPanel Grid.Row="2" Margin="0,0,0,16">
@@ -3045,6 +3064,34 @@
                         </Grid>
                     </StackPanel>
                 </Grid>
+            </Border>
+        </Border>
+
+        <!-- ─── 13. MODAL: 🧩 ZORUNLU TARAYICI EKLENTİSİ GÜNCELLEME DİYALOĞU ───── -->
+        <Border Background="#90000000" IsVisible="{Binding IsExtensionUpdateRequiredModalOpen}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ZIndex="140">
+            <Border Background="{Binding ThemeCardBg}" BorderBrush="#38BDF8" BorderThickness="2" CornerRadius="12" Width="520" Padding="24" HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 10 32 #50000000">
+                <StackPanel Spacing="16">
+                    <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
+                        <Border Width="48" Height="48" CornerRadius="24" Background="#2038BDF8" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="🧩" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Tarayıcı Eklentinizi Güncelleyin!" FontSize="18" FontWeight="Bold" Foreground="{Binding ThemeForeground}" />
+                            <TextBlock Text="Yeni özelliklerin çalışması için bu adım zorunludur." FontSize="12" Foreground="#38BDF8" FontWeight="SemiBold" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <Border Background="{DynamicResource SystemChromeLowColor}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="8" Padding="14">
+                        <TextBlock Text="FDownloader yeni sürümü ile gelen Facebook, Instagram ve video yakalama geliştirmelerinin çalışabilmesi için tarayıcı eklentinizin güncellenmesi gerekmektedir.&#x0a;&#x0a;Aşağıdaki butona basarak eklentinizi açık olan tüm tarayıcılarda tek tıkla güncelleyebilirsiniz." FontSize="12" LineHeight="18" TextWrapping="Wrap" Foreground="{Binding ThemeForeground}" />
+                    </Border>
+
+                    <Button Command="{Binding ConfirmExtensionUpdateCommand}" Background="#10B981" Foreground="White" FontWeight="Bold" FontSize="13" Height="42" CornerRadius="8" Cursor="Hand" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                            <TextBlock Text="🔄" FontSize="16" VerticalAlignment="Center" />
+                            <TextBlock Text="Eklentiyi Şimdi Güncelle ve Etkinleştir" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
             </Border>
         </Border>
 

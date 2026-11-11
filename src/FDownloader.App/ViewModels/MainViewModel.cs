@@ -134,6 +134,12 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
     public bool HasPendingUpdate => IsUpdateAvailable && !IsCurrentVersionUpToDate;
 
+    public bool HasExtensionUpdate => HasPendingUpdate && 
+        (!string.IsNullOrWhiteSpace(UpdateTargetVersion) && 
+         (UpdateTargetVersion.Contains("2.0.1") || UpdateTargetVersion.Contains("2.0.2") || UpdateTargetVersion.Contains("2.1")));
+
+    [ObservableProperty] private bool _isExtensionUpdateRequiredModalOpen = false;
+
     public bool IsCurrentVersionUpToDate =>
         !string.IsNullOrWhiteSpace(UpdateTargetVersion) &&
         !string.IsNullOrWhiteSpace(UpdateCurrentVersion) &&
@@ -181,6 +187,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     private void NotifyUpdateStateProperties()
     {
         OnPropertyChanged(nameof(HasPendingUpdate));
+        OnPropertyChanged(nameof(HasExtensionUpdate));
         OnPropertyChanged(nameof(IsCurrentVersionUpToDate));
         OnPropertyChanged(nameof(UpdateDialogTitle));
         OnPropertyChanged(nameof(UpdateDialogCloseButtonText));
@@ -11657,6 +11664,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
             IsExtensionUpdateAvailable = true;
+            IsExtensionUpdateRequiredModalOpen = true;
 
 
 
@@ -15042,35 +15050,36 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
         IsUpdateDialogOpen = true;
 
-        if (string.IsNullOrWhiteSpace(UpdateChangelog))
+        UpdateReleaseTitle = $"FDownloader {UpdateTargetVersion} Güncellemesi";
+        UpdateReleaseDate = DateTime.Now.ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.InvariantCulture);
+
+        IsLoadingChangelog = true;
+        UpdateChangelog = "Sürüm notları GitHub üzerinden alınıyor...";
+        try
         {
-            IsLoadingChangelog = true;
-            UpdateChangelog = "Sürüm notları GitHub üzerinden alınıyor...";
-            try
-            {
-                var releaseInfo = await _updateService.FetchLatestGitHubReleaseAsync();
-                if (releaseInfo != null)
-                {
-                    UpdateReleaseTitle = releaseInfo.Name;
-                    UpdateReleaseDate = releaseInfo.PublishedAt?.ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.InvariantCulture) ?? "";
-                    UpdateChangelog = !string.IsNullOrWhiteSpace(releaseInfo.Body)
-                        ? releaseInfo.Body
-                        : "Bu sürüm için detaylı açıklama eklenmemiş.";
-                }
-                else
-                {
-                    UpdateChangelog = await _updateService.FetchReleaseNotesAsync(UpdateTargetVersion);
-                }
-            }
-            catch (Exception ex)
-            {
-                UpdateChangelog = "Sürüm notları alınırken bir hata oluştu: " + ex.Message;
-            }
-            finally
-            {
-                IsLoadingChangelog = false;
-            }
+            UpdateChangelog = await _updateService.FetchReleaseNotesAsync(UpdateTargetVersion);
         }
+        catch (Exception ex)
+        {
+            UpdateChangelog = "Sürüm notları alınırken bir hata oluştu: " + ex.Message;
+        }
+        finally
+        {
+            IsLoadingChangelog = false;
+        }
+    }
+
+    [RelayCommand]
+    public void ConfirmExtensionUpdate()
+    {
+        BrowserBridgeService.RequestExtensionReload();
+        IsExtensionUpdateRequiredModalOpen = false;
+        ShowNotification(
+            "🔄 Eklenti Güncellendi",
+            "Tarayıcı eklentinize güncelleme komutu iletildi ve diskteki güncel sürüm etkinleştirildi.",
+            "Eklenti Güncelleme",
+            "✔️",
+            CompletionSound.Notify);
     }
 
     [RelayCommand]
