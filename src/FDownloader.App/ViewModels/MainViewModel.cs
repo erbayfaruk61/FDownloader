@@ -12064,35 +12064,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
         // 2. YouTube & Medya Kontrolü
 
-
-
-        bool isMedia = url.Contains("youtube.com", StringComparison.OrdinalIgnoreCase) ||
-
-
-
-                       url.Contains("youtu.be", StringComparison.OrdinalIgnoreCase) ||
-
-
-
-                       url.Contains("tiktok.com", StringComparison.OrdinalIgnoreCase) ||
-
-
-
-                       url.Contains("instagram.com", StringComparison.OrdinalIgnoreCase) ||
-
-
-
-                       url.Contains("twitter.com", StringComparison.OrdinalIgnoreCase) ||
-
-
-
-                       url.Contains("x.com", StringComparison.OrdinalIgnoreCase) ||
-
-
-
-                       url.Contains("soundcloud.com", StringComparison.OrdinalIgnoreCase);
-
-
+        bool isMedia = YtDlpMediaService.IsMediaUrl(url);
 
         if (isMedia)
 
@@ -12275,10 +12247,8 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
         bool isYouTube = url.Contains("youtube.com", StringComparison.OrdinalIgnoreCase) || url.Contains("youtu.be", StringComparison.OrdinalIgnoreCase);
-
-
-
-        AddDialogStatusText = isYouTube ? "YouTube bilgisi alınıyor..." : "Medya bilgisi alınıyor...";
+        bool isFacebook = url.Contains("facebook.com", StringComparison.OrdinalIgnoreCase) || url.Contains("fb.watch", StringComparison.OrdinalIgnoreCase) || url.Contains("fbcdn.net", StringComparison.OrdinalIgnoreCase);
+        AddDialogStatusText = isYouTube ? "YouTube bilgisi alınıyor..." : (isFacebook ? "Facebook video bilgisi alınıyor..." : "Medya bilgisi alınıyor...");
 
 
 

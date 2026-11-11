@@ -970,6 +970,9 @@ public sealed class YtDlpMediaService : IDisposable
                url.Contains("youtu.be", StringComparison.OrdinalIgnoreCase) ||
                url.Contains("tiktok.com", StringComparison.OrdinalIgnoreCase) ||
                url.Contains("instagram.com", StringComparison.OrdinalIgnoreCase) ||
+               url.Contains("facebook.com", StringComparison.OrdinalIgnoreCase) ||
+               url.Contains("fb.watch", StringComparison.OrdinalIgnoreCase) ||
+               url.Contains("fbcdn.net", StringComparison.OrdinalIgnoreCase) ||
                url.Contains("twitter.com", StringComparison.OrdinalIgnoreCase) ||
                url.Contains("x.com", StringComparison.OrdinalIgnoreCase) ||
                url.Contains("soundcloud.com", StringComparison.OrdinalIgnoreCase);

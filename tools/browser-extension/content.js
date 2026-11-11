@@ -351,6 +351,28 @@
 
     const isFacebook = host.includes("facebook.com") || host.includes("fb.watch");
     if (isFacebook) {
+      // Feed veya sayfa üzerindeki kalıcı Reel/Video URL'sini öncelikle bul
+      let postLink = null;
+      try {
+        const container = video.closest("div[role='feed'], div[role='article'], div[data-pagelet], div[aria-label*='Video'], div.x1y1aw1k, [data-video-id], div[data-nosnippet]") || video.parentElement;
+        if (container) {
+          const a = container.querySelector("a[href*='/reel/'], a[href*='/watch/'], a[href*='/videos/'], a[href*='fb.watch']");
+          if (a && a.href) postLink = a.href;
+        }
+      } catch (e) { }
+
+      // Eğer sayfanın kendisi bir Reel veya Watch sayfasıysa doğrudan o URL'yi kullan
+      const loc = window.location.href;
+      const isWatchOrReelPage = loc.includes("/reel/") || loc.includes("/watch/") || loc.includes("/videos/") || loc.includes("fb.watch");
+      const bestMediaUrl = postLink || (isWatchOrReelPage ? loc : null);
+
+      if (bestMediaUrl) {
+        return {
+          url: bestMediaUrl,
+          filename: document.title ? document.title.replace(/\s*\|\s*Facebook$/i, "").trim() + ".mp4" : "Facebook Video.mp4"
+        };
+      }
+
       const src = video.currentSrc || video.src || "";
       if (src && !src.startsWith("blob:") && !src.startsWith("data:")) {
         return {
@@ -359,18 +381,8 @@
         };
       }
 
-      // En yakın feed / gönderi linkini ara
-      let postLink = null;
-      try {
-        const container = video.closest("div[role='feed'], div[role='article'], div[data-pagelet], div[aria-label*='Video'], div.x1y1aw1k, [data-video-id]") || video.parentElement;
-        if (container) {
-          const a = container.querySelector("a[href*='/watch/'], a[href*='/reel/'], a[href*='/videos/'], a[href*='fb.watch']");
-          if (a && a.href) postLink = a.href;
-        }
-      } catch (e) { }
-
       return {
-        url: postLink || window.location.href,
+        url: window.location.href,
         filename: document.title ? document.title.replace(/\s*\|\s*Facebook$/i, "").trim() + ".mp4" : "Facebook Video.mp4"
       };
     }
