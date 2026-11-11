@@ -3001,20 +3001,14 @@
                         </Panel>
                     </Border>
 
-                    <!-- Eklenti Güncelleme Bildirim ve Hızlı Yenileme Alanı -->
+                    <!-- Eklenti Güncelleme Bildirim ve Bilgi Alanı -->
                     <Border Background="#2038BDF8" BorderBrush="#5038BDF8" BorderThickness="1" CornerRadius="8" Padding="12,8" IsVisible="{Binding HasExtensionUpdate}">
-                        <Grid ColumnDefinitions="Auto, *, Auto">
+                        <Grid ColumnDefinitions="Auto, *">
                             <TextBlock Text="🧩" FontSize="18" VerticalAlignment="Center" Margin="0,0,10,0" />
                             <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                <TextBlock Text="Tarayıcı Eklentisi Güncellemesi İçerir" FontWeight="Bold" FontSize="12" Foreground="#38BDF8" />
-                                <TextBlock Text="Facebook, Reels ve video yakalama geliştirmeleri için eklenti de güncellenecektir." FontSize="11" Foreground="{Binding ThemeTextSecondary}" />
+                                <TextBlock Text="Tarayıcı Eklentisi Otomatik Güncellenecek" FontWeight="Bold" FontSize="12" Foreground="#38BDF8" />
+                                <TextBlock Text="Facebook, Reels ve video yakalama geliştirmeleri için tarayıcı eklentiniz arka planda otomatik yenilenecektir." FontSize="11" Foreground="{Binding ThemeTextSecondary}" />
                             </StackPanel>
-                            <Button Grid.Column="2" Command="{Binding ReloadBrowserExtensionCommand}" Background="#10B981" Foreground="White" FontWeight="Bold" Padding="10,6" CornerRadius="6" Cursor="Hand" ToolTip.Tip="Eklentiyi şimdi anında yenile">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <TextBlock Text="🔄" VerticalAlignment="Center" />
-                                    <TextBlock Text="Eklentiyi Yenile" VerticalAlignment="Center" FontSize="11" />
-                                </StackPanel>
-                            </Button>
                         </Grid>
                     </Border>
                     </StackPanel>

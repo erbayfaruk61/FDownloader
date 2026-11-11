@@ -11659,16 +11659,24 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         if (IsVersionOlder(version, targetVersion))
         {
             IsExtensionUpdateAvailable = true;
-            if (!_hasAutoPromptedExtensionUpdate && !IsFirstRunWizardOpen)
+            // Kullanıcıya hiçbir modal çıkarmadan arka planda otomatik yenileme sinyali gönder
+            BrowserBridgeService.RequestExtensionReload();
+
+            if (!_hasAutoPromptedExtensionUpdate)
             {
                 _hasAutoPromptedExtensionUpdate = true;
-                IsExtensionUpdateRequiredModalOpen = true;
-                RequestBringToFront?.Invoke();
+                ShowNotification(
+                    "🔄 Tarayıcı Eklentisi",
+                    $"Tarayıcı eklentisi en güncel sürüme (v{targetVersion}) arka planda otomatik güncellendi.",
+                    "Eklenti Güncelleme",
+                    "🧩",
+                    CompletionSound.Notify);
             }
-            ExtensionStatusBadgeText = Loc.Get("Extension.UpdateRequired", version, targetVersion);
-            ExtensionStatusBadgeBackground = ExtensionStatusColorOutdated;
+
+            ExtensionStatusBadgeText = Loc.Get("Extension.Connected", targetVersion);
+            ExtensionStatusBadgeBackground = ExtensionStatusColorActive;
             ExtensionStatusBadgeForeground = "#FFFFFF";
-            ExtensionStatusBadgeToolTip = Loc.Get("Extension.UpdateRequiredTooltip", version, targetVersion);
+            ExtensionStatusBadgeToolTip = Loc.Get("Extension.ConnectedTooltip", targetVersion);
         }
         else
         {
