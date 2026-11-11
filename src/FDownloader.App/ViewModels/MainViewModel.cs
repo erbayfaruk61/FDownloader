@@ -11170,73 +11170,44 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
     [RelayCommand]
-
-
-
     public void OpenBrowserExtensionFolder()
-
-
-
     {
-
-
-
         var folder = GetBrowserExtensionFolder();
-
-
-
-        if (folder != null)
-
-
-
+        if (!string.IsNullOrWhiteSpace(folder) && Directory.Exists(folder))
         {
-
-
-
             try
-
-
-
             {
-
-
+                var cleanFolder = Path.GetFullPath(folder).TrimEnd('\\', '/');
+                var manifestPath = Path.Combine(cleanFolder, "manifest.json");
 
                 Process.Start(new ProcessStartInfo
-
-
-
                 {
-
-
-
                     FileName = "explorer.exe",
-
-
-
-                    Arguments = $"\"{folder}\"",
-
-
-
-                    UseShellExecute = false
-
-
-
+                    Arguments = File.Exists(manifestPath)
+                        ? $"/select,\"{manifestPath}\""
+                        : $"\"{cleanFolder}\"",
+                    UseShellExecute = true
                 });
-
-
-
+                return;
             }
-
-
-
-            catch { }
-
-
-
+            catch (Exception ex)
+            {
+                FDownloader.Core.Logging.AppFileLoggerProvider.AppendLog(
+                    Microsoft.Extensions.Logging.LogLevel.Warning,
+                    "BrowserExtension",
+                    $"Klasör gezginde açılamadı: {ex.Message}",
+                    ex);
+            }
         }
 
-
-
+        // Klasör henüz yoksa oluştur ve aç
+        try
+        {
+            var fallback = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FDownloader", "browser-extension");
+            Directory.CreateDirectory(fallback);
+            Process.Start(new ProcessStartInfo { FileName = fallback, UseShellExecute = true });
+        }
+        catch { }
     }
 
 
