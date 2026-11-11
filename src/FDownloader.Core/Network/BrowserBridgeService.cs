@@ -33,6 +33,16 @@ public sealed class BrowserBridgeService : IDisposable
 
     public const int DefaultPort = 9666;
 
+    private static volatile bool _reloadRequested = false;
+
+    /// <summary>
+    /// Tarayıcı eklentilerine bir sonraki kalp atışında kendini yeniden yükleme (reload) sinyali gönderir.
+    /// </summary>
+    public static void RequestExtensionReload()
+    {
+        _reloadRequested = true;
+    }
+
     // ─── Güvenlik Sabitleri ───────────────────────────────────────────────
     private static readonly string[] AllowedOriginPrefixes =
     [
@@ -253,14 +263,26 @@ public sealed class BrowserBridgeService : IDisposable
 
                 _eventBus.Publish(new BrowserExtensionHeartbeatEvent(version, DateTime.UtcNow));
 
+                var shouldReload = _reloadRequested;
+                if (shouldReload) _reloadRequested = false;
+
                 var pingJson = JsonSerializer.Serialize(new
                 {
                     status = "ok",
                     app = "FDownloader",
                     extensionVersion = version,
+                    reloadRequested = shouldReload,
                     timestamp = DateTime.UtcNow
                 });
                 await WriteJsonResponseAsync(response, 200, pingJson);
+                return;
+            }
+
+            if (path == "/extension/reload")
+            {
+                RequestExtensionReload();
+                var relJson = JsonSerializer.Serialize(new { status = "ok", message = "reload_signal_queued" });
+                await WriteJsonResponseAsync(response, 200, relJson);
                 return;
             }
 
@@ -277,12 +299,16 @@ public sealed class BrowserBridgeService : IDisposable
                     _eventBus.Publish(new BrowserExtensionHeartbeatEvent(detectedVersion, DateTime.UtcNow));
                 }
 
+                var shouldReload = _reloadRequested;
+                if (shouldReload) _reloadRequested = false;
+
                 var healthJson = JsonSerializer.Serialize(new
                 {
                     status = "ok",
                     app = "FDownloader",
                     version = "1.0.0",
-                    bridge = "active"
+                    bridge = "active",
+                    reloadRequested = shouldReload
                 });
                 await WriteJsonResponseAsync(response, 200, healthJson);
                 return;

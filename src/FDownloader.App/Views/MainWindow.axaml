@@ -2014,6 +2014,13 @@
                                         <StackPanel Spacing="8">
                                             <TextBlock Text="{Binding Loc[Settings.BrowserQuickActions], FallbackValue='🚀 Hızlı İşlemler (Tek Tıkla Kurulum Kolaylığı):'}" FontWeight="Bold" FontSize="12" />
                                             <WrapPanel Orientation="Horizontal">
+                                                <Button Command="{Binding ReloadBrowserExtensionCommand}" Background="#10B981" Foreground="White" FontWeight="Bold" Padding="12,6" Margin="0,0,8,6" ToolTip.Tip="Açık olan tarayıcılardaki FDownloader eklentisini diskten anında yeniler.">
+                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                        <TextBlock Text="🔄" VerticalAlignment="Center" />
+                                                        <TextBlock Text="Eklentiyi Canlı Yenile (Tek Tıkla)" VerticalAlignment="Center" FontSize="11" />
+                                                    </StackPanel>
+                                                </Button>
+
                                                 <Button Command="{Binding OpenBrowserExtensionFolderCommand}" Background="{DynamicResource AccentButtonBackground}" Foreground="{DynamicResource AccentButtonForeground}" FontWeight="SemiBold" Padding="12,6" Margin="0,0,8,6">
                                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                                         <TextBlock Text="📁" VerticalAlignment="Center" />

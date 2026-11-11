@@ -156,7 +156,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         get
         {
             var v = typeof(MainViewModel).Assembly.GetName().Version;
-            return v != null ? $"v{v.Major}.{v.Minor}.{v.Build}" : "v2.0.0";
+            return v != null ? $"v{v.Major}.{v.Minor}.{v.Build}" : "v2.0.1";
         }
     }
 
@@ -11228,41 +11228,42 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
     [RelayCommand]
-
-
-
     public void CopyBrowserExtensionPath()
-
-
-
     {
-
-
-
         var folder = GetBrowserExtensionFolder();
-
-
-
         if (!string.IsNullOrEmpty(folder))
-
-
-
         {
-
-
-
             ClipboardWatcher.SetWindowsClipboardText(folder);
-
-
-
             ShowNotification("📋 Pano", "Eklenti klasör yolu panoya kopyalandı! 'Paketlenmemiş Öğe Yükle' penceresine yapıştırabilirsiniz.", folder, "📋", CompletionSound.Notify);
-
-
-
         }
+    }
 
+    [RelayCommand]
+    public void ReloadBrowserExtension()
+    {
+        BrowserBridgeService.RequestExtensionReload();
+        ShowNotification(
+            "🔄 Tarayıcı Eklentisi",
+            "Eklentiye anında yenileme sinyali iletildi! Açık olan tarayıcılarda eklenti dosyaları diskten otomatik olarak yenilenir.",
+            "Eklenti Yenileme",
+            "🔄",
+            CompletionSound.Notify);
+    }
 
-
+    [RelayCommand]
+    public void OpenBrowserExtensionsPage()
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = "/c start chrome://extensions || start edge://extensions",
+                CreateNoWindow = true,
+                UseShellExecute = false
+            });
+        }
+        catch { }
     }
 
 

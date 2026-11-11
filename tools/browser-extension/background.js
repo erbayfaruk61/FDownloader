@@ -201,11 +201,54 @@ async function isBridgeAlive() {
       signal: controller.signal
     });
     clearTimeout(timer);
-    return res.ok;
+    if (res.ok) {
+      try {
+        const data = await res.json();
+        if (data && data.reloadRequested === true) {
+          if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.reload) {
+            console.log("⚡ FDownloader: Uygulamadan yenileme sinyali alındı, eklenti yenileniyor...");
+            chrome.runtime.reload();
+          }
+        }
+      } catch (_) { }
+      return true;
+    }
+    return false;
   } catch (e) {
     return false;
   }
 }
+
+async function checkBridgeHeartbeat() {
+  try {
+    const manifest = chrome.runtime.getManifest();
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 2000);
+    const res = await fetch(`${BRIDGE_URL}/ping`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Extension-Version": manifest.version || "1.0.0"
+      },
+      body: JSON.stringify({ version: manifest.version || "1.0.0" }),
+      signal: controller.signal
+    });
+    clearTimeout(timer);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.reloadRequested === true) {
+        if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.reload) {
+          console.log("⚡ FDownloader: Kalp atışında yenileme sinyali alındı, eklenti diskten güncelleniyor...");
+          chrome.runtime.reload();
+        }
+      }
+    }
+  } catch (_) { }
+}
+
+// FDownloader uygulamasından komut/yenileme kontrolü (3.5 saniye aralıkla)
+setInterval(checkBridgeHeartbeat, 3500);
+setTimeout(checkBridgeHeartbeat, 1500);
 
 async function getCookiesForUrl(url, referrer) {
   const cookieMap = new Map();

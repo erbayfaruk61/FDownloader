@@ -30,7 +30,7 @@
 
 ---
 
-## 🚀 Öne Çıkan Özellikler (v2.0.0)
+## 🚀 Öne Çıkan Özellikler (v2.0.1)
 
 * ⚡ **Çok Kanallı & Parçalı Hızlı İndirme:** Dinamik parçalı motor, tam bant genişliği kullanımı ve kayıpsız indirme devam ettirme (Lossless Resume).
 * 🌊 **BitTorrent & Magnet Desteği:** Magnet linkleri ve `.torrent` dosyaları, sıralı indirme (Streaming modu), ön izlemeli dosya seçimi ve eş takibi.
