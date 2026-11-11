@@ -2741,7 +2741,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-    public const double ExtensionHeartbeatTimeoutSeconds = 35.0;
+    public const double ExtensionHeartbeatTimeoutSeconds = 65.0;
 
 
 

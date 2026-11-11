@@ -197,7 +197,7 @@ public sealed class BrowserBridgeService : IDisposable
             : "null";
 
         response.AppendHeader("Access-Control-Allow-Origin", allowedOrigin);
-        response.AppendHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+        response.AppendHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
         response.AppendHeader("Access-Control-Allow-Headers", "Content-Type, X-Extension-Version, X-Bridge-Token");
         response.AppendHeader("Access-Control-Max-Age", "600");
         response.AppendHeader("Vary", "Origin");

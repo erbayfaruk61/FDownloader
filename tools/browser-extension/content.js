@@ -754,4 +754,15 @@
       updateGrabberPosition(currentActiveVideo);
     }
   }, { passive: true });
+
+  // FDownloader Service Worker ve Köprü senkronizasyonu
+  function pingExtensionBridge() {
+    try {
+      if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.sendMessage) {
+        chrome.runtime.sendMessage({ type: "PING_BRIDGE" }).catch(() => {});
+      }
+    } catch (_) { }
+  }
+  pingExtensionBridge();
+  setInterval(pingExtensionBridge, 15000);
 })();

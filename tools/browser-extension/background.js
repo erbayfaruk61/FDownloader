@@ -222,20 +222,36 @@ async function isBridgeAlive() {
 async function checkBridgeHeartbeat() {
   try {
     const manifest = chrome.runtime.getManifest();
+    const ver = manifest.version || "1.0.0";
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 2000);
-    const res = await fetch(`${BRIDGE_URL}/ping`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Extension-Version": manifest.version || "1.0.0"
-      },
-      body: JSON.stringify({ version: manifest.version || "1.0.0" }),
-      signal: controller.signal
-    });
+    
+    // Öncelikli olarak POST /ping dene
+    let res = null;
+    try {
+      res = await fetch(`${BRIDGE_URL}/ping`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Extension-Version": ver
+        },
+        body: JSON.stringify({ version: ver }),
+        signal: controller.signal
+      });
+    } catch (_) {
+      // POST başarısız olursa basit GET /health ile kalp atışını bildir
+      try {
+        res = await fetch(`${BRIDGE_URL}/health?v=${encodeURIComponent(ver)}`, {
+          method: "GET",
+          headers: { "X-Extension-Version": ver },
+          signal: controller.signal
+        });
+      } catch (__) { }
+    }
     clearTimeout(timer);
-    if (res.ok) {
-      const data = await res.json();
+
+    if (res && res.ok) {
+      const data = await res.json().catch(() => null);
       if (data && data.reloadRequested === true) {
         if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.reload) {
           console.log("⚡ FDownloader: Kalp atışında yenileme sinyali alındı, eklenti diskten güncelleniyor...");
@@ -248,7 +264,29 @@ async function checkBridgeHeartbeat() {
 
 // FDownloader uygulamasından komut/yenileme kontrolü (3.5 saniye aralıkla)
 setInterval(checkBridgeHeartbeat, 3500);
-setTimeout(checkBridgeHeartbeat, 1500);
+setTimeout(checkBridgeHeartbeat, 1000);
+
+// Chrome Manifest V3 Service Worker uyanıklık ve alarm mekanizması
+try {
+  if (typeof chrome !== "undefined" && chrome.alarms) {
+    chrome.alarms.create("fdownloader_heartbeat", { periodInMinutes: 0.5 });
+    chrome.alarms.onAlarm.addListener(alarm => {
+      if (alarm && alarm.name === "fdownloader_heartbeat") {
+        checkBridgeHeartbeat();
+      }
+    });
+  }
+} catch (_) { }
+
+// Sekme ve pencere odaklanmalarında kalp atışını anında tetikle
+try {
+  if (typeof chrome !== "undefined" && chrome.tabs && chrome.tabs.onActivated) {
+    chrome.tabs.onActivated.addListener(() => checkBridgeHeartbeat());
+  }
+  if (typeof chrome !== "undefined" && chrome.windows && chrome.windows.onFocusChanged) {
+    chrome.windows.onFocusChanged.addListener(() => checkBridgeHeartbeat());
+  }
+} catch (_) { }
 
 async function getCookiesForUrl(url, referrer) {
   const cookieMap = new Map();
@@ -309,6 +347,12 @@ let memAltPressedUntil = 0;
 // Alt tuşu baypası persistence hazırlandı
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message && message.type === "PING_BRIDGE") {
+    checkBridgeHeartbeat();
+    sendResponse({ ok: true });
+    return false;
+  }
+
   if (message && message.type === "ALT_EVENT") {
     memIsAltDown = Boolean(message.isDown);
     if (message.isDown) {

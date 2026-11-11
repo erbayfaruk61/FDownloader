@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     FDownloader Sürüm Güncelleme ve Dağıtım Eşitleme Aracı
 .DESCRIPTION
@@ -134,3 +134,4 @@ if ($CommitAndTag) {
     git push origin $tagName
     Write-Host "Sürüm $tagName GitHub'a başarıyla gönderildi ve Release CI tetiklendi." -ForegroundColor Green
 }
+

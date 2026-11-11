@@ -1,9 +1,6 @@
-﻿### 🚀 FDownloader v2.0.2 Yenilikleri & Düzeltmeleri:
+﻿### 🚀 FDownloader v2.0.3 Yenilikleri & Düzeltmeleri:
 
-• 🎬 **Facebook Video & Reels İndirme İyileştirmesi:** Facebook arama, etiket (#) ve doğrudan video sayfalarındaki medya akışı tespiti optimize edildi; "Bağlantı koptu / indirme başlatılamadı" hatası giderildi.
-• 🔔 **Eklenti Güncelleme Bildirimi Düzenlendi:** Eklenti güncellendiğinde çıkan bildirimden ilgisiz "Dosyayı Aç" / "Klasörü Aç" butonları kaldırıldı, yalnızca bilgi amaçlı temiz bildirim sağlandı.
-• 🔄 **Otomatik Eklenti Senkronizasyonu:** Uygulama açılışında kurulu eklenti sürümü eskiyse arka planda otomatik ve sessizce yenilenmesi sağlandı.
-• 📊 **Güncelleme Ekranında Eklenti Sürümü Gösterimi:** Güncelleme penceresinde mevcut ve yeni program sürümünün yanında bağlı olan eklenti sürümü de karşılaştırmalı olarak eklendi.
-• 🛡️ **Genel Kararlılık ve Performans:** Akış yakalama ve indirme köprüsünde kararlılık iyileştirmeleri yapıldı.
-
+• 🧩 **Tarayıcı Eklentisi Canlı Bağlantı Stabilizasyonu:** Chrome Manifest V3 arka plan Service Worker uykusu çözüldü; tarayıcı açıkken köprünün "Bekleniyor" durumuna düşmesi engellendi ve anlık iki yönlü kalp atışı (heartbeat) altyapısı güçlendirildi.
+• 🎨 **Tarayıcı Ayarları Arayüzü Sadeleştirildi:** Ayarlar penceresindeki Tarayıcı sekmesinden eski/gereksiz buton ve rehber kalabalıkları temizlendi; sade, ferah ve tek tıkla canlı yenileme destekli modern bir kontrol paneline dönüştürüldü.
+• 🔄 **Otomatik Canlı Senkronizasyon:** Eklenti ve masaüstü köprüsü arasındaki CORS ve bağlantı yöntemleri optimize edilerek anında yenileme ve durum algılama sağlandı.
 
