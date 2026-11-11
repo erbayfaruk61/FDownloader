@@ -138,6 +138,12 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         (!string.IsNullOrWhiteSpace(UpdateTargetVersion) && 
          (UpdateTargetVersion.Contains("2.0.1") || UpdateTargetVersion.Contains("2.0.2") || UpdateTargetVersion.Contains("2.1")));
 
+    public string DisplayConnectedExtensionVersion =>
+        string.IsNullOrWhiteSpace(ConnectedExtensionVersion) ? "v1.0.0" : $"v{ConnectedExtensionVersion.TrimStart('v')}";
+
+    public string DisplayExpectedExtensionVersion =>
+        string.IsNullOrWhiteSpace(ExpectedExtensionVersion) ? "v2.0.2" : $"v{ExpectedExtensionVersion.TrimStart('v')}";
+
     [ObservableProperty] private bool _isExtensionUpdateRequiredModalOpen = false;
 
     public bool IsCurrentVersionUpToDate =>
