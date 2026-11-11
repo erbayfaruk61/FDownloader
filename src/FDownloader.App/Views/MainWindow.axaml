@@ -2063,8 +2063,8 @@
                                                         <TextBlock Text="3" FontWeight="Bold" Foreground="White" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                     </Border>
                                                     <StackPanel Grid.Column="1" Spacing="1" Margin="8,0,0,0" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding Loc[Settings.BrowserStep3Title], FallbackValue='Paketlenmemiş Öğe Yükle'}" FontWeight="SemiBold" FontSize="11" Foreground="#10B981" />
-                                                        <TextBlock Text="'Paketlenmemiş Öğe Yükle' butonuna tıklayarak yukarıdaki 'Klasör Yolunu Kopyala' ile kopyaladığınız eklenti dizinini seçin." FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                                        <TextBlock Text="Sürükle-Bırak veya Paketlenmemiş Öğe Yükle" FontWeight="SemiBold" FontSize="11" Foreground="#10B981" />
+                                                        <TextBlock Text="Açılan eklenti klasörünü doğrudan tarayıcı penceresine sürükleyip bırakabilir ya da 'Paketlenmemiş Öğe Yükle' butonundan klasörü seçebilirsiniz." FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" />
                                                     </StackPanel>
                                                 </Grid>
                                             </Border>

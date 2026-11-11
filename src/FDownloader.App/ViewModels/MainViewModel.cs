@@ -11339,109 +11339,45 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
     [RelayCommand]
-
-
-
     public void OpenChromeExtensionsPage()
-
-
-
     {
+        // 1. Eklenti yolunu panoya kopyala
+        CopyBrowserExtensionPath();
 
+        // 2. Eklenti klasörünü aç
+        OpenBrowserExtensionFolder();
 
-
-        CopyChromeExtensionsUrl();
-
-
-
+        // 3. Tarayıcı eklentiler sayfasını aç
         try
-
-
-
         {
-
-
-
             Process.Start(new ProcessStartInfo
-
-
-
             {
-
-
-
                 FileName = "chrome.exe",
-
-
-
                 Arguments = "chrome://extensions",
-
-
-
                 UseShellExecute = true
-
-
-
             });
-
-
-
         }
-
-
-
         catch
-
-
-
         {
-
-
-
             try
-
-
-
             {
-
-
-
                 Process.Start(new ProcessStartInfo
-
-
-
                 {
-
-
-
                     FileName = "msedge.exe",
-
-
-
                     Arguments = "edge://extensions",
-
-
-
                     UseShellExecute = true
-
-
-
                 });
-
-
-
             }
-
-
-
             catch { }
-
-
-
         }
 
-
-
+        // 4. Kolay sürükle-bırak rehber bildirimi
+        ShowNotification(
+            "🧩 Kolay Kurulum (Sürükle-Bırak)",
+            "Açılan eklenti klasörünü tarayıcınızdaki Eklentiler sayfasına sürükleyip bırakmanız yeterlidir.",
+            null,
+            "🚀",
+            CompletionSound.Notify);
     }
 
 
