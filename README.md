@@ -1,4 +1,4 @@
-# FDownloader - Yeni Nesil İndirme Yöneticisi
+﻿# FDownloader - Yeni Nesil İndirme Yöneticisi
 
 <p align="center">
   <img src="src/FDownloader.App/Assets/logo.png" alt="FDownloader Logo" width="128" height="128" />
@@ -30,7 +30,7 @@
 
 ---
 
-## 🚀 Öne Çıkan Özellikler (v2.0.1)
+## 🚀 Öne Çıkan Özellikler (v2.0.2)
 
 * ⚡ **Çok Kanallı & Parçalı Hızlı İndirme:** Dinamik parçalı motor, tam bant genişliği kullanımı ve kayıpsız indirme devam ettirme (Lossless Resume).
 * 🌊 **BitTorrent & Magnet Desteği:** Magnet linkleri ve `.torrent` dosyaları, sıralı indirme (Streaming modu), ön izlemeli dosya seçimi ve eş takibi.
@@ -91,3 +91,4 @@ FDownloader aşağıdaki açık kaynak teknolojiler ve projeler üzerine inşa e
 ## 📄 Lisans
 
 Bu proje [MIT Lisansı](LICENSE) kapsamında geliştirilmektedir.
+

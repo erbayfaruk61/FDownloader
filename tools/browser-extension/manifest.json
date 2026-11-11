@@ -1,50 +1,58 @@
-{
-  "manifest_version": 3,
-  "name": "FDownloader Entegrasyonu",
-  "version": "2.0.2",
-  "description": "FDownloader indirme yöneticisi için otomatik tarayıcı yakalama eklentisi.",
-  "permissions": [
-    "downloads",
-    "contextMenus",
-    "storage",
-    "cookies"
-  ],
-  "host_permissions": [
-    "http://127.0.0.1:9666/*",
-    "http://localhost:9666/*",
-    "*://*/*"
-  ],
-  "background": {
-    "service_worker": "background.js"
-  },
-  "content_scripts": [
-    {
-      "matches": ["*://*/*"],
-      "js": ["content.js"],
-      "run_at": "document_start",
-      "all_frames": true
-    }
-  ],
-  "action": {
-    "default_popup": "popup.html",
-    "default_title": "FDownloader",
-    "default_icon": {
-      "16": "icons/icon-16.png",
-      "32": "icons/icon-32.png",
-      "48": "icons/icon-48.png",
-      "128": "icons/icon-128.png"
-    }
-  },
-  "icons": {
-    "16": "icons/icon-16.png",
-    "32": "icons/icon-32.png",
-    "48": "icons/icon-48.png",
-    "128": "icons/icon-128.png"
-  },
-  "web_accessible_resources": [
-    {
-      "resources": ["icons/*"],
-      "matches": ["*://*/*"]
-    }
-  ]
+﻿{
+    "manifest_version":  3,
+    "name":  "FDownloader Entegrasyonu",
+    "version":  "2.0.2",
+    "description":  "FDownloader indirme yöneticisi için otomatik tarayıcı yakalama eklentisi.",
+    "permissions":  [
+                        "downloads",
+                        "contextMenus",
+                        "storage",
+                        "cookies"
+                    ],
+    "host_permissions":  [
+                             "http://127.0.0.1:9666/*",
+                             "http://localhost:9666/*",
+                             "*://*/*"
+                         ],
+    "background":  {
+                       "service_worker":  "background.js"
+                   },
+    "content_scripts":  [
+                            {
+                                "matches":  [
+                                                "*://*/*"
+                                            ],
+                                "js":  [
+                                           "content.js"
+                                       ],
+                                "run_at":  "document_start",
+                                "all_frames":  true
+                            }
+                        ],
+    "action":  {
+                   "default_popup":  "popup.html",
+                   "default_title":  "FDownloader",
+                   "default_icon":  {
+                                        "16":  "icons/icon-16.png",
+                                        "32":  "icons/icon-32.png",
+                                        "48":  "icons/icon-48.png",
+                                        "128":  "icons/icon-128.png"
+                                    }
+               },
+    "icons":  {
+                  "16":  "icons/icon-16.png",
+                  "32":  "icons/icon-32.png",
+                  "48":  "icons/icon-48.png",
+                  "128":  "icons/icon-128.png"
+              },
+    "web_accessible_resources":  [
+                                     {
+                                         "resources":  [
+                                                           "icons/*"
+                                                       ],
+                                         "matches":  [
+                                                         "*://*/*"
+                                                     ]
+                                     }
+                                 ]
 }

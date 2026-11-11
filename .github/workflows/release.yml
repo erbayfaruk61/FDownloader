@@ -100,7 +100,6 @@ jobs:
           name: FDownloader ${{ steps.get_version.outputs.VERSION }}
           body_path: RELEASE_NOTES.md
           generate_release_notes: false
-          name: FDownloader ${{ github.ref_name }}
           draft: false
           prerelease: false
         env:
