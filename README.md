@@ -19,6 +19,22 @@
 </p>
 
 <p align="center">
+  <img src="https://img.shields.io/badge/bittorrent--client-0A84FF?style=flat-square" alt="bittorrent-client" />
+  <img src="https://img.shields.io/badge/torrent--client-0A84FF?style=flat-square" alt="torrent-client" />
+  <img src="https://img.shields.io/badge/magnet-0A84FF?style=flat-square" alt="magnet" />
+  <img src="https://img.shields.io/badge/download--manager-0A84FF?style=flat-square" alt="download-manager" />
+  <img src="https://img.shields.io/badge/download--accelerator-0A84FF?style=flat-square" alt="download-accelerator" />
+  <img src="https://img.shields.io/badge/file--downloader-0A84FF?style=flat-square" alt="file-downloader" />
+  <img src="https://img.shields.io/badge/idm--alternative-0A84FF?style=flat-square" alt="idm-alternative" />
+  <img src="https://img.shields.io/badge/internet--download--manager-0A84FF?style=flat-square" alt="internet-download-manager" />
+  <img src="https://img.shields.io/badge/video--downloader-0A84FF?style=flat-square" alt="video-downloader" />
+  <img src="https://img.shields.io/badge/youtube--downloader-0A84FF?style=flat-square" alt="youtube-downloader" />
+  <img src="https://img.shields.io/badge/playlist--downloader-0A84FF?style=flat-square" alt="playlist-downloader" />
+  <img src="https://img.shields.io/badge/m3u8--downloader-0A84FF?style=flat-square" alt="m3u8-downloader" />
+  <img src="https://img.shields.io/badge/yt--dlp-0A84FF?style=flat-square" alt="yt-dlp" />
+</p>
+
+<p align="center">
   <a href="https://github.com/erbayfaruk61/FDownloader/releases/latest/download/FDownloader-win-Setup.exe">
     <img src="https://img.shields.io/badge/Hemen_İndir-FDownloader--win--Setup.exe-success?style=for-the-badge&logo=windows&logoColor=white" height="38" alt="Windows Kurulumunu İndir" />
   </a>
