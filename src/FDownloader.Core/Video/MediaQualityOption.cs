@@ -22,3 +22,4 @@ public sealed class MediaQualityOption
 
     public override string ToString() => DisplayText;
 }
+

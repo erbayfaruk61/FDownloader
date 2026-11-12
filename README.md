@@ -30,12 +30,27 @@
 
 ---
 
-## 🚀 Öne Çıkan Özellikler (v2.0.2)
+## 📸 Ekran Görüntüleri
+
+<p align="center">
+  <strong>Ana Görev Paneli & Koyu Tema Görünümü</strong><br>
+  <img src="docs/images/main-ui.png" alt="FDownloader Ana Ekranı" width="900" />
+</p>
+
+<p align="center">
+  <img src="docs/images/settings-browser.jpg" alt="Tarayıcı Entegrasyonu ve Ayarlar" width="445" />
+  &nbsp;
+  <img src="docs/images/update-dialog.png" alt="Akıllı Otomatik Güncelleyici ve Sürüm Notları" width="445" />
+</p>
+
+---
+
+## 🚀 Öne Çıkan Özellikler (v2.0.5)
 
 * ⚡ **Çok Kanallı & Parçalı Hızlı İndirme:** Dinamik parçalı motor, tam bant genişliği kullanımı ve kayıpsız indirme devam ettirme (Lossless Resume).
-* 🌊 **BitTorrent & Magnet Desteği:** Magnet linkleri ve `.torrent` dosyaları, sıralı indirme (Streaming modu), ön izlemeli dosya seçimi ve eş takibi.
-* 🎥 **Gelişmiş Medya & Video İndirici:** yt-dlp altyapısıyla 4K/1080p video, canlı yayın/HLS akışları, otomatik MP3 dönüştürme ve altyazı desteği.
-* 🧩 **Tarayıcı Eklentisi & Yüzen Yakalayıcı:** Chrome, Edge ve Firefox üzerinden indirme ve video yakalama (Floating Grabber).
+* 🌊 **BitTorrent & Magnet Desteği:** Magnet linkleri ve `.torrent` dosyaları, sıralı indirme (Streaming modu), ön izlemeli dosya seçimi ve gelişmiş Seeding (0.50x paylaşım oranı ve tek tıkla durdurma) kontrolleri.
+* 🎥 **Gelişmiş Medya & Video İndirici:** yt-dlp altyapısıyla 4K/2K/1080p/720p çözünürlük seçimi, canlı yayın/HLS akışları, otomatik MP3 (320-128 kbps) dönüştürme ve altyazı desteği.
+* 🧩 **Tarayıcı Eklentisi & Yüzen Yakalayıcı:** Chrome, Edge, Brave, Opera ve Firefox üzerinden doğrudan indirme ve video yakalama (Floating Grabber).
 * 🔒 **Dosya Bütünlüğü & Hash Doğrulama:** İndirilen dosyalar için anlık MD5, SHA-1 ve SHA-256 hesaplama ve eşleştirme kontrolü.
 * 📦 **Otomatik Arşiv Açıcı & Şifre Desteği:** ZIP, RAR, 7Z ve TAR arşivlerini otomatik çıkartma, parola korumalı arşiv çözümü ve güvenlik filtreleri.
 * 🛡️ **Ağ Adaptörü Kilidi & VPN Koruma:** İndirmeleri belirli bir ağ kartına veya VPN'e bağlama; bağlantı koptuğunda indirmeleri güvenle durdurma.
@@ -91,7 +106,3 @@ FDownloader aşağıdaki açık kaynak teknolojiler ve projeler üzerine inşa e
 ## 📄 Lisans
 
 Bu proje [MIT Lisansı](LICENSE) kapsamında geliştirilmektedir.
-
-
-
-
