@@ -1,7 +1,6 @@
-﻿### 🚀 FDownloader v2.0.7 Yenilikleri & Düzeltmeleri:
+﻿### 🚀 FDownloader v2.0.8 Yenilikleri & Düzeltmeleri:
 
-• 🧩 **Akıllı Eklenti Varlık & Durum Kontrolü:**
-  - Eklenti tarayıcıda kurulu veya aktif değilken rozete tıklandığında sahte güncelleme bildirimi verilmesi engellendi.
-  - Eklenti algılanamadığında kullanıcı doğrudan bilgilendirilir ve tek tıkla eklentiyi yükleyebilmesi için **Ayarlar > Tarayıcı Kurulum Rehberi** otomatik olarak açılır.
-  - Eklenti bağlı ve eskiyse arka planda güncellenir; zaten güncelse bağlantısının tazelendiği bildirilir.
-• 🛡️ **Kararlılık:** Tarayıcı köprüsü heartbeat ve eklenti durum denetimi güçlendirildi.
+• 🧩 **Gerçek Eklenti Durumu & "Kurulu Değil" Gösterimi:**
+  - Güncelleme penceresinde ve sistemde eklenti bağlı/kurulu değilken yanıltıcı biçimde `v1.0.0` yazması sorunu giderildi.
+  - Eklenti tarayıcıda açık ve bağlı değilse kırmızı rozet ile açıkça **"Kurulu Değil / Bağlı Değil"** olarak gösterilmesi sağlandı.
+  - Hedef sürüm her zaman güncel sistem sürümüyle (`v2.0.8`) tam senkronize hale getirildi.

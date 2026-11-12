@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 
 
 
@@ -139,10 +139,17 @@ public partial class MainViewModel : ViewModelBase, IDisposable
          (UpdateTargetVersion.Contains("2.0.1") || UpdateTargetVersion.Contains("2.0.2") || UpdateTargetVersion.Contains("2.1")));
 
     public string DisplayConnectedExtensionVersion =>
-        string.IsNullOrWhiteSpace(ConnectedExtensionVersion) ? "v1.0.0" : $"v{ConnectedExtensionVersion.TrimStart('v')}";
+        IsExtensionConnected && !string.IsNullOrWhiteSpace(ConnectedExtensionVersion)
+            ? $"v{ConnectedExtensionVersion.TrimStart('v')}"
+            : "Kurulu Değil / Bağlı Değil";
+
+    public string DisplayConnectedExtensionBadgeBackground =>
+        IsExtensionConnected && !string.IsNullOrWhiteSpace(ConnectedExtensionVersion)
+            ? "#334155"
+            : "#EF4444";
 
     public string DisplayExpectedExtensionVersion =>
-        string.IsNullOrWhiteSpace(ExpectedExtensionVersion) ? "v2.0.2" : $"v{ExpectedExtensionVersion.TrimStart('v')}";
+        string.IsNullOrWhiteSpace(ExpectedExtensionVersion) ? $"v{TargetExtensionVersion}" : $"v{ExpectedExtensionVersion.TrimStart('v')}";
 
     [ObservableProperty] private bool _isExtensionUpdateRequiredModalOpen = false;
 
@@ -2742,7 +2749,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-    public const string TargetExtensionVersion = "2.0.2";
+    public const string TargetExtensionVersion = "2.0.8";
 
 
 
@@ -11622,6 +11629,9 @@ public partial class MainViewModel : ViewModelBase, IDisposable
             HeaderExtensionBadgeForeground = "#F59E0B";
             HeaderExtensionBadgeBorder = "#40F59E0B";
             HeaderExtensionBadgeTooltip = $"Tarayıcı eklentisi henüz bağlı değil (Hedef Sürüm: v{targetVersion}) - Tıklayarak kurulum rehberini açın";
+            OnPropertyChanged(nameof(DisplayConnectedExtensionVersion));
+            OnPropertyChanged(nameof(DisplayConnectedExtensionBadgeBackground));
+            OnPropertyChanged(nameof(DisplayExpectedExtensionVersion));
             return;
         }
 
@@ -11689,6 +11699,10 @@ public partial class MainViewModel : ViewModelBase, IDisposable
             HeaderExtensionBadgeBorder = "#40F59E0B";
             HeaderExtensionBadgeTooltip = $"FDownloader Eklentisi: v{version} (Bağlı & Güncel - Tıklayarak arka planda yenileyebilirsiniz)";
         }
+
+        OnPropertyChanged(nameof(DisplayConnectedExtensionVersion));
+        OnPropertyChanged(nameof(DisplayConnectedExtensionBadgeBackground));
+        OnPropertyChanged(nameof(DisplayExpectedExtensionVersion));
 
 
 
@@ -15352,4 +15366,5 @@ public class TempFileInfoItem : CommunityToolkit.Mvvm.ComponentModel.ObservableO
     public bool IsSelected { get => _isSelected; set => SetProperty(ref _isSelected, value); }
 
 }
+
 

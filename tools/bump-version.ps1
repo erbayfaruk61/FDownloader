@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     FDownloader Sürüm Güncelleme ve Dağıtım Eşitleme Aracı
 .DESCRIPTION
@@ -70,6 +70,13 @@ $appContent = $appContent -replace '<Version>[^<]+</Version>', "<Version>$target
 $appContent = $appContent -replace '<AssemblyVersion>[^<]+</AssemblyVersion>', "<AssemblyVersion>$targetVer.0</AssemblyVersion>"
 $appContent = $appContent -replace '<FileVersion>[^<]+</FileVersion>', "<FileVersion>$targetVer.0</FileVersion>"
 Set-Content $appCsprojPath -Value $appContent -Encoding utf8
+
+$vmPath = Join-Path $rootDir "src/FDownloader.App/ViewModels/MainViewModel.cs"
+if (Test-Path $vmPath) {
+    $vmContent = Get-Content $vmPath -Raw -Encoding utf8
+    $vmContent = $vmContent -replace 'public const string TargetExtensionVersion = "[^"]+";', "public const string TargetExtensionVersion = `"$targetVer`";"
+    Set-Content $vmPath -Value $vmContent -Encoding utf8
+}
 
 $coreContent = Get-Content $coreCsprojPath -Raw -Encoding utf8
 $coreContent = $coreContent -replace '<Version>[^<]+</Version>', "<Version>$targetVer</Version>"

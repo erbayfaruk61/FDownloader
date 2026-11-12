@@ -61,7 +61,7 @@
 
 ---
 
-## 🚀 Öne Çıkan Özellikler (v2.0.5)
+## 🚀 Öne Çıkan Özellikler (v2.0.8)
 
 * ⚡ **Çok Kanallı & Parçalı Hızlı İndirme:** Dinamik parçalı motor, tam bant genişliği kullanımı ve kayıpsız indirme devam ettirme (Lossless Resume).
 * 🌊 **BitTorrent & Magnet Desteği:** Magnet linkleri ve `.torrent` dosyaları, sıralı indirme (Streaming modu), ön izlemeli dosya seçimi ve gelişmiş Seeding (0.50x paylaşım oranı ve tek tıkla durdurma) kontrolleri.
@@ -122,5 +122,6 @@ FDownloader aşağıdaki açık kaynak teknolojiler ve projeler üzerine inşa e
 ## 📄 Lisans
 
 Bu proje [MIT Lisansı](LICENSE) kapsamında geliştirilmektedir.
+
 
 
