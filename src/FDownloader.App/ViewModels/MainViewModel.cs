@@ -2771,10 +2771,15 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
     [ObservableProperty] private string _extensionStatusBadgeForeground = "#CBD5E1";
-
-
-
     [ObservableProperty] private string _extensionStatusBadgeToolTip = "FDownloader yerel köprüsü (127.0.0.1:9666) hazır ve dinliyor. Tarayıcınızı açtığınızda eklenti otomatik bağlanacaktır.";
+
+    // Üst Başlık Eklenti Rozeti (v2.0.5 sağı)
+    [ObservableProperty] private string _headerExtensionVersionText = "v2.0.5";
+    [ObservableProperty] private string _headerExtensionBadgeBackground = "#15F59E0B";
+    [ObservableProperty] private string _headerExtensionBadgeForeground = "#F59E0B";
+    [ObservableProperty] private string _headerExtensionBadgeBorder = "#30F59E0B";
+    [ObservableProperty] private string _headerExtensionBadgeTooltip = "Tarayıcı Eklentisi: v2.0.5 (Tıklayarak arka planda yenileyebilirsiniz)";
+    private bool _extensionBlinkState = false;
 
 
 
@@ -11601,45 +11606,23 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
         ExpectedExtensionVersion = targetVersion;
-
-
+        HeaderExtensionVersionText = $"v{targetVersion.TrimStart('v')}";
 
         if (!isAlive)
-
-
-
         {
-
-
-
             IsExtensionConnected = false;
-
-
-
             IsExtensionUpdateAvailable = false;
-
-
-
             ExtensionStatusBadgeText = Loc["Extension.Waiting"];
-
-
-
             ExtensionStatusBadgeBackground = ExtensionStatusColorWaiting;
-
-
-
             ExtensionStatusBadgeForeground = "#CBD5E1";
-
-
-
             ExtensionStatusBadgeToolTip = Loc["Extension.WaitingTooltip"];
 
-
-
+            // Tarayıcı bağlı değilse turuncu stabil dursun
+            HeaderExtensionBadgeBackground = "#18F59E0B";
+            HeaderExtensionBadgeForeground = "#F59E0B";
+            HeaderExtensionBadgeBorder = "#40F59E0B";
+            HeaderExtensionBadgeTooltip = $"FDownloader Eklentisi: v{targetVersion} (Tarayıcı bekleniyor - Tıklayarak eklentiyi yenileyin)";
             return;
-
-
-
         }
 
 
@@ -11673,30 +11656,38 @@ public partial class MainViewModel : ViewModelBase, IDisposable
             ExtensionStatusBadgeBackground = ExtensionStatusColorActive;
             ExtensionStatusBadgeForeground = "#FFFFFF";
             ExtensionStatusBadgeToolTip = Loc.Get("Extension.ConnectedTooltip", targetVersion);
+
+            // Sürüm eski: Kırmızı yanıp sönme efekti (Blink)
+            _extensionBlinkState = !_extensionBlinkState;
+            if (_extensionBlinkState)
+            {
+                HeaderExtensionBadgeBackground = "#EF4444";
+                HeaderExtensionBadgeForeground = "#FFFFFF";
+                HeaderExtensionBadgeBorder = "#EF4444";
+            }
+            else
+            {
+                HeaderExtensionBadgeBackground = "#20EF4444";
+                HeaderExtensionBadgeForeground = "#EF4444";
+                HeaderExtensionBadgeBorder = "#60EF4444";
+            }
+            HeaderExtensionBadgeTooltip = $"⚠️ Eklenti Sürümü Eski! (Kurulu: v{version}, Güncel: v{targetVersion}) - Tıklayarak anında güncelleyin";
         }
         else
         {
             IsExtensionUpdateAvailable = false;
             IsExtensionUpdateRequiredModalOpen = false;
 
-
-
             ExtensionStatusBadgeText = Loc.Get("Extension.Connected", version);
-
-
-
             ExtensionStatusBadgeBackground = ExtensionStatusColorActive;
-
-
-
             ExtensionStatusBadgeForeground = "#FFFFFF";
-
-
-
             ExtensionStatusBadgeToolTip = Loc.Get("Extension.ConnectedTooltip", version);
 
-
-
+            // Eklenti güncel ve bağlı: Şık turuncu sabit rozet
+            HeaderExtensionBadgeBackground = "#18F59E0B";
+            HeaderExtensionBadgeForeground = "#F59E0B";
+            HeaderExtensionBadgeBorder = "#40F59E0B";
+            HeaderExtensionBadgeTooltip = $"FDownloader Eklentisi: v{version} (Bağlı & Güncel - Tıklayarak arka planda yenileyebilirsiniz)";
         }
 
 
@@ -11710,7 +11701,21 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
     [RelayCommand]
+    public void ClickHeaderExtensionBadge()
+    {
+        var targetVersion = GetExpectedExtensionVersion();
+        BrowserBridgeService.RequestExtensionReload();
+        UpdateExtensionStatus();
 
+        ShowNotification(
+            "🔄 Eklenti Güncellemesi",
+            $"Tarayıcı eklentisi (v{targetVersion}) arka planda başarıyla yenilendi ve güncellendi.",
+            null,
+            "⚡",
+            CompletionSound.Notify);
+    }
+
+    [RelayCommand]
     public void OpenFirstRunWizard()
 
     {

@@ -122,3 +122,4 @@ FDownloader aşağıdaki açık kaynak teknolojiler ve projeler üzerine inşa e
 ## 📄 Lisans
 
 Bu proje [MIT Lisansı](LICENSE) kapsamında geliştirilmektedir.
+

@@ -114,12 +114,29 @@
                             <Image Source="/Assets/logo.png" Width="34" Height="34" Stretch="UniformToFill" />
                         </Border>
 
-                        <!-- Uygulama Adı & Versiyon -->
-                        <StackPanel VerticalAlignment="Center" Spacing="1" Margin="2,0,4,0">
+                        <!-- Uygulama Adı & Versiyonlar -->
+                        <StackPanel VerticalAlignment="Center" Spacing="2" Margin="2,0,4,0">
                             <TextBlock Text="FDownloader" FontWeight="Bold" FontSize="13" Foreground="{Binding ThemeForeground}" />
-                            <Border Background="#1538BDF8" CornerRadius="3" Padding="4,1" HorizontalAlignment="Left">
-                                <TextBlock Text="{Binding AppVersionText}" FontSize="10" FontWeight="SemiBold" Foreground="#38BDF8" />
-                            </Border>
+                            <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Left">
+                                <!-- Program Versiyonu (Mavi) -->
+                                <Border Background="#1538BDF8" CornerRadius="3" Padding="4,1" ToolTip.Tip="FDownloader Masaüstü Uygulaması Sürümü">
+                                    <TextBlock Text="{Binding AppVersionText}" FontSize="10" FontWeight="SemiBold" Foreground="#38BDF8" />
+                                </Border>
+                                <!-- Eklenti Versiyonu (Turuncu / Eski ise Kırmızı Yanıp Sönen Rozet) -->
+                                <Button Command="{Binding ClickHeaderExtensionBadgeCommand}"
+                                        Background="{Binding HeaderExtensionBadgeBackground}"
+                                        BorderBrush="{Binding HeaderExtensionBadgeBorder}"
+                                        BorderThickness="1"
+                                        CornerRadius="3"
+                                        Padding="4,1"
+                                        Cursor="Hand"
+                                        ToolTip.Tip="{Binding HeaderExtensionBadgeTooltip}">
+                                    <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                                        <TextBlock Text="🧩" FontSize="9" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding HeaderExtensionVersionText}" FontSize="10" FontWeight="SemiBold" Foreground="{Binding HeaderExtensionBadgeForeground}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
                         </StackPanel>
 
                         <!-- Yeni Sürüm Butonu (Yeni sürüm algılandığında üstte belirir) -->
