@@ -11617,11 +11617,11 @@ public partial class MainViewModel : ViewModelBase, IDisposable
             ExtensionStatusBadgeForeground = "#CBD5E1";
             ExtensionStatusBadgeToolTip = Loc["Extension.WaitingTooltip"];
 
-            // Tarayıcı bağlı değilse turuncu stabil dursun
+            // Tarayıcı eklentisi hiç bağlı değil / kurulu değil
             HeaderExtensionBadgeBackground = "#18F59E0B";
             HeaderExtensionBadgeForeground = "#F59E0B";
             HeaderExtensionBadgeBorder = "#40F59E0B";
-            HeaderExtensionBadgeTooltip = $"FDownloader Eklentisi: v{targetVersion} (Tarayıcı bekleniyor - Tıklayarak eklentiyi yenileyin)";
+            HeaderExtensionBadgeTooltip = $"Tarayıcı eklentisi henüz bağlı değil (Hedef Sürüm: v{targetVersion}) - Tıklayarak kurulum rehberini açın";
             return;
         }
 
@@ -11704,15 +11704,46 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     public void ClickHeaderExtensionBadge()
     {
         var targetVersion = GetExpectedExtensionVersion();
+        var now = DateTime.UtcNow;
+        var isAlive = _lastExtensionHeartbeat.HasValue &&
+                      (now - _lastExtensionHeartbeat.Value).TotalSeconds <= ExtensionHeartbeatTimeoutSeconds;
+
+        if (!isAlive)
+        {
+            // Eklenti tarayıcıda henüz kurulu veya aktif değil!
+            ShowNotification(
+                "🧩 Eklenti Henüz Bağlı Değil",
+                $"Tarayıcınızda kurulu FDownloader eklentisi algılanamadı. Kurulum adımlarını tamamlayabilmeniz için Tarayıcı Ayarları açılıyor...",
+                null,
+                "⚠️",
+                CompletionSound.Notify);
+
+            OpenExtensionSetup();
+            return;
+        }
+
+        var version = string.IsNullOrWhiteSpace(ConnectedExtensionVersion) ? TargetExtensionVersion : ConnectedExtensionVersion.Trim();
         BrowserBridgeService.RequestExtensionReload();
         UpdateExtensionStatus();
 
-        ShowNotification(
-            "🔄 Eklenti Güncellemesi",
-            $"Tarayıcı eklentisi (v{targetVersion}) arka planda başarıyla yenilendi ve güncellendi.",
-            null,
-            "⚡",
-            CompletionSound.Notify);
+        if (IsVersionOlder(version, targetVersion))
+        {
+            ShowNotification(
+                "⚡ Eklenti Güncellendi",
+                $"Eski sürüm (v{version}) tespit edildi ve eklenti v{targetVersion} sürümüne arka planda yenilendi.",
+                null,
+                "🔄",
+                CompletionSound.Notify);
+        }
+        else
+        {
+            ShowNotification(
+                "✓ Eklenti Zaten Güncel",
+                $"Tarayıcı eklentiniz (v{version}) en son sürümde çalışıyor ve bağlantısı tazelendi.",
+                null,
+                "✓",
+                CompletionSound.Notify);
+        }
     }
 
     [RelayCommand]
