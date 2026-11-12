@@ -554,6 +554,11 @@
                                                         <TextBlock Text="🔍" VerticalAlignment="Center" />
                                                     </MenuItem.Icon>
                                                 </MenuItem>
+                                                <MenuItem Header="Göndermeyi (Seed) Durdur" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).StopTorrentSeedingCommand}" CommandParameter="{Binding}" IsVisible="{Binding IsTorrentSeeding}">
+                                                    <MenuItem.Icon>
+                                                        <TextBlock Text="⏹" Foreground="#F59E0B" FontWeight="Bold" VerticalAlignment="Center" />
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
                                                 <Separator IsVisible="{Binding IsTorrent}" />
                                                 <MenuItem Header="Bağlantıyı Kopyala" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).CopyUrlCommand}" CommandParameter="{Binding}">
                                                     <MenuItem.Icon>
@@ -1170,6 +1175,21 @@
                                 </StackPanel>
                             </StackPanel>
 
+                            <!-- Kalite / Çözünürlük Seçimi -->
+                            <StackPanel Spacing="4" Margin="0,4,0,0">
+                                <TextBlock Text="Çözünürlük / Kalite Seçimi (4K, 1080p, 720p vb.):" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource SystemBaseHighColor}" />
+                                <ComboBox ItemsSource="{Binding AddDialogQualityOptions}" 
+                                          SelectedItem="{Binding AddDialogSelectedQuality}" 
+                                          HorizontalAlignment="Stretch" 
+                                          Height="34">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding DisplayText}" VerticalAlignment="Center" FontSize="12" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+
                             <!-- Playlist / Çalma Listesi Seçeneği -->
                             <Border Background="{Binding ThemeCardBg}" CornerRadius="6" Padding="10" IsVisible="{Binding AddDialogIsPlaylistDetected}" BorderBrush="#3B82F6" BorderThickness="1.5">
                                 <StackPanel Spacing="6">
@@ -1252,6 +1272,26 @@
                             <!-- Yetersiz Disk Alanı Uyarısı -->
                             <Border Background="#25EF4444" BorderBrush="#EF4444" BorderThickness="1" CornerRadius="6" Padding="8,6" IsVisible="{Binding AddDialogHasDiskWarning}">
                                 <TextBlock Text="{Binding AddDialogDiskWarningText}" Foreground="#F87171" FontWeight="Bold" FontSize="11" TextWrapping="Wrap" />
+                            </Border>
+
+                            <!-- Torrent Paylaşım (Seeding) Kuralı -->
+                            <Border Background="{Binding ThemeCardBg}" CornerRadius="6" Padding="10" BorderBrush="{DynamicResource SystemBaseLowColor}" BorderThickness="1">
+                                <StackPanel Spacing="6">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock Text="🌊" VerticalAlignment="Center" />
+                                        <TextBlock Text="Paylaşım (Seeding) Ayarı:" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                    
+                                    <CheckBox IsChecked="{Binding AddDialogStopSeedingImmediately}" 
+                                              Content="İndirme tamamlandığında göndermeyi hemen durdur (0 Seed)" 
+                                              FontSize="11" />
+
+                                    <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding !AddDialogStopSeedingImmediately}" Margin="4,2,0,0">
+                                        <TextBlock Text="Hedef Paylaşım Oranı (Ratio):" VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                        <TextBox Text="{Binding AddDialogSeedRatioLimit}" Width="65" Height="28" VerticalContentAlignment="Center" FontSize="11" />
+                                        <TextBlock Text="(Örn: 0.50, 1.00 veya 2.00 katı)" VerticalAlignment="Center" FontSize="10" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                    </StackPanel>
+                                </StackPanel>
                             </Border>
 
                             <TextBlock Text="* BitTorrent modülü geliştirme (Beta) aşamasındadır. Seçili olmayan dosyalar indirilmeyecektir. Hiçbiri seçilmezse tümü indirilir." FontSize="10" Foreground="{Binding ThemeTextSecondary}" />
@@ -1661,7 +1701,7 @@
                                             <StackPanel Orientation="Horizontal" Spacing="8" Margin="6,4,0,2">
                                                 <CheckBox IsChecked="{Binding TorrentStopSeedingWhenRatioReached}" Content="{Binding Loc[Settings.TorrentStopSeeding], FallbackValue='Paylaşım Oranına Ulaşılınca Göndermeyi Durdur:'}" VerticalAlignment="Center" FontSize="12" />
                                                 <TextBox Text="{Binding TorrentSeedRatioLimit}" Width="60" Height="28" VerticalContentAlignment="Center" IsEnabled="{Binding TorrentStopSeedingWhenRatioReached}" />
-                                                <TextBlock Text="(Örn: 1.00 veya 2.00 katı)" VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
+                                                <TextBlock Text="(Örn: 0.50, 1.00 veya 2.00 katı)" VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource SystemBaseMediumColor}" />
                                             </StackPanel>
                                         </StackPanel>
                                     </Border>

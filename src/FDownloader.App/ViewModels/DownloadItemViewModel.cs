@@ -66,6 +66,16 @@ public partial class DownloadItemViewModel : ViewModelBase
 
     [ObservableProperty] private bool _isSequentialDownload;
 
+    [ObservableProperty] private bool _isSeeding;
+
+    partial void OnIsSeedingChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsTorrentSeeding));
+        OnPropertyChanged(nameof(StatusDisplay));
+    }
+
+    public bool IsTorrentSeeding => IsTorrent && (IsSeeding || (Status == DownloadStatus.Completed && UploadSpeedBytesPerSecond > 0));
+
 
 
     public int ConsecutiveZeroSpeedCount { get; set; }
@@ -302,6 +312,11 @@ public partial class DownloadItemViewModel : ViewModelBase
 
                 return Loc["Common.SearchingMeta"];
 
+            }
+
+            if (IsTorrent && (IsSeeding || (Status == DownloadStatus.Completed && UploadSpeedBytesPerSecond > 0)))
+            {
+                return "Gönderiliyor (Seed)";
             }
 
             return Status switch

@@ -472,7 +472,8 @@ public sealed class DownloadManager : IAsyncDisposable
         bool isAudioOnlyMp3 = false,
         bool isPlaylist = false,
         string? title = null,
-        bool startImmediately = true)
+        bool startImmediately = true,
+        string? formatSpecifier = null)
     {
         saveDirectory ??= Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
 
@@ -488,7 +489,8 @@ public sealed class DownloadManager : IAsyncDisposable
             SaveDirectory = saveDirectory,
             Category = isAudioOnlyMp3 ? DownloadCategory.Music : DownloadCategory.Video,
             Status = DownloadStatus.Queued,
-            CreatedAt = DateTimeOffset.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
+            FormatSpecifier = formatSpecifier
         };
 
         _repository.AddTask(task);
@@ -515,7 +517,7 @@ public sealed class DownloadManager : IAsyncDisposable
             {
                 try
                 {
-                    await _mediaService.DownloadMediaAsync(task.Id, url, saveDirectory, isAudioOnlyMp3, isPlaylist, task.Name, cts.Token);
+                    await _mediaService.DownloadMediaAsync(task.Id, url, saveDirectory, isAudioOnlyMp3, isPlaylist, task.Name, task.FormatSpecifier, cts.Token);
                 }
                 catch (Exception ex)
                 {
@@ -615,7 +617,7 @@ public sealed class DownloadManager : IAsyncDisposable
             {
                 try
                 {
-                    await _mediaService.DownloadMediaAsync(task.Id, task.OriginalUrl, task.SaveDirectory, isAudioOnly, isPlaylist, task.Name, cts.Token);
+                    await _mediaService.DownloadMediaAsync(task.Id, task.OriginalUrl, task.SaveDirectory, isAudioOnly, isPlaylist, task.Name, task.FormatSpecifier, cts.Token);
                 }
                 catch (Exception ex)
                 {
@@ -1129,6 +1131,9 @@ public sealed class DownloadManager : IAsyncDisposable
         string? referrer = null,
         string? userAgent = null)
         => _torrentService.InspectTorrentFilesAsync(sourceUrlOrPath, cookies, referrer, userAgent);
+
+    public Task StopTorrentSeedingAsync(long taskId)
+        => _torrentService.StopSeedingAsync(taskId);
 
     public Task CleanUnattachedTorrentManagersAsync()
         => _torrentService.CleanUnattachedManagersAsync();

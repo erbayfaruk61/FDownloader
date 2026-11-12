@@ -31,12 +31,12 @@ public sealed class DownloadRepository
                 (Name, OriginalUrl, FinalUrl, FileName, SaveDirectory, TempFilePath,
                  TotalBytes, DownloadedBytes, Category, Status, RetryCount,
                  SegmentCount, SupportsRange, SpeedLimitBytesPerSec, Priority,
-                 ETag, LastModified, Referer, UserAgent, Cookies, CreatedAt)
+                 ETag, LastModified, Referer, UserAgent, Cookies, CreatedAt, FormatSpecifier)
             VALUES
                 (@Name, @OriginalUrl, @FinalUrl, @FileName, @SaveDirectory, @TempFilePath,
                  @TotalBytes, @DownloadedBytes, @Category, @Status, @RetryCount,
                  @SegmentCount, @SupportsRange, @SpeedLimit, @Priority,
-                 @ETag, @LastModified, @Referer, @UserAgent, @Cookies, @CreatedAt);
+                 @ETag, @LastModified, @Referer, @UserAgent, @Cookies, @CreatedAt, @FormatSpecifier);
             SELECT last_insert_rowid();";
 
         BindTask(cmd, task);
@@ -277,6 +277,16 @@ public sealed class DownloadRepository
             CreatedAt = DateTimeOffset.Parse(r.GetString(r.GetOrdinal("CreatedAt")))
         };
 
+        try
+        {
+            var fmtOrd = r.GetOrdinal("FormatSpecifier");
+            if (fmtOrd >= 0 && !r.IsDBNull(fmtOrd))
+            {
+                task.FormatSpecifier = r.GetString(fmtOrd);
+            }
+        }
+        catch { }
+
         task.SetStatusDirect((DownloadStatus)r.GetInt32(r.GetOrdinal("Status")));
         return task;
     }
@@ -323,6 +333,7 @@ public sealed class DownloadRepository
         cmd.Parameters.AddWithValue("@UserAgent", (object?)task.UserAgent ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@Cookies", (object?)protectedCookies ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@CreatedAt", task.CreatedAt.ToString("O"));
+        cmd.Parameters.AddWithValue("@FormatSpecifier", (object?)task.FormatSpecifier ?? DBNull.Value);
     }
 
     public string? GetSetting(string key)

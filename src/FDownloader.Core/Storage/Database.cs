@@ -106,7 +106,8 @@ public sealed class Database : IDisposable
                 Cookies                 TEXT,
                 CreatedAt               TEXT NOT NULL,
                 StartedAt               TEXT,
-                CompletedAt             TEXT
+                CompletedAt             TEXT,
+                FormatSpecifier         TEXT
             );
         ");
 
@@ -135,6 +136,13 @@ public sealed class Database : IDisposable
         // İndeksler
         ExecuteNonQuery("CREATE INDEX IF NOT EXISTS idx_tasks_status ON DownloadTasks(Status);");
         ExecuteNonQuery("CREATE INDEX IF NOT EXISTS idx_segments_taskid ON Segments(TaskId);");
+
+        // Geriye dönük uyumluluk: FormatSpecifier sütununu kontrol et / ekle
+        try
+        {
+            ExecuteNonQuery("ALTER TABLE DownloadTasks ADD COLUMN FormatSpecifier TEXT;");
+        }
+        catch { }
 
         SetSchemaVersion(1);
         _logger.LogInformation("Şema V1 oluşturuldu.");

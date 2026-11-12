@@ -1359,14 +1359,26 @@ public sealed class TorrentService : IAsyncDisposable
                         }
 
                         var ratio = (manager.Torrent?.Size > 0) ? (double)manager.Monitor.DataBytesSent / manager.Torrent.Size : 0;
-                        if (_settings.StopSeedingWhenRatioReached && _settings.SeedRatioLimit > 0 && ratio >= _settings.SeedRatioLimit && manager.State == TorrentState.Seeding)
+                        if (manager.State == TorrentState.Seeding)
                         {
-                            try
+                            if (_settings.StopSeedingImmediately)
                             {
-                                await manager.PauseAsync();
-                                _logger.LogInformation("Torrent #{TaskId} hedeflenen paylaşım oranına ulaştığı için durduruldu: {Ratio:F2}", taskId, ratio);
+                                try
+                                {
+                                    await manager.PauseAsync();
+                                    _logger.LogInformation("Torrent #{TaskId} indirme tamamlandığı için (0 Seed kuralı) anında durduruldu.", taskId);
+                                }
+                                catch { }
                             }
-                            catch { }
+                            else if (_settings.StopSeedingWhenRatioReached && _settings.SeedRatioLimit > 0 && ratio >= _settings.SeedRatioLimit)
+                            {
+                                try
+                                {
+                                    await manager.PauseAsync();
+                                    _logger.LogInformation("Torrent #{TaskId} hedeflenen paylaşım oranına ({TargetRatio:F2}) ulaştığı için durduruldu: {Ratio:F2}", taskId, _settings.SeedRatioLimit, ratio);
+                                }
+                                catch { }
+                            }
                         }
 
                         string finalTorrentPath = manager.SavePath;
@@ -1431,6 +1443,31 @@ public sealed class TorrentService : IAsyncDisposable
         catch { }
 
         return details;
+    }
+
+    /// <summary>
+    /// Seeding durumundaki bir torrentin gönderme işlemini anında sonlandırır ve durdurur.
+    /// </summary>
+    public async Task StopSeedingAsync(long taskId)
+    {
+        TorrentManager? manager = null;
+        lock (_activeManagers)
+        {
+            _activeManagers.TryGetValue(taskId, out manager);
+        }
+
+        if (manager != null)
+        {
+            try
+            {
+                await manager.PauseAsync();
+                _logger.LogInformation("Torrent #{TaskId} kullanıcı isteğiyle Seeding modundan çıkartılarak durduruldu.", taskId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Torrent #{TaskId} seeding durdurulurken hata oluştu.", taskId);
+            }
+        }
     }
 
     private long _currentDlLimit;

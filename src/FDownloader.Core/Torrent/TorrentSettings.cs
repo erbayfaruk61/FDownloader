@@ -9,7 +9,7 @@ public sealed class TorrentSettings
     public const int DefaultPort = 55123;
     public const int DefaultMaxConnections = 200;
     public const int DefaultMaxConnectionsPerTorrent = 60;
-    public const double DefaultSeedRatio = 1.0;
+    public const double DefaultSeedRatio = 0.50;
 
     /// <summary>Gelen bağlantılar için dinleme portu (varsayılan: 55123).</summary>
     public int ListeningPort { get; set; } = DefaultPort;
@@ -48,6 +48,9 @@ public sealed class TorrentSettings
 
     /// <summary>Hedef paylaşım oranı (Ratio). 0 ise sınır yok.</summary>
     public double SeedRatioLimit { get; set; } = DefaultSeedRatio;
+
+    /// <summary>İndirme biter bitmez gönderme yapmadan (0 Seed) hemen durdur.</summary>
+    public bool StopSeedingImmediately { get; set; } = false;
 
     /// <summary>Hedef paylaşım oranına ulaşıldığında göndermeyi (seed) otomatik durdur.</summary>
     public bool StopSeedingWhenRatioReached { get; set; }

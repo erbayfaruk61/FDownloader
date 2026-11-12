@@ -424,10 +424,15 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
     [ObservableProperty] private bool _addDialogIsMp3 = true; // Varsayılan MP3
-
-
-
     [ObservableProperty] private bool _addDialogIsMp4 = false;
+
+    // Video ve Ses Kalite/Çözünürlük Seçenekleri (4K, 1440p, 1080p, 720p, 480p, 360p, 320k)
+    [ObservableProperty] private ObservableCollection<MediaQualityOption> _addDialogQualityOptions = new();
+    [ObservableProperty] private MediaQualityOption? _addDialogSelectedQuality;
+
+    // Torrent Seeding Seçenekleri (Ekle Diyaloğu)
+    [ObservableProperty] private bool _addDialogStopSeedingImmediately = false;
+    [ObservableProperty] private double _addDialogSeedRatioLimit = 0.50;
 
 
 
@@ -4291,6 +4296,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
                             item.UploadSpeedBytesPerSecond = details.UploadSpeed;
+                            item.IsSeeding = details.State.Contains("Seed", StringComparison.OrdinalIgnoreCase);
 
 
 
@@ -6185,44 +6191,111 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
     partial void OnAddDialogIsMp3Changed(bool value)
-
-
-
     {
-
-
-
         if (value && AddDialogIsMp4) AddDialogIsMp4 = false;
-
-
-
         else if (!value && !AddDialogIsMp4) AddDialogIsMp4 = true;
-
-
-
+        RefreshAddDialogQualityOptions(_lastDetectedMediaInfo);
     }
-
-
 
     partial void OnAddDialogIsMp4Changed(bool value)
-
-
-
     {
-
-
-
         if (value && AddDialogIsMp3) AddDialogIsMp3 = false;
-
-
-
         else if (!value && !AddDialogIsMp3) AddDialogIsMp3 = true;
-
-
-
+        RefreshAddDialogQualityOptions(_lastDetectedMediaInfo);
     }
 
+    private FDownloader.Core.Video.MediaMetadata? _lastDetectedMediaInfo;
 
+    public void RefreshAddDialogQualityOptions(FDownloader.Core.Video.MediaMetadata? info = null)
+    {
+        _lastDetectedMediaInfo = info ?? _lastDetectedMediaInfo;
+        AddDialogQualityOptions.Clear();
+
+        if (AddDialogIsMp4)
+        {
+            var availableHeights = _lastDetectedMediaInfo?.Formats?
+                .Where(f => f.Height.HasValue && f.Height.Value > 0)
+                .Select(f => f.Height!.Value)
+                .Distinct()
+                .OrderByDescending(h => h)
+                .ToList() ?? new List<int>();
+
+            var standardResolutions = new (int Height, string Label)[]
+            {
+                (2160, "🎬 4K Ultra HD (2160p)"),
+                (1440, "🎬 2K Quad HD (1440p)"),
+                (1080, "🎬 Full HD (1080p)"),
+                (720, "🎬 HD (720p)"),
+                (480, "🎬 SD (480p)"),
+                (360, "🎬 Düşük (360p)")
+            };
+
+            AddDialogQualityOptions.Add(new FDownloader.Core.Video.MediaQualityOption
+            {
+                DisplayText = "🌟 En Yüksek Kalite (Otomatik)",
+                FormatSpecifier = "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best[ext=mp4]/best",
+                Height = availableHeights.Count > 0 ? availableHeights[0] : 1080,
+                IsAudioOnly = false
+            });
+
+            foreach (var (h, label) in standardResolutions)
+            {
+                if (availableHeights.Count > 0 && h > availableHeights.Max())
+                {
+                    continue;
+                }
+
+                var fmt = _lastDetectedMediaInfo?.Formats?.FirstOrDefault(f => f.Height == h);
+                var sizeText = (fmt?.FileSize.HasValue == true && fmt.FileSize.Value > 0)
+                    ? $" (~{SpeedCalculator.FormatBytes(fmt.FileSize.Value)})"
+                    : "";
+
+                AddDialogQualityOptions.Add(new FDownloader.Core.Video.MediaQualityOption
+                {
+                    DisplayText = $"{label}{sizeText}",
+                    FormatSpecifier = $"bestvideo[height<={h}][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<={h}]+bestaudio/best[height<={h}]/best",
+                    Height = h,
+                    FileSizeBytes = fmt?.FileSize,
+                    IsAudioOnly = false
+                });
+            }
+        }
+        else
+        {
+            AddDialogQualityOptions.Add(new FDownloader.Core.Video.MediaQualityOption
+            {
+                DisplayText = "🎵 MP3 En Yüksek Kalite (320 kbps)",
+                FormatSpecifier = "-x --audio-format mp3 --audio-quality 0 --embed-metadata",
+                IsAudioOnly = true
+            });
+            AddDialogQualityOptions.Add(new FDownloader.Core.Video.MediaQualityOption
+            {
+                DisplayText = "🎵 MP3 Yüksek Kalite (256 kbps)",
+                FormatSpecifier = "-x --audio-format mp3 --audio-quality 2 --embed-metadata",
+                IsAudioOnly = true
+            });
+            AddDialogQualityOptions.Add(new FDownloader.Core.Video.MediaQualityOption
+            {
+                DisplayText = "🎵 MP3 Standart (192 kbps)",
+                FormatSpecifier = "-x --audio-format mp3 --audio-quality 4 --embed-metadata",
+                IsAudioOnly = true
+            });
+            AddDialogQualityOptions.Add(new FDownloader.Core.Video.MediaQualityOption
+            {
+                DisplayText = "🎵 MP3 Hızlı / Düşük Boyut (128 kbps)",
+                FormatSpecifier = "-x --audio-format mp3 --audio-quality 5 --embed-metadata",
+                IsAudioOnly = true
+            });
+            AddDialogQualityOptions.Add(new FDownloader.Core.Video.MediaQualityOption
+            {
+                DisplayText = "🎵 M4A / AAC (Orijinal Kayıpsız Akış)",
+                FormatSpecifier = "-x --audio-format m4a --embed-metadata",
+                IsAudioOnly = true
+            });
+        }
+
+        AddDialogSelectedQuality = AddDialogQualityOptions.FirstOrDefault();
+    }
 
     partial void OnAddDialogDownloadSingleOnlyChanged(bool value)
 
@@ -10227,9 +10300,19 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
         target.IsSequentialDownload = newState;
+    }
 
+    [RelayCommand]
+    public async Task StopTorrentSeeding(DownloadItemViewModel? item)
+    {
+        var target = item ?? SelectedDownload;
+        if (target == null) return;
 
-
+        await _downloadManager.StopTorrentSeedingAsync(target.Id);
+        target.IsSeeding = false;
+        target.UploadSpeedBytesPerSecond = 0;
+        target.Status = DownloadStatus.Completed;
+        ShowNotification("🌊 BitTorrent", $"'{target.FileName}' için gönderme (seeding) durduruldu.", null, "⏹️", CompletionSound.Notify);
     }
 
 
@@ -12183,6 +12266,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
                 AddDialogStatusText = $"{info.Title} ({info.Duration:mm\\:ss})";
+                RefreshAddDialogQualityOptions(info);
 
 
 
@@ -12203,6 +12287,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
                 AddDialogStatusText = "Medya algılandı. MP4 veya MP3 formatı seçebilirsiniz.";
+                RefreshAddDialogQualityOptions(null);
 
 
 
@@ -12450,7 +12535,10 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-                TorrentFiles = AddDialogTorrentFiles.Select(f => new TorrentFileSelection { Index = f.Index, IsSelected = f.IsSelected }).ToList()
+                TorrentFiles = AddDialogTorrentFiles.Select(f => new TorrentFileSelection { Index = f.Index, IsSelected = f.IsSelected }).ToList(),
+                FormatSpecifier = AddDialogSelectedQuality?.FormatSpecifier,
+                StopSeedingImmediately = AddDialogStopSeedingImmediately,
+                SeedRatioLimit = AddDialogSeedRatioLimit
 
 
 
@@ -13541,10 +13629,8 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
                     title: req.FileName,
-
-
-
-                    startImmediately: true);
+                    startImmediately: true,
+                    formatSpecifier: req.FormatSpecifier);
 
 
 
@@ -15179,6 +15265,9 @@ public sealed class PendingDownloadRequest
 
 
     public List<TorrentFileSelection>? TorrentFiles { get; set; }
+    public string? FormatSpecifier { get; set; }
+    public bool StopSeedingImmediately { get; set; }
+    public double? SeedRatioLimit { get; set; }
 
 
 

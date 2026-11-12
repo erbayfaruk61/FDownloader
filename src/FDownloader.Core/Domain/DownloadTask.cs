@@ -92,6 +92,9 @@ public class DownloadTask
     /// <summary>Öncelik sırası (düşük sayı = yüksek öncelik).</summary>
     public int Priority { get; set; } = 100;
 
+    /// <summary>Video veya ses için seçilen özel format veya kalite belirteci (Örn: bestvideo[height<=1080]+bestaudio).</summary>
+    public string? FormatSpecifier { get; set; }
+
     // ─── HTTP Meta Bilgileri ──────────────────────────────────────────────
 
     /// <summary>Sunucudan gelen ETag değeri (devam etme doğrulaması için).</summary>
