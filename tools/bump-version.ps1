@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     FDownloader Sürüm Güncelleme ve Dağıtım Eşitleme Aracı
 .DESCRIPTION

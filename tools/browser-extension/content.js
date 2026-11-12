@@ -351,16 +351,7 @@
 
     const isFacebook = host.includes("facebook.com") || host.includes("fb.watch");
     if (isFacebook) {
-      // 1. Doğrudan video elementi src veya currentSrc fbcdn / mp4 URL'si içeriyorsa
-      const src = video.currentSrc || video.src || "";
-      if (src && !src.startsWith("blob:") && !src.startsWith("data:")) {
-        return {
-          url: src,
-          filename: document.title ? document.title.replace(/\s*\|\s*Facebook$/i, "").trim() + ".mp4" : "Facebook Video.mp4"
-        };
-      }
-
-      // 2. Feed veya kart üzerindeki kalıcı Reel / Watch / Post video URL'sini bul
+      // 1. Feed veya kart üzerindeki kalıcı Reel / Watch / Post video URL'sini bul (yt-dlp için en stabil ve kopmayan yöntem)
       let postLink = null;
       try {
         const container = video.closest("div[role='feed'], div[role='article'], div[data-pagelet], div[aria-label*='Video'], div.x1y1aw1k, [data-video-id], div[data-nosnippet]") || video.parentElement;
@@ -382,7 +373,7 @@
         }
       } catch (e) { }
 
-      // 3. Sayfa URL'sinin kendisi geçerli bir video/reel sayfası mı? (Hashtag/Search hariç)
+      // 2. Sayfa URL'sinin kendisi geçerli bir video/reel sayfası mı? (Hashtag/Search hariç)
       const loc = window.location.href;
       const isWatchOrReelPage = (loc.includes("/reel/") || loc.includes("/watch/") || loc.includes("/videos/") || loc.includes("fb.watch")) &&
                                 !loc.includes("/hashtag/") && !loc.includes("/search/");
@@ -391,6 +382,15 @@
       if (bestMediaUrl) {
         return {
           url: bestMediaUrl,
+          filename: document.title ? document.title.replace(/\s*\|\s*Facebook$/i, "").trim() + ".mp4" : "Facebook Video.mp4"
+        };
+      }
+
+      // 3. Doğrudan video elementi src veya currentSrc fbcdn / mp4 URL'si içeriyorsa
+      const src = video.currentSrc || video.src || "";
+      if (src && !src.startsWith("blob:") && !src.startsWith("data:")) {
+        return {
+          url: src,
           filename: document.title ? document.title.replace(/\s*\|\s*Facebook$/i, "").trim() + ".mp4" : "Facebook Video.mp4"
         };
       }
@@ -409,7 +409,7 @@
         }
       } catch (_) { }
 
-      // 5. Son çare: Post linki veya mevcut konum
+      // 5. Son çare: Post linki veya mevcut sayfa URL'si
       return {
         url: postLink || window.location.href,
         filename: document.title ? document.title.replace(/\s*\|\s*Facebook$/i, "").trim() + ".mp4" : "Facebook Video.mp4"

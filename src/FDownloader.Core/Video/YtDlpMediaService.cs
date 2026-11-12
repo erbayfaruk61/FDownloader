@@ -201,6 +201,18 @@ public sealed class YtDlpMediaService : IDisposable
         list.Add("--extractor-args");
         list.Add("youtube:player_client=web,default,android");
 
+        // Ağ ve bağlantı kopmalarına karşı yüksek tolerans & otomatik yeniden deneme (Facebook, TikTok, CDN akışları)
+        list.Add("--retries");
+        list.Add("15");
+        list.Add("--fragment-retries");
+        list.Add("15");
+        list.Add("--socket-timeout");
+        list.Add("30");
+        list.Add("--file-access-retries");
+        list.Add("5");
+        list.Add("--user-agent");
+        list.Add("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36");
+
         return list;
     }
 
