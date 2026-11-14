@@ -57,9 +57,47 @@ public sealed class Database : IDisposable
         _logger.LogDebug("Şema versiyonu: {Version}", version);
 
         if (version < 1) ApplyMigration_V1();
+        if (version < 2) ApplyMigration_V2();
 
         // Gelecekteki migrationlar buraya eklenir:
-        // if (version < 2) ApplyMigration_V2();
+        // if (version < 3) ApplyMigration_V3();
+    }
+
+    private void ApplyMigration_V2()
+    {
+        _logger.LogInformation("Şema V2 uygulanıyor (FormatSpecifier)...");
+
+        try
+        {
+            // DownloadTasks tablosunda FormatSpecifier kolonu var mı kontrol et
+            bool columnExists = false;
+            using (var cmd = CreateCommand())
+            {
+                cmd.CommandText = "PRAGMA table_info(DownloadTasks);";
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    var colName = reader.GetString(reader.GetOrdinal("name"));
+                    if (string.Equals(colName, "FormatSpecifier", StringComparison.OrdinalIgnoreCase))
+                    {
+                        columnExists = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!columnExists)
+            {
+                ExecuteNonQuery("ALTER TABLE DownloadTasks ADD COLUMN FormatSpecifier TEXT;");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "FormatSpecifier sütunu eklenirken hata veya zaten mevcut.");
+        }
+
+        SetSchemaVersion(2);
+        _logger.LogInformation("Şema V2 başarıyla tamamlandı.");
     }
 
     private int GetSchemaVersion()
