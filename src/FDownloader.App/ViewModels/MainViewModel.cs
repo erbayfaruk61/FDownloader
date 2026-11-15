@@ -2749,7 +2749,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-    public const string TargetExtensionVersion = "2.0.10";
+    public const string TargetExtensionVersion = "2.0.11";
 
 
 
@@ -15366,6 +15366,7 @@ public class TempFileInfoItem : CommunityToolkit.Mvvm.ComponentModel.ObservableO
     public bool IsSelected { get => _isSelected; set => SetProperty(ref _isSelected, value); }
 
 }
+
 
 
 

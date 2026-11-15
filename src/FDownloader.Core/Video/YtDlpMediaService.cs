@@ -614,7 +614,18 @@ public sealed class YtDlpMediaService : IDisposable
             var title = FormatMediaTitle(author, rawTitle);
 
             var thumbnail = root.TryGetProperty("thumbnail", out var thumbProp) ? thumbProp.GetString() ?? "" : "";
-            var duration = root.TryGetProperty("duration", out var durProp) ? TimeSpan.FromSeconds(durProp.GetDouble()) : TimeSpan.Zero;
+            var duration = TimeSpan.Zero;
+            if (root.TryGetProperty("duration", out var durProp))
+            {
+                if (durProp.ValueKind == JsonValueKind.Number && durProp.TryGetDouble(out var durSec) && !double.IsNaN(durSec) && !double.IsInfinity(durSec) && durSec >= 0)
+                {
+                    duration = TimeSpan.FromSeconds(durSec);
+                }
+                else if (durProp.ValueKind == JsonValueKind.String && double.TryParse(durProp.GetString(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var parsedSec) && !double.IsNaN(parsedSec) && !double.IsInfinity(parsedSec) && parsedSec >= 0)
+                {
+                    duration = TimeSpan.FromSeconds(parsedSec);
+                }
+            }
 
             bool isPlaylist = url.Contains("list=", StringComparison.OrdinalIgnoreCase) ||
                               url.Contains("/playlist", StringComparison.OrdinalIgnoreCase);
@@ -629,9 +640,40 @@ public sealed class YtDlpMediaService : IDisposable
                     var ext = fmt.TryGetProperty("ext", out var fext) ? fext.GetString() ?? "" : "";
                     var vcodec = fmt.TryGetProperty("vcodec", out var fvc) ? fvc.GetString() : null;
                     var acodec = fmt.TryGetProperty("acodec", out var fac) ? fac.GetString() : null;
-                    var height = fmt.TryGetProperty("height", out var fh) && fh.ValueKind == JsonValueKind.Number ? fh.GetInt32() : (int?)null;
-                    var fps = fmt.TryGetProperty("fps", out var ffps) && ffps.ValueKind == JsonValueKind.Number ? ffps.GetInt32() : (int?)null;
-                    var fileSize = fmt.TryGetProperty("filesize", out var fsz) && fsz.ValueKind == JsonValueKind.Number ? fsz.GetInt64() : (long?)null;
+
+                    int? height = null;
+                    if (fmt.TryGetProperty("height", out var fh))
+                    {
+                        if (fh.ValueKind == JsonValueKind.Number && (fh.TryGetInt32(out var hInt) || (fh.TryGetDouble(out var hDbl) && (hInt = (int)hDbl) >= 0)))
+                            height = hInt;
+                        else if (fh.ValueKind == JsonValueKind.String && int.TryParse(fh.GetString(), out var hParsed))
+                            height = hParsed;
+                    }
+
+                    int? fps = null;
+                    if (fmt.TryGetProperty("fps", out var ffps))
+                    {
+                        if (ffps.ValueKind == JsonValueKind.Number)
+                        {
+                            if (ffps.TryGetInt32(out var fpsInt))
+                                fps = fpsInt;
+                            else if (ffps.TryGetDouble(out var fpsDbl) && !double.IsNaN(fpsDbl) && !double.IsInfinity(fpsDbl))
+                                fps = (int)Math.Round(fpsDbl);
+                        }
+                        else if (ffps.ValueKind == JsonValueKind.String && double.TryParse(ffps.GetString(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var parsedFps))
+                        {
+                            fps = (int)Math.Round(parsedFps);
+                        }
+                    }
+
+                    long? fileSize = null;
+                    if (fmt.TryGetProperty("filesize", out var fsz))
+                    {
+                        if (fsz.ValueKind == JsonValueKind.Number && (fsz.TryGetInt64(out var szLong) || (fsz.TryGetDouble(out var szDbl) && (szLong = (long)szDbl) >= 0)))
+                            fileSize = szLong;
+                        else if (fsz.ValueKind == JsonValueKind.String && long.TryParse(fsz.GetString(), out var szParsed))
+                            fileSize = szParsed;
+                    }
 
                     bool isAudioOnly = vcodec == "none" || (string.IsNullOrEmpty(vcodec) && !string.IsNullOrEmpty(acodec) && acodec != "none");
 
