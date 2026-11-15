@@ -1061,6 +1061,8 @@ public sealed class LocalizationService : INotifyPropertyChanged
         // Toolbar & Durum
 
         ["Toolbar.ClipboardWatcher"] = "📋 Pano İzleyici",
+        ["Toolbar.TurboMp3Mode"] = "⚡ Turbo MP3",
+        ["Toolbar.TurboMp3ModeTip"] = "Turbo MP3 Modu: Açıkken panodan veya tarayıcıdan yakalanan medya bağlantıları doğrudan MP3 olarak ayarlanır.",
 
         ["Graph.CurrentSpeed"] = "⚡ Anlık:",
 
@@ -1945,6 +1947,8 @@ public sealed class LocalizationService : INotifyPropertyChanged
         // Toolbar & Status
 
         ["Toolbar.ClipboardWatcher"] = "📋 Clipboard Monitor",
+        ["Toolbar.TurboMp3Mode"] = "⚡ Turbo MP3",
+        ["Toolbar.TurboMp3ModeTip"] = "Turbo MP3 Mode: When enabled, media links captured from clipboard or browser default directly to MP3.",
 
         ["Graph.CurrentSpeed"] = "⚡ Speed:",
 

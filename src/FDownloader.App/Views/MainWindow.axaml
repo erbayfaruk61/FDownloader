@@ -208,11 +208,16 @@
                         </Button>
                     </StackPanel>
 
-                    <!-- Sağ Taraf: Pano İzleyici ve Toplam Hız Rozeti -->
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <!-- Sağ Taraf: Pano İzleyici, Turbo MP3 ve Toplam Hız Rozeti -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                         <!-- Pano İzleme Anahtarı -->
                         <Border Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="6" Padding="8,4" Height="34" VerticalAlignment="Center">
                             <CheckBox IsChecked="{Binding IsClipboardMonitoringEnabled}" Content="{Binding Loc[Toolbar.ClipboardWatcher], FallbackValue='📋 Pano İzleyici'}" VerticalAlignment="Center" />
+                        </Border>
+
+                        <!-- Turbo MP3 Modu Anahtarı -->
+                        <Border Background="{Binding ThemeCardBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="6" Padding="8,4" Height="34" VerticalAlignment="Center" ToolTip.Tip="{Binding Loc[Toolbar.TurboMp3ModeTip], FallbackValue='Turbo MP3 Modu: Yakalanan medyalar doğrudan MP3 yapılır.'}">
+                            <CheckBox IsChecked="{Binding IsTurboMp3ModeEnabled}" Content="{Binding Loc[Toolbar.TurboMp3Mode], FallbackValue='⚡ Turbo MP3'}" VerticalAlignment="Center" Foreground="#F59E0B" FontWeight="SemiBold" />
                         </Border>
 
                         <!-- Toplam Hız Göstergesi Rozeti -->
@@ -1328,7 +1333,9 @@
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12" Margin="0,8,0,0">
                         <Button Command="{Binding CancelAddDownloadCommand}" Content="İptal" Width="90" Height="34" />
-                        <Button Command="{Binding ConfirmAddDownloadCommand}" Content="İndirmeyi Başlat" Background="{Binding ThemeAccentBg}" Foreground="{Binding ThemeAccentFg}" FontWeight="Bold" Width="140" Height="34" />
+                        <Button Command="{Binding ConfirmAddDownloadCommand}" 
+                                IsEnabled="{Binding CanConfirmAddDownload}"
+                                Content="İndirmeyi Başlat" Background="{Binding ThemeAccentBg}" Foreground="{Binding ThemeAccentFg}" FontWeight="Bold" Width="140" Height="34" />
                     </StackPanel>
                 </StackPanel>
             </Border>

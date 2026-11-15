@@ -408,6 +408,9 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
     [ObservableProperty] private bool _isClipboardMonitoringEnabled = true;
 
+    // Turbo MP3 Modu: Açıkken yakalanan medya indirmeleri doğrudan MP3 formatına ayarlanır
+    [ObservableProperty] private bool _isTurboMp3ModeEnabled = false;
+
 
 
     // ─── Yeni İndirme Ekleme Diyaloğu ─────────────────────────────────────
@@ -422,7 +425,9 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-    [ObservableProperty] private string _addDialogTitle = string.Empty;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanConfirmAddDownload))]
+    private string _addDialogTitle = string.Empty;
 
 
 
@@ -443,7 +448,9 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-    [ObservableProperty] private bool _addDialogIsMediaDetected = false;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanConfirmAddDownload))]
+    private bool _addDialogIsMediaDetected = false;
 
 
 
@@ -451,7 +458,9 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-    [ObservableProperty] private bool _addDialogIsLoading = false;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanConfirmAddDownload))]
+    private bool _addDialogIsLoading = false;
 
 
 
@@ -468,6 +477,30 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
     [ObservableProperty] private bool _addDialogIsPlaylistDetected = false;
+
+    /// <summary>
+    /// Medya indirmelerinde başlık ve meta verileri henüz çekilmemişken indirmeyi başlatmayı kısıtlar.
+    /// </summary>
+    public bool CanConfirmAddDownload
+    {
+        get
+        {
+            if (AddDialogIsLoading) return false;
+            if (AddDialogIsMediaDetected)
+            {
+                if (string.IsNullOrWhiteSpace(AddDialogTitle)) return false;
+                var trimmed = AddDialogTitle.Trim();
+                if (trimmed.Equals("Medya", StringComparison.OrdinalIgnoreCase) ||
+                    trimmed.Equals("Medya İndirme", StringComparison.OrdinalIgnoreCase) ||
+                    trimmed.Equals("Video", StringComparison.OrdinalIgnoreCase) ||
+                    trimmed.Equals("Audio", StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
 
 
 
@@ -1504,6 +1537,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     private const string SettingKeyAltUploadLimitKiB = "Network.AltUploadLimitKiB";
 
     private const string SettingKeyIsAltRateLimitActive = "Network.IsAltRateLimitActive";
+    private const string SettingKeyTurboMp3Mode = "Media.TurboMp3Mode";
 
 
 
@@ -2749,7 +2783,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-    public const string TargetExtensionVersion = "2.0.11";
+    public const string TargetExtensionVersion = "2.0.12";
 
 
 
@@ -3823,6 +3857,9 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
         if (bool.TryParse(_downloadManager.GetSetting(SettingKeyIsAltRateLimitActive), out var bArl))
             IsAltRateLimitActive = bArl;
+
+        if (bool.TryParse(_downloadManager.GetSetting(SettingKeyTurboMp3Mode), out var bTurbo))
+            IsTurboMp3ModeEnabled = bTurbo;
 
         UpdateLimitDisplays();
 
@@ -6198,6 +6235,11 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
+    }
+
+    partial void OnIsTurboMp3ModeEnabledChanged(bool value)
+    {
+        _downloadManager.SetSetting(SettingKeyTurboMp3Mode, value.ToString());
     }
 
 
@@ -11101,7 +11143,11 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
         AddDialogUserAgent = null;
 
-
+        if (IsTurboMp3ModeEnabled)
+        {
+            AddDialogIsMp3 = true;
+            AddDialogIsMp4 = false;
+        }
 
         IsAddDialogOpen = true;
 
@@ -11153,6 +11199,13 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         {
             AddDialogTitle = fileName;
         }
+
+        if (IsTurboMp3ModeEnabled)
+        {
+            AddDialogIsMp3 = true;
+            AddDialogIsMp4 = false;
+        }
+
         IsAddDialogOpen = true;
         AddDialogUrl = url;
 
@@ -12382,6 +12435,13 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
         if (string.IsNullOrWhiteSpace(AddDialogUrl)) return;
+
+        // Medya indirmelerinde başlık ve meta verileri henüz çekilmemişse veya yükleniyorsa indirmeyi başlatma
+        if (!CanConfirmAddDownload)
+        {
+            AddDialogStatusText = "⚠️ Lütfen medya başlığı ve bilgileri yüklenene kadar bekleyin...";
+            return;
+        }
 
 
 
@@ -15366,6 +15426,7 @@ public class TempFileInfoItem : CommunityToolkit.Mvvm.ComponentModel.ObservableO
     public bool IsSelected { get => _isSelected; set => SetProperty(ref _isSelected, value); }
 
 }
+
 
 
 
