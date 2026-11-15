@@ -1,12 +1,14 @@
-﻿### 🚀 FDownloader v2.0.12 Yenilikleri & Düzeltmeleri:
+### 🚀 FDownloader v2.0.12 Yenilikleri & Düzeltmeleri:
 
 • ⚡ **Yeni Özellik: Turbo MP3 Modu:**
   - Ana araç çubuğuna Pano İzleyicisi'nin hemen yanına **⚡ Turbo MP3** modu seçeneği eklendi.
-  - Açık olduğunda panodan veya tarayıcıdan yakalanan tüm medya/video bağlantıları doğrudan MP3 formatına önceden ayarlanır. Seçim kalıcı olarak kaydedilir.
-
-• 🛡️ **Medya İsimlendirme ve "Zaten Var" Çakışma Koruması:**
-  - YouTube ve medya bağlantılarında meta veriler (video başlığı, formatlar) arka planda çekilip listelenmeden kullanıcının erkenden "İndirmeyi Başlat" butonuna tıklaması engellendi (buton meta veriler gelene kadar devre dışı bırakılır).
-  - Medya başlığı çekilmeden önce "Medya.mp3" gibi genel isimle indirme başlatılması ve ardından gelen indirmelerde "Hedef klasörde aynı isimde dosya zaten var" çakışması yaşanması sorunu tamamen ortadan kaldırıldı.
+  - Açık olduğunda panodan veya tarayıcıdan yakalanan medya/video bağlantıları diyalog penceresi açılmadan doğrudan arka planda MP3 formatında indirilmeye başlar.
+• 🎵 **YouTube ve YouTube Music İndirme Ayrıştırması Düzeltildi:**
+  - `yt-dlp` ses formatı parametreleri ayrıştırılarak `Requested format is not available` hatası tamamen giderildi, `bestaudio/best` akış seçicisiyle kesintisiz indirme sağlandı.
+• ✨ **Canlı Medya Durum Animasyonu:**
+  - Yeni indirme modalinde medya bilgisi taranırken döner neon shimmer efekti ve dinamik nabız simgesi eklendi.
+• 🛡️ **Medya İsimlendirme ve Çakışma Koruması:**
+  - Medya meta verileri çekilmeden erken tıklama engellendi, çakışmalar ve dosya üzerine yazma sorunları önlendi.
 
 ### 🚀 FDownloader v2.0.11 Yenilikleri & Düzeltmeleri:
 

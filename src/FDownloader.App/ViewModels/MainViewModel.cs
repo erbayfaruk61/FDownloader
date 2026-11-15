@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 
 
 
@@ -11143,10 +11143,11 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
         AddDialogUserAgent = null;
 
-        if (IsTurboMp3ModeEnabled)
+        // Turbo MP3 Modu: Eğer aktifse ve URL bir medya bağlantısıysa diyalog açmadan arka planda doğrudan MP3 olarak başlat
+        if (IsTurboMp3ModeEnabled && (urlType == ClipboardUrlType.MediaVideo || YtDlpMediaService.IsMediaUrl(url)))
         {
-            AddDialogIsMp3 = true;
-            AddDialogIsMp4 = false;
+            _ = StartTurboMp3DownloadAsync(url);
+            return;
         }
 
         IsAddDialogOpen = true;
@@ -11195,15 +11196,17 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         AddDialogReferrer = referrer;
         AddDialogCookies = cookies;
         AddDialogUserAgent = userAgent;
+
+        // Turbo MP3 Modu: Eğer aktifse ve URL bir medya bağlantısıysa diyalog açmadan arka planda doğrudan MP3 olarak başlat
+        if (IsTurboMp3ModeEnabled && YtDlpMediaService.IsMediaUrl(url))
+        {
+            _ = StartTurboMp3DownloadAsync(url, fileName, referrer, cookies, userAgent);
+            return;
+        }
+
         if (!string.IsNullOrWhiteSpace(fileName))
         {
             AddDialogTitle = fileName;
-        }
-
-        if (IsTurboMp3ModeEnabled)
-        {
-            AddDialogIsMp3 = true;
-            AddDialogIsMp4 = false;
         }
 
         IsAddDialogOpen = true;
@@ -11229,6 +11232,54 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
+    }
+
+    /// <summary>
+    /// Turbo MP3 Modu: Diyalog açmadan medyayı doğrudan MP3 olarak indirmeye başlar.
+    /// </summary>
+    private async Task StartTurboMp3DownloadAsync(
+        string url, string? suggestedTitle = null, string? referrer = null, string? cookies = null, string? userAgent = null)
+    {
+        try
+        {
+            var saveDir = !string.IsNullOrWhiteSpace(AddDialogSavePath) 
+                ? AddDialogSavePath 
+                : (!string.IsNullOrWhiteSpace(SettingsDefaultSaveDirectory) 
+                    ? SettingsDefaultSaveDirectory 
+                    : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"));
+
+            bool hasPlaylist = url.Contains("list=", StringComparison.OrdinalIgnoreCase) ||
+                               url.Contains("/playlist", StringComparison.OrdinalIgnoreCase);
+
+            string initialTitle = !string.IsNullOrWhiteSpace(suggestedTitle) ? suggestedTitle : "Medya";
+            initialTitle = FileNameSanitizer.Sanitize(initialTitle);
+            if (!initialTitle.EndsWith(".mp3", StringComparison.OrdinalIgnoreCase))
+            {
+                initialTitle += ".mp3";
+            }
+
+            var pendingReq = new PendingDownloadRequest
+            {
+                Url = url,
+                SaveDir = saveDir,
+                FileName = initialTitle,
+                IsMedia = true,
+                IsTorrent = false,
+                IsMp3 = true,
+                IsPlaylist = hasPlaylist,
+                Referrer = referrer,
+                Cookies = cookies,
+                UserAgent = userAgent,
+                FormatSpecifier = null
+            };
+
+            await ExecutePendingDownloadAsync(pendingReq, overwriteExisting: false);
+            ShowNotification("⚡ Turbo MP3 İndirmesi Başlatıldı", initialTitle, null, "⚡", CompletionSound.Notify);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Turbo MP3 indirmesi başlatılamadı: {url} | {ex.Message}");
+        }
     }
 
 

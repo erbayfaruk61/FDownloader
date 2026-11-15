@@ -98,6 +98,46 @@
             <Setter Property="BorderBrush" Value="#803B82F6" />
             <Setter Property="BoxShadow" Value="0 2 12 0 #303B82F6" />
         </Style>
+
+        <!-- Yanarlı Dönerli Medya Bilgisi Yükleniyor Animasyonu -->
+        <Style Selector="Border.mediaShimmer">
+            <Style.Animations>
+                <Animation Duration="0:0:1.8" IterationCount="Infinite">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="BorderBrush" Value="#FF0EA5E9" />
+                        <Setter Property="BoxShadow" Value="0 0 10 1 #350EA5E9" />
+                    </KeyFrame>
+                    <KeyFrame Cue="33%">
+                        <Setter Property="BorderBrush" Value="#FFA855F7" />
+                        <Setter Property="BoxShadow" Value="0 0 14 2 #45A855F7" />
+                    </KeyFrame>
+                    <KeyFrame Cue="66%">
+                        <Setter Property="BorderBrush" Value="#FFEC4899" />
+                        <Setter Property="BoxShadow" Value="0 0 14 2 #45EC4899" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="BorderBrush" Value="#FF0EA5E9" />
+                        <Setter Property="BoxShadow" Value="0 0 10 1 #350EA5E9" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+
+        <Style Selector="TextBlock.pulsingIcon">
+            <Style.Animations>
+                <Animation Duration="0:0:1.2" IterationCount="Infinite">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Opacity" Value="0.4" />
+                    </KeyFrame>
+                    <KeyFrame Cue="50%">
+                        <Setter Property="Opacity" Value="1.0" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Opacity" Value="0.4" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
     </Window.Styles>
 
     <Grid>
@@ -1172,9 +1212,25 @@
                         </Grid>
                     </StackPanel>
 
-                    <Border Background="{Binding ThemeWindowBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1" CornerRadius="6" Padding="12,8">
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="{Binding AddDialogStatusText}" FontWeight="Medium" Foreground="{DynamicResource SystemBaseHighColor}" />
+                    <!-- Durum ve Bilgilendirme Kutusu (Yükleme sırasında Yanarlı Dönerli Shimmer & Pulse) -->
+                    <Border Background="{Binding ThemeWindowBg}" BorderBrush="{Binding ThemeBorderColor}" BorderThickness="1.5" CornerRadius="8" Padding="12,10"
+                            Classes.mediaShimmer="{Binding AddDialogIsLoading}">
+                        <StackPanel Spacing="6">
+                            <Grid ColumnDefinitions="Auto, *">
+                                <TextBlock Grid.Column="0" Text="✨" FontSize="15" Margin="0,0,8,0" VerticalAlignment="Center"
+                                           Classes.pulsingIcon="{Binding AddDialogIsLoading}"
+                                           IsVisible="{Binding AddDialogIsLoading}" />
+                                <TextBlock Grid.Column="1" Text="{Binding AddDialogStatusText}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource SystemBaseHighColor}" VerticalAlignment="Center" />
+                            </Grid>
+                            <ProgressBar IsIndeterminate="True" Height="3.5" CornerRadius="2" IsVisible="{Binding AddDialogIsLoading}" Margin="0,2,0,2">
+                                <ProgressBar.Foreground>
+                                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+                                        <GradientStop Color="#0EA5E9" Offset="0.0" />
+                                        <GradientStop Color="#A855F7" Offset="0.5" />
+                                        <GradientStop Color="#EC4899" Offset="1.0" />
+                                    </LinearGradientBrush>
+                                </ProgressBar.Foreground>
+                            </ProgressBar>
                             <TextBlock Text="Video veya ses bağlantılarında MP4 veya MP3 formatı seçebilirsiniz." FontSize="11" Foreground="{Binding ThemeTextSecondary}" IsVisible="{Binding AddDialogIsMediaDetected}" />
                         </StackPanel>
                     </Border>

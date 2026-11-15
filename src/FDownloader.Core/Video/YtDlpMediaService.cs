@@ -829,25 +829,53 @@ public sealed class YtDlpMediaService : IDisposable
             psi.ArgumentList.Add(_toolsDir);
         }
 
-        if (!string.IsNullOrWhiteSpace(formatSpecifier))
+        if (isAudioOnlyMp3)
+        {
+            // MP3 / Ses dönüştürme:
+            // formatSpecifier format ID veya selector ise -f ile aktar, bayraklar (-x vb.) ise ayrıştır
+            string audioFormat = "mp3";
+            string audioQuality = "0";
+            string? customFormatSelector = null;
+
+            if (!string.IsNullOrWhiteSpace(formatSpecifier))
+            {
+                var tokens = formatSpecifier.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                for (int i = 0; i < tokens.Length; i++)
+                {
+                    if (tokens[i].Equals("--audio-format", StringComparison.OrdinalIgnoreCase) && i + 1 < tokens.Length)
+                    {
+                        audioFormat = tokens[++i];
+                    }
+                    else if (tokens[i].Equals("--audio-quality", StringComparison.OrdinalIgnoreCase) && i + 1 < tokens.Length)
+                    {
+                        audioQuality = tokens[++i];
+                    }
+                    else if (tokens[i].Equals("-f", StringComparison.OrdinalIgnoreCase) && i + 1 < tokens.Length)
+                    {
+                        customFormatSelector = tokens[++i];
+                    }
+                    else if (!tokens[i].StartsWith("-"))
+                    {
+                        customFormatSelector = tokens[i];
+                    }
+                }
+            }
+
+            psi.ArgumentList.Add("-f");
+            psi.ArgumentList.Add(!string.IsNullOrWhiteSpace(customFormatSelector) ? customFormatSelector : "bestaudio/best");
+            psi.ArgumentList.Add("-x");
+            psi.ArgumentList.Add("--audio-format");
+            psi.ArgumentList.Add(audioFormat);
+            psi.ArgumentList.Add("--audio-quality");
+            psi.ArgumentList.Add(audioQuality);
+            psi.ArgumentList.Add("--embed-metadata");
+        }
+        else if (!string.IsNullOrWhiteSpace(formatSpecifier))
         {
             psi.ArgumentList.Add("-f");
             psi.ArgumentList.Add(formatSpecifier);
-            if (!isAudioOnlyMp3)
-            {
-                psi.ArgumentList.Add("--merge-output-format");
-                psi.ArgumentList.Add("mp4");
-            }
-        }
-        else if (isAudioOnlyMp3)
-        {
-            // MP3 Ses dönüştürme: -x --audio-format mp3 --audio-quality 0 --embed-metadata
-            psi.ArgumentList.Add("-x");
-            psi.ArgumentList.Add("--audio-format");
-            psi.ArgumentList.Add("mp3");
-            psi.ArgumentList.Add("--audio-quality");
-            psi.ArgumentList.Add("0");
-            psi.ArgumentList.Add("--embed-metadata");
+            psi.ArgumentList.Add("--merge-output-format");
+            psi.ArgumentList.Add("mp4");
         }
         else
         {
