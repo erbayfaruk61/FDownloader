@@ -30,6 +30,13 @@ public static class FileNameSanitizer
         "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
     };
 
+    // Dinamik sunucu betiği uzantıları (Kullanıcı bunları dosya olarak değil, dinamik üretilen PDF/ZIP/XLS belgesi olarak indirir)
+    private static readonly HashSet<string> DynamicScriptExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".aspx", ".asp", ".php", ".php3", ".php4", ".php5", ".phtml",
+        ".jsp", ".jspx", ".do", ".action", ".ashx", ".asmx", ".cgi", ".pl"
+    };
+
     private const int MaxFileNameLength = 200; // Windows 260 karakter sınırının güvenli altı
     private const string FallbackName = "downloaded_file";
 
@@ -84,10 +91,15 @@ public static class FileNameSanitizer
             fileName = "_" + fileName;
         }
 
-        // Uzantı yoksa fallbackExtension ekle
-        if (string.IsNullOrEmpty(Path.GetExtension(fileName)) && !string.IsNullOrEmpty(fallbackExtension))
+        // Uzantı kontrolü ve dinamik betik uzantılarını gerçek dosya uzantısıyla değiştirme (.aspx -> .pdf gibi)
+        string currentExt = Path.GetExtension(fileName);
+        if (string.IsNullOrEmpty(currentExt) && !string.IsNullOrEmpty(fallbackExtension))
         {
             fileName += fallbackExtension;
+        }
+        else if (IsDynamicScriptExtension(currentExt) && !string.IsNullOrEmpty(fallbackExtension) && !IsDynamicScriptExtension(fallbackExtension))
+        {
+            fileName = Path.ChangeExtension(fileName, fallbackExtension);
         }
 
         // Maksimum uzunluk kontrolü (uzantıyı koruyarak kırp)
@@ -229,6 +241,124 @@ public static class FileNameSanitizer
             counter++;
         }
         while (File.Exists(fullPath));
+
+        return fileName;
+    }
+
+    /// <summary>
+    /// Belirtilen uzantının dinamik sunucu betiği (.aspx, .php, .jsp vb.) olup olmadığını doğrular.
+    /// </summary>
+    public static bool IsDynamicScriptExtension(string? extension)
+    {
+        if (string.IsNullOrWhiteSpace(extension)) return false;
+        var ext = extension.Trim();
+        if (!ext.StartsWith('.')) ext = "." + ext;
+        return DynamicScriptExtensions.Contains(ext);
+    }
+
+    /// <summary>
+    /// Dosyanın ilk baytlarından (Magic Bytes) gerçek dosya türü uzantısını tespit eder.
+    /// </summary>
+    public static string? DetectExtensionFromMagicBytes(ReadOnlySpan<byte> header)
+    {
+        if (header.IsEmpty || header.Length < 4) return null;
+
+        // PDF: %PDF (0x25, 0x50, 0x44, 0x46)
+        if (header.Length >= 4 && header[0] == 0x25 && header[1] == 0x50 && header[2] == 0x44 && header[3] == 0x46)
+        {
+            return ".pdf";
+        }
+
+        // ZIP / DOCX / XLSX / JAR: PK\x03\x04
+        if (header.Length >= 4 && header[0] == 0x50 && header[1] == 0x4B && header[2] == 0x03 && header[3] == 0x04)
+        {
+            return ".zip";
+        }
+
+        // RAR: Rar!\x1A\x07 (v4 veya v5)
+        if (header.Length >= 6 && header[0] == 0x52 && header[1] == 0x61 && header[2] == 0x72 && header[3] == 0x21 && header[4] == 0x1A && header[5] == 0x07)
+        {
+            return ".rar";
+        }
+
+        // 7-Zip: 7z\xBC\xAF\x27\x1C
+        if (header.Length >= 6 && header[0] == 0x37 && header[1] == 0x7A && header[2] == 0xBC && header[3] == 0xAF && header[4] == 0x27 && header[5] == 0x1C)
+        {
+            return ".7z";
+        }
+
+        // GZip: \x1F\x8B
+        if (header.Length >= 2 && header[0] == 0x1F && header[1] == 0x8B)
+        {
+            return ".gz";
+        }
+
+        // JPEG: \xFF\xD8\xFF
+        if (header.Length >= 3 && header[0] == 0xFF && header[1] == 0xD8 && header[2] == 0xFF)
+        {
+            return ".jpg";
+        }
+
+        // PNG: \x89PNG\r\n\x1a\n
+        if (header.Length >= 8 && header[0] == 0x89 && header[1] == 0x50 && header[2] == 0x4E && header[3] == 0x47 &&
+            header[4] == 0x0D && header[5] == 0x0A && header[6] == 0x1A && header[7] == 0x0A)
+        {
+            return ".png";
+        }
+
+        // GIF: GIF87a veya GIF89a
+        if (header.Length >= 6 && header[0] == 0x47 && header[1] == 0x49 && header[2] == 0x46 && header[3] == 0x38 &&
+            (header[4] == 0x37 || header[4] == 0x39) && header[5] == 0x61)
+        {
+            return ".gif";
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// İçeriğin HTML / Web giriş sayfası olup olmadığını tespit eder.
+    /// </summary>
+    public static bool IsHtmlContent(ReadOnlySpan<byte> header)
+    {
+        if (header.IsEmpty) return false;
+        var len = Math.Min(header.Length, 1024);
+        var text = Encoding.ASCII.GetString(header[..len]).TrimStart();
+        return text.StartsWith("<!DOCTYPE html", StringComparison.OrdinalIgnoreCase) ||
+               text.StartsWith("<html", StringComparison.OrdinalIgnoreCase) ||
+               text.StartsWith("<?xml", StringComparison.OrdinalIgnoreCase) ||
+               text.StartsWith("<head", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// İçerik verisine (Magic Bytes) veya MIME tipine göre dosya adının uzantısını doğrular ve düzeltir.
+    /// Örn: "IstekBelgesi.aspx" ve %PDF -> "IstekBelgesi.pdf"
+    /// </summary>
+    public static string CorrectExtensionByContent(string fileName, ReadOnlySpan<byte> headerBytes, string? fallbackExt = null)
+    {
+        if (string.IsNullOrWhiteSpace(fileName)) return fileName;
+
+        var detectedMagicExt = DetectExtensionFromMagicBytes(headerBytes);
+        var currentExt = Path.GetExtension(fileName);
+
+        // 1. Magic byte kesin PDF/ZIP/RAR vb. gösteriyorsa ve mevcut uzantı dinamik betik (.aspx vb.) ya da genel/hatalı ise
+        if (!string.IsNullOrEmpty(detectedMagicExt))
+        {
+            if (string.IsNullOrEmpty(currentExt) ||
+                IsDynamicScriptExtension(currentExt) ||
+                currentExt.Equals(".bin", StringComparison.OrdinalIgnoreCase) ||
+                currentExt.Equals(".tmp", StringComparison.OrdinalIgnoreCase) ||
+                (!currentExt.Equals(detectedMagicExt, StringComparison.OrdinalIgnoreCase) && IsDynamicScriptExtension(currentExt)))
+            {
+                return Path.ChangeExtension(fileName, detectedMagicExt);
+            }
+        }
+
+        // 2. Magic byte yoksa ama fallback uzantı varsa (.pdf gibi) ve mevcut uzantı dinamik betik ise
+        if (!string.IsNullOrEmpty(fallbackExt) && IsDynamicScriptExtension(currentExt))
+        {
+            return Path.ChangeExtension(fileName, fallbackExt);
+        }
 
         return fileName;
     }

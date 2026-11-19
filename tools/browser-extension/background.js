@@ -377,37 +377,72 @@ try {
   }
 } catch (_) { }
 
+function extractRootDomain(hostname) {
+  if (!hostname) return "";
+  const parts = hostname.toLowerCase().split(".");
+  if (parts.length <= 2) return hostname;
+
+  // Bilinen iki seviyeli ülke kodu TLD'leri (ccSLD)
+  const twoLevelTlds = new Set([
+    "gov.tr", "edu.tr", "org.tr", "com.tr", "net.tr", "bel.tr", "k12.tr", "pol.tr", "mil.tr",
+    "co.uk", "org.uk", "ac.uk", "gov.uk", "com.au", "net.au", "co.nz", "co.jp", "com.br"
+  ]);
+
+  const lastTwo = parts.slice(-2).join(".");
+  if (twoLevelTlds.has(lastTwo) && parts.length >= 3) {
+    return parts.slice(-3).join(".");
+  }
+
+  return parts.slice(-2).join(".");
+}
+
 async function getCookiesForUrl(url, referrer) {
   const cookieMap = new Map();
+  const domainsToQuery = new Set();
   const urlsToQuery = new Set();
 
-  if (url && (url.startsWith("http://") || url.startsWith("https://"))) {
-    urlsToQuery.add(url);
+  function analyzeTarget(targetUrl) {
+    if (!targetUrl || (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://"))) return;
+    urlsToQuery.add(targetUrl);
     try {
-      const parsed = new URL(url);
+      const parsed = new URL(targetUrl);
       const host = parsed.hostname.toLowerCase();
-      // Kök alan adı (apex domain) çerezleri
-      const parts = host.split(".");
-      if (parts.length >= 2) {
-        const rootDomain = parts.slice(-2).join(".");
+      domainsToQuery.add(host);
+
+      const rootDomain = extractRootDomain(host);
+      if (rootDomain) {
+        domainsToQuery.add(rootDomain);
+        domainsToQuery.add(`.${rootDomain}`);
         urlsToQuery.add(`https://${rootDomain}/`);
         urlsToQuery.add(`https://www.${rootDomain}/`);
       }
+
       // Google Drive / Cloud depolama özel çerez havuzu
       if (host.includes("google.com")) {
         urlsToQuery.add("https://drive.google.com/");
         urlsToQuery.add("https://google.com/");
+        domainsToQuery.add("google.com");
       }
     } catch (_) { }
   }
 
-  if (referrer && (referrer.startsWith("http://") || referrer.startsWith("https://"))) {
-    urlsToQuery.add(referrer);
-  }
+  analyzeTarget(url);
+  analyzeTarget(referrer);
 
+  // 1. URL bazlı çerez sorgusu
   for (const qUrl of urlsToQuery) {
     try {
       const list = await chrome.cookies.getAll({ url: qUrl });
+      if (list) {
+        list.forEach(c => cookieMap.set(c.name, c.value));
+      }
+    } catch (_) { }
+  }
+
+  // 2. Domain / Kök Domain bazlı çerez sorgusu (Tüm alt alan adları ve SSO çerezleri)
+  for (const dom of domainsToQuery) {
+    try {
+      const list = await chrome.cookies.getAll({ domain: dom });
       if (list) {
         list.forEach(c => {
           if (!cookieMap.has(c.name)) {
@@ -461,13 +496,23 @@ function isProtectedInvoiceOrSessionUrl(url, filename) {
   const u = url.toLowerCase();
   const fn = (filename || "").toLowerCase();
 
-  // Sadece ve sadece Cloudflare bot korumalı e-Fatura ve kamu portalları
+  // 1. e-Fatura ve kamu portalları
   if (u.includes("fatura.n11.com") || u.includes("earsivportal.efatura.gov.tr") || u.includes("earsiv") || u.includes("efatura")) {
     return true;
   }
   if (u.includes("fatura") && (u.includes(".pdf") || fn.includes(".pdf") || u.includes("n11.com") || u.includes("gib.gov.tr"))) {
     return true;
   }
+
+  // 2. Dinamik sunucu betikleri (.aspx, .asp, .php, .jsp vb.) ve kamu/intranet sistemleri (BYS, EBYS, EDYS vb.)
+  const isDynamicScript = [".aspx", ".asp", ".php", ".jsp", ".ashx", ".asmx", ".do", ".action"].some(ext => u.includes(ext) || fn.endsWith(ext));
+  if (isDynamicScript) {
+    if (u.includes(".gov.tr") || u.includes(".edu.tr") || u.includes("bys.") || u.includes("ebys") || u.includes("portal") ||
+        u.includes("rapor") || u.includes("belge") || fn.includes("belge") || fn.includes("rapor") || fn.includes("istek")) {
+      return true;
+    }
+  }
+
   return false;
 }
 
@@ -639,13 +684,28 @@ chrome.downloads.onDeterminingFilename.addListener((downloadItem, suggest) => {
       const cookies = await getCookiesForUrl(downloadItem.url, downloadItem.referrer);
       
       let fileBase64 = null;
+      let finalFilename = downloadItem.filename || "";
+
       if (isProtectedInvoiceOrSessionUrl(downloadItem.url, downloadItem.filename)) {
         fileBase64 = await fetchFileAsBase64(downloadItem.url, downloadItem.referrer);
       }
 
+      // Dinamik sunucu betik uzantılarını (.aspx/.php) gerçek dosya türüyle (.pdf) düzelt
+      if (fileBase64 && fileBase64.startsWith("JVBERi")) {
+        const lowerFn = finalFilename.toLowerCase();
+        if (lowerFn.endsWith(".aspx") || lowerFn.endsWith(".php") || lowerFn.endsWith(".asp") || lowerFn.endsWith(".jsp") || !lowerFn.includes(".")) {
+          finalFilename = finalFilename.replace(/\.[^/.]+$/, "") + ".pdf";
+        }
+      } else if (downloadItem.mime === "application/pdf") {
+        const lowerFn = finalFilename.toLowerCase();
+        if (lowerFn.endsWith(".aspx") || lowerFn.endsWith(".php") || lowerFn.endsWith(".asp") || lowerFn.endsWith(".jsp")) {
+          finalFilename = finalFilename.replace(/\.[^/.]+$/, "") + ".pdf";
+        }
+      }
+
       captured = await sendToFDownloader({
         url: downloadItem.url,
-        filename: downloadItem.filename,
+        filename: finalFilename,
         referrer: downloadItem.referrer || "",
         cookies: cookies,
         userAgent: navigator.userAgent,
@@ -659,7 +719,7 @@ chrome.downloads.onDeterminingFilename.addListener((downloadItem, suggest) => {
 
     if (captured) {
       // 1. Önce suggest() çağrılarak determining_filename aşaması sonlandırılır
-      suggest({ filename: downloadItem.filename });
+      suggest({ filename: finalFilename || downloadItem.filename });
       // 2. İndirme in_progress durumuna geçtiği an iptal edilip indirme geçmişinden silinir
       setTimeout(() => {
         chrome.downloads.cancel(downloadItem.id, () => {

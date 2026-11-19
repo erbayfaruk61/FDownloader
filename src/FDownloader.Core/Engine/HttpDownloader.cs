@@ -145,6 +145,9 @@ public sealed class HttpDownloader : IDisposable
                     _task.DownloadedBytes = fileBytes.Length;
                     _task.Status = DownloadStatus.Downloading;
 
+                    // Sihirli bayt (Magic Bytes) kontrolü: İçerik PDF/ZIP vb. ise dinamik betik uzantısını düzelt (.aspx -> .pdf)
+                    _task.FileName = FileNameSanitizer.CorrectExtensionByContent(_task.FileName, fileBytes);
+
                     var targetDir = !string.IsNullOrEmpty(_task.SaveDirectory)
                         ? _task.SaveDirectory
                         : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
@@ -168,8 +171,8 @@ public sealed class HttpDownloader : IDisposable
                 }
             }
 
-            // 1. ADIM: Sunucu Probe'u (Eğer daha önce yapılmadıysa)
-            if (_task.TotalBytes <= 0 || string.IsNullOrEmpty(_task.FileName))
+            // 1. ADIM: Sunucu Probe'u (Daha önce yapılmadıysa veya dosya adı .aspx/.php gibi dinamik sunucu betiği ise)
+            if (_task.TotalBytes <= 0 || string.IsNullOrEmpty(_task.FileName) || FileNameSanitizer.IsDynamicScriptExtension(Path.GetExtension(_task.FileName)))
             {
                 var prober = new DownloadProber(
                     _httpClient,
@@ -472,6 +475,50 @@ public sealed class HttpDownloader : IDisposable
             _repository.UpdateTaskStatus(_task);
 
             await writer.CommitAsync(_task.FinalFilePath, cancellationToken);
+
+            // 5.1 ADIM: Dinamik Betik Uzantısı ve Sihirli Bayt (Magic Bytes) Düzeltmesi (.aspx/.php -> .pdf vb.)
+            try
+            {
+                if (File.Exists(_task.FinalFilePath))
+                {
+                    using (var fs = new FileStream(_task.FinalFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    {
+                        byte[] headerBuf = new byte[1024];
+                        int bytesRead = fs.Read(headerBuf, 0, headerBuf.Length);
+                        if (bytesRead > 0)
+                        {
+                            var headerSpan = headerBuf.AsSpan(0, bytesRead);
+                            string correctedName = FileNameSanitizer.CorrectExtensionByContent(_task.FileName, headerSpan);
+                            if (!string.Equals(correctedName, _task.FileName, StringComparison.OrdinalIgnoreCase))
+                            {
+                                string newFinalPath = Path.Combine(_task.SaveDirectory, correctedName);
+                                if (!File.Exists(newFinalPath))
+                                {
+                                    fs.Dispose();
+                                    File.Move(_task.FinalFilePath, newFinalPath);
+                                    _task.FileName = correctedName;
+                                    _logger.LogInformation("Dosya içeriğine (Magic Bytes) göre dosya adı düzeltildi: {Old} -> {New}", _task.FinalFilePath, newFinalPath);
+                                }
+                            }
+
+                            // HTML içerik uyarısı
+                            if (FileNameSanitizer.IsHtmlContent(headerSpan))
+                            {
+                                string currentExt = Path.GetExtension(_task.FileName);
+                                if (!currentExt.Equals(".html", StringComparison.OrdinalIgnoreCase) &&
+                                    !currentExt.Equals(".htm", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    _logger.LogWarning("⚠️ Dikkat: İndirilen içerik bir web/giriş sayfası (HTML) olarak görünüyor: Görev #{Id}, Dosya: {FileName}", _task.Id, _task.FileName);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Dosya başlığı incelemesi sırasında hata oluştu: Görev #{Id}", _task.Id);
+            }
 
             // 5.5 ADIM: Mark-of-the-Web (Zone.Identifier) Uygulaması (P3-06)
             Security.DownloadFileSecurity.ApplyZoneIdentifier(
