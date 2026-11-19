@@ -379,27 +379,44 @@ try {
 
 async function getCookiesForUrl(url, referrer) {
   const cookieMap = new Map();
-  try {
-    if (url && (url.startsWith("http://") || url.startsWith("https://"))) {
-      const urlCookies = await chrome.cookies.getAll({ url });
-      if (urlCookies) {
-        urlCookies.forEach(c => cookieMap.set(c.name, c.value));
-      }
-    }
-  } catch (e) { }
+  const urlsToQuery = new Set();
 
-  try {
-    if (referrer && (referrer.startsWith("http://") || referrer.startsWith("https://"))) {
-      const refCookies = await chrome.cookies.getAll({ url: referrer });
-      if (refCookies) {
-        refCookies.forEach(c => {
+  if (url && (url.startsWith("http://") || url.startsWith("https://"))) {
+    urlsToQuery.add(url);
+    try {
+      const parsed = new URL(url);
+      const host = parsed.hostname.toLowerCase();
+      // Kök alan adı (apex domain) çerezleri
+      const parts = host.split(".");
+      if (parts.length >= 2) {
+        const rootDomain = parts.slice(-2).join(".");
+        urlsToQuery.add(`https://${rootDomain}/`);
+        urlsToQuery.add(`https://www.${rootDomain}/`);
+      }
+      // Google Drive / Cloud depolama özel çerez havuzu
+      if (host.includes("google.com")) {
+        urlsToQuery.add("https://drive.google.com/");
+        urlsToQuery.add("https://google.com/");
+      }
+    } catch (_) { }
+  }
+
+  if (referrer && (referrer.startsWith("http://") || referrer.startsWith("https://"))) {
+    urlsToQuery.add(referrer);
+  }
+
+  for (const qUrl of urlsToQuery) {
+    try {
+      const list = await chrome.cookies.getAll({ url: qUrl });
+      if (list) {
+        list.forEach(c => {
           if (!cookieMap.has(c.name)) {
             cookieMap.set(c.name, c.value);
           }
         });
       }
-    }
-  } catch (e) { }
+    } catch (_) { }
+  }
 
   return Array.from(cookieMap.entries())
     .map(([k, v]) => `${k}=${v}`)

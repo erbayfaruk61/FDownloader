@@ -80,81 +80,47 @@ public sealed class DownloadProber
 
         {
 
-            // 1. Önce doğrudan Range probe (GET bytes=0-0) dene (IDM tarzı 0.2 sn anında başlama).
-
-            // Çoğu modern sunucu ve dosya barındırıcı (MediaFire vb.) HEAD isteklerini askıya alır veya geciktirir.
-
-            // GET Range isteği ise saliseler içinde 206 Partial Content ile boyut ve dosya adını döner.
-
+            // 1. Önce doğrudan Range probe (GET bytes=0-0) dene (IDM tarzı anında başlama).
+            // Çoğu modern sunucu ve dosya barındırıcı (Google Drive, MediaFire vb.) HEAD isteklerini kısıtlar.
+            // GET Range isteği ise 206 Partial Content ile boyut ve dosya adını döner.
             using var fastProbeCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-
-            fastProbeCts.CancelAfter(TimeSpan.FromSeconds(3.5));
-
-
+            fastProbeCts.CancelAfter(TimeSpan.FromSeconds(12.0));
 
             try
-
             {
-
                 var rangeResult = await RangeProbeAsync(url, referer, cookies, userAgent, fastProbeCts.Token);
-
                 if (rangeResult is not null && rangeResult.IsSuccess)
-
                 {
-
                     return rangeResult;
-
                 }
-
             }
-
             catch (OperationCanceledException) when (!ct.IsCancellationRequested)
-
             {
-
                 _logger.LogDebug("Range probe zaman aşımına uğradı, alternatif probe deneniyor: {Url}", url);
-
             }
-
             catch (Exception ex)
-
             {
-
                 _logger.LogDebug(ex, "Range probe başarısız oldu, alternatif probe deneniyor: {Url}", url);
-
             }
-
-
 
             // 2. Range başarısız olduysa veya yanıt vermediyse hızlı HEAD dene
-
             using var headCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-
-            headCts.CancelAfter(TimeSpan.FromSeconds(3.0));
-
-
+            headCts.CancelAfter(TimeSpan.FromSeconds(8.0));
 
             try
-
             {
-
                 var headResult = await TryHeadProbeAsync(url, referer, cookies, userAgent, headCts.Token);
-
                 if (headResult is not null && headResult.IsSuccess) return headResult;
-
             }
-
             catch (Exception ex)
-
             {
-
                 _logger.LogDebug(ex, "HEAD probe başarısız: {Url}", url);
-
             }
+
             // 3. Sunucu Range (bytes=0-0) veya HEAD isteklerini 403/405 ile engelliyorsa (Cloudflare, kurumsal WAF vb.):
             // Standart Range'siz tam GET probe dene (ilk birkaç baytı okuyarak dosyanın varlığını teyit eder).
             using var stdGetCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            stdGetCts.CancelAfter(TimeSpan.FromSeconds(4.0));
+            stdGetCts.CancelAfter(TimeSpan.FromSeconds(10.0));
 
             try
             {
@@ -170,9 +136,9 @@ public sealed class DownloadProber
                 _logger.LogDebug(ex, "Standart GET probe başarısız: {Url}", url);
             }
 
-            // 4. Son çare olarak genel Range probe'u maksimum 5 saniyelik linked timeout ile çalıştır
+            // 4. Son çare olarak genel Range probe'u 15 saniyelik linked timeout ile çalıştır
             using var fallbackCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            fallbackCts.CancelAfter(TimeSpan.FromSeconds(5.0));
+            fallbackCts.CancelAfter(TimeSpan.FromSeconds(15.0));
             return await RangeProbeAsync(url, referer, cookies, userAgent, fallbackCts.Token);
 
         }
