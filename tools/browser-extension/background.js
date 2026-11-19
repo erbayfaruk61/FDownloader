@@ -147,6 +147,10 @@ function extractHostname(urlStr) {
 function isDomainExcluded(url, referrer, excludedList) {
   if (!Array.isArray(excludedList) || excludedList.length === 0) return false;
 
+  const urlHost = extractHostname(url);
+  const refHost = extractHostname(referrer);
+  if (!urlHost && !refHost) return false;
+
   for (const item of excludedList) {
     if (!item || typeof item !== "string") continue;
     let pattern = item.toLowerCase().trim();
