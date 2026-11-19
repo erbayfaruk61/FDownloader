@@ -105,8 +105,11 @@ public static class DesktopShortcutHelper
                 catch { }
             }
 
-            // Windows Simge Önbelleğini (Icon Cache) ve Kabuğunu Yenile
-            RefreshWindowsIconCache();
+            // Windows Simge Önbelleğini (Icon Cache) ve Kabuğunu Sadece Değişiklik Varsa Yenile
+            if (anyUpdated)
+            {
+                RefreshWindowsIconCache();
+            }
         }
         catch
         {

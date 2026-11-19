@@ -1046,9 +1046,9 @@ public sealed class LocalizationService : INotifyPropertyChanged
         ["Wizard.ThemeCyberPurple"] = "🔮 Siber Mor (Koyu)",
         ["Wizard.ThemePlatinumGray"] = "🌪️ Platin Gri (Açık/Modern)",
         ["Wizard.ThemeLightClean"] = "☀️ Sade & Aydınlık (Açık)",
-        ["Wizard.ExtStep1"] = "1. 'Eklenti Klasörünü Aç' butonuna tıklayın ve klasör yolunu kopyalayın.",
+        ["Wizard.ExtStep1"] = "1. 'Klasör Yolunu Kopyala' butonuna tıklayarak eklenti yolunu panoya alın.",
         ["Wizard.ExtStep2"] = "2. Tarayıcınızda 'chrome://extensions' adresini açıp 'Geliştirici modu'nu aktif edin.",
-        ["Wizard.ExtStep3"] = "3. 'Paketlenmemiş öğe yükle' diyerek açılan klasörü seçin.",
+        ["Wizard.ExtStep3"] = "3. 'Paketlenmemiş öğe yükle' diyerek kopyaladığınız klasör yolunu yapıştırın ve seçin.",
 
         ["Wizard.OpenExtFolder"] = "📂 Eklenti Klasörünü Aç",
 
@@ -1932,9 +1932,9 @@ public sealed class LocalizationService : INotifyPropertyChanged
         ["Wizard.ThemeCyberPurple"] = "🔮 Cyber Purple (Dark)",
         ["Wizard.ThemePlatinumGray"] = "🌪️ Platinum Gray (Light)",
         ["Wizard.ThemeLightClean"] = "☀️ Clean & Bright (Light)",
-        ["Wizard.ExtStep1"] = "1. Click 'Open Extension Folder' and copy the folder path.",
+        ["Wizard.ExtStep1"] = "1. Click 'Copy Folder Path' to copy the extension folder path to clipboard.",
         ["Wizard.ExtStep2"] = "2. Open 'chrome://extensions' in your browser and enable 'Developer mode'.",
-        ["Wizard.ExtStep3"] = "3. Click 'Load unpacked' and select the extension folder.",
+        ["Wizard.ExtStep3"] = "3. Click 'Load unpacked', paste the copied path, and select the folder.",
 
         ["Wizard.OpenExtFolder"] = "📂 Open Extension Folder",
 

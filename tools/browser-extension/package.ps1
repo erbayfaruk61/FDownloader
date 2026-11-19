@@ -59,4 +59,20 @@ Compress-Archive -Path "$firefoxDist\*" -DestinationPath $firefoxZip -Force
 
 Write-Host "Chrome Eklentisi: $chromeZip" -ForegroundColor Green
 Write-Host "Firefox Eklentisi: $firefoxZip" -ForegroundColor Green
+
+# Uygulama ve Yerel Kurulu Dizinleri Senkronize Et
+$appDebugDist = Join-Path $scriptDir "..\..\src\FDownloader.App\bin\Debug\net9.0\tools\browser-extension"
+if (Test-Path (Split-Path -Parent $appDebugDist)) {
+    if (-not (Test-Path $appDebugDist)) { New-Item -ItemType Directory -Path $appDebugDist -Force | Out-Null }
+    Copy-Item -Path "$chromeDist\*" -Destination $appDebugDist -Recurse -Force
+    Write-Host "Debug dizinine kopyalandi: $appDebugDist" -ForegroundColor DarkGray
+}
+
+$localAppDataDist = Join-Path $env:LOCALAPPDATA "FDownloader\current\tools\browser-extension"
+if (Test-Path (Split-Path -Parent $localAppDataDist)) {
+    if (-not (Test-Path $localAppDataDist)) { New-Item -ItemType Directory -Path $localAppDataDist -Force | Out-Null }
+    Copy-Item -Path "$chromeDist\*" -Destination $localAppDataDist -Recurse -Force
+    Write-Host "AppData dizinine kopyalandi: $localAppDataDist" -ForegroundColor DarkGray
+}
+
 Write-Host "Tum eklenti paketleri basariyla olusturuldu." -ForegroundColor Cyan

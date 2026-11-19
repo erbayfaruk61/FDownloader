@@ -27,6 +27,7 @@ public sealed class SegmentWorker
     private readonly string? _referer;
     private readonly string? _cookies;
     private readonly SpeedLimiter? _speedLimiter;
+    private readonly bool _supportsRange;
 
     // İlerleme callback (DownloadedBytes delta olarak gelir)
     public event Action<long>? BytesWritten;
@@ -49,7 +50,8 @@ public sealed class SegmentWorker
         string? referer = null,
         string? cookies = null,
         SpeedLimiter? speedLimiter = null,
-        Action? onRateLimitDetected = null)
+        Action? onRateLimitDetected = null,
+        bool supportsRange = true)
     {
         _segment = segment;
         _url = url;
@@ -64,6 +66,7 @@ public sealed class SegmentWorker
         _cookies = cookies;
         _speedLimiter = speedLimiter;
         _onRateLimitDetected = onRateLimitDetected;
+        _supportsRange = supportsRange;
         _speedCalc = new SpeedCalculator();
     }
 
@@ -273,6 +276,14 @@ public sealed class SegmentWorker
 
         var userAgent = !string.IsNullOrEmpty(_userAgent) ? _userAgent : Network.NetworkConstants.DefaultUserAgent;
         request.Headers.TryAddWithoutValidation("User-Agent", userAgent);
+
+        // Cloudflare, Akamai ve modern WAF sistemlerinin bot engeline takılmamak için standart tarayıcı başlıkları
+        request.Headers.TryAddWithoutValidation("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,application/pdf,*/*;q=0.8");
+        request.Headers.TryAddWithoutValidation("Accept-Language", "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7");
+        request.Headers.TryAddWithoutValidation("Sec-Fetch-Dest", "document");
+        request.Headers.TryAddWithoutValidation("Sec-Fetch-Mode", "navigate");
+        request.Headers.TryAddWithoutValidation("Sec-Fetch-Site", "cross-site");
+        request.Headers.TryAddWithoutValidation("Upgrade-Insecure-Requests", "1");
         if (!string.IsNullOrEmpty(_referer))
             request.Headers.TryAddWithoutValidation("Referer", _referer);
 
@@ -300,11 +311,14 @@ public sealed class SegmentWorker
         // Sıkıştırma isteme
         request.Headers.TryAddWithoutValidation("Accept-Encoding", "identity");
 
-        // Range başlığı (to == long.MaxValue ise açık uçlu range)
-        if (to == long.MaxValue)
-            request.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(from, null);
-        else
-            request.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(from, to);
+        // Range başlığı (yalnızca sunucu Range destekliyorsa; aksi halde tek parça 200 OK akışı)
+        if (_supportsRange)
+        {
+            if (to == long.MaxValue)
+                request.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(from, null);
+            else
+                request.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(from, to);
+        }
 
         return request;
     }

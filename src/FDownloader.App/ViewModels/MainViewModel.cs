@@ -99,6 +99,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
     private readonly UpdateService _updateService;
+    private readonly System.Collections.Generic.HashSet<long> _initialCompletedTaskIds = new();
 
 
 
@@ -454,7 +455,10 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-    [ObservableProperty] private bool _addDialogIsTorrentDetected = false;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(AddDialogShowTorrentSection))]
+    [NotifyPropertyChangedFor(nameof(AddDialogShowTorrentResolving))]
+    private bool _addDialogIsTorrentDetected = false;
 
 
 
@@ -529,6 +533,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
     [ObservableProperty] private string? _addDialogUserAgent;
+    [ObservableProperty] private string? _addDialogFileBase64;
 
 
 
@@ -541,8 +546,16 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-    [ObservableProperty] private bool _addDialogHasTorrentFiles = false;
-    [ObservableProperty] private bool _addDialogIsTorrentResolving = false;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(AddDialogShowTorrentSection))]
+    private bool _addDialogHasTorrentFiles = false;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(AddDialogShowTorrentResolving))]
+    private bool _addDialogIsTorrentResolving = false;
+
+    public bool AddDialogShowTorrentSection => AddDialogIsTorrentDetected && AddDialogHasTorrentFiles;
+    public bool AddDialogShowTorrentResolving => AddDialogIsTorrentDetected && AddDialogIsTorrentResolving;
 
 
 
@@ -2783,7 +2796,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-    public const string TargetExtensionVersion = "2.0.12";
+    public const string TargetExtensionVersion = "2.0.19";
 
 
 
@@ -4413,162 +4426,65 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-        // 4. Görev Tamamlandı
-
-
-
         _eventBus.Subscribe<TaskCompletedEvent>(e =>
-
-
-
         {
-
-
-
             Dispatcher.UIThread.Post(() =>
-
-
-
             {
-
-
-
                 var item = Downloads.FirstOrDefault(d => d.Id == e.TaskId);
-
-
+                bool wasAlreadyCompleted = (item != null && item.Status == DownloadStatus.Completed) || _initialCompletedTaskIds.Contains(e.TaskId);
 
                 if (item != null)
-
-
-
                 {
-
-
-
                     item.Status = DownloadStatus.Completed;
-
-
-
                     item.ProgressPercent = 100.0;
-
-
-
                     item.SpeedBytesPerSecond = 0;
-
-
-
                     item.EtaDisplay = "Tamamlandı";
-
-
-
                     item.SavePath = e.FilePath;
 
-
-
                     // Streaming indirmelerde TotalBytes -1 olabilir; gerçek boyutu yaz
-
-
-
                     if (e.TotalBytes > 0) item.TotalBytes = e.TotalBytes;
 
-
-
                     if (!string.IsNullOrEmpty(e.FilePath) && (File.Exists(e.FilePath) || Directory.Exists(e.FilePath)))
-
-
-
                     {
-
-
-
                         var name = Path.GetFileName(e.FilePath);
-
-
-
                         if (!string.IsNullOrWhiteSpace(name)) item.FileName = name;
-
-
-
                     }
 
-
-
                     ApplyFilter();
-
-
-
                 }
-
-
 
                 UpdateGlobalStats();
-
-
-
                 UpdateHybridState();
-
-
-
                 UpdateDiskSpace();
 
-
-
-                // 🔔 İndirme Tamamlandı Bildirimi ve Ses (Sağ Alt Köşe)
-
-
-
-                ShowCompletionNotification(item?.FileName ?? "Dosya", e.FilePath);
-
-
-
-                // 📦 Otomatik Arşiv Çıkarma (Auto-Extract)
-
-
-
-                // 🌊 Torrent Dosyası İndirildiğinde Kullanıcıya Dosya Listesini Aç
-
-                if (!string.IsNullOrEmpty(e.FilePath) && e.FilePath.EndsWith(".torrent", StringComparison.OrdinalIgnoreCase) && File.Exists(e.FilePath))
-
+                // Eğer görev zaten önceden tamamlanmış olarak yüklenmişse (açılış restore veya eski indirme) bildirim, ses ve oto-çıkarma tetikleme
+                if (wasAlreadyCompleted)
                 {
-
-                    Dispatcher.UIThread.Post(async () =>
-
-                    {
-
-                        try
-
-                        {
-
-                            RequestBringToFront?.Invoke();
-
-                            await HandleDroppedFileOrUrlAsync(e.FilePath);
-
-                        }
-
-                        catch { }
-
-                    });
-
+                    return;
                 }
 
+                // 🔔 İndirme Tamamlandı Bildirimi ve Ses (Sağ Alt Köşe)
+                ShowCompletionNotification(item?.FileName ?? "Dosya", e.FilePath);
 
-
-                if (AutoExtractArchives && !string.IsNullOrEmpty(e.FilePath) && ArchiveExtractorService.IsFirstVolumeOrStandalone(e.FilePath))
-
-
-
+                // 🌊 Torrent Dosyası İndirildiğinde Kullanıcıya Dosya Listesini Aç
+                if (!string.IsNullOrEmpty(e.FilePath) && e.FilePath.EndsWith(".torrent", StringComparison.OrdinalIgnoreCase) && File.Exists(e.FilePath))
                 {
-
-
-
-                    _ = Task.Run(async () =>
-
-
-
+                    Dispatcher.UIThread.Post(async () =>
                     {
+                        try
+                        {
+                            RequestBringToFront?.Invoke();
+                            await HandleDroppedFileOrUrlAsync(e.FilePath);
+                        }
+                        catch { }
+                    });
+                }
 
-
-
+                // 📦 Otomatik Arşiv Çıkarma (Auto-Extract)
+                if (AutoExtractArchives && !string.IsNullOrEmpty(e.FilePath) && ArchiveExtractorService.IsFirstVolumeOrStandalone(e.FilePath))
+                {
+                    _ = Task.Run(async () =>
+                    {
                         var result = await _downloadManager.ArchiveExtractor.ExtractAsync(
                             e.FilePath,
                             createSubfolder: ExtractArchivesToSubfolder);
@@ -4595,17 +4511,8 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
                         Dispatcher.UIThread.Post(() =>
                         {
-
-
-
                             if (result.Success)
-
-
-
                             {
-
-
-
                                 var notifMsg = autoMatchedPassword != null
                                     ? $"{result.ExtractedFilesCount} dosya kayıtlı parola ('{autoMatchedPassword}') ile otomatik açıldı."
                                     : $"{result.ExtractedFilesCount} dosya klasöre başarıyla açıldı.";
@@ -4639,13 +4546,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
                                             delEx);
                                     }
                                 }
-
-
-
                             }
-
-
-
                             else if (result.IsPasswordProtected)
                             {
                                 ShowNotification("🔒 Şifreli Arşiv", "Arşivi klasöre çıkartabilmek için parola gerekiyor.", e.FilePath, "🔒", CompletionSound.Sessiz, true);
@@ -4656,21 +4557,9 @@ public partial class MainViewModel : ViewModelBase, IDisposable
                                 ShowNotification("⚠️ Arşiv Hatası", result.ErrorMessage ?? "Arşiv açılırken bir hata oluştu.", e.FilePath, "⚠️", CompletionSound.Sessiz, true);
                             }
                         });
-
-
-
                     });
-
-
-
                 }
-
-
-
             });
-
-
-
         });
 
 
@@ -4976,33 +4865,67 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
         _eventBus.Subscribe<BrowserDownloadCapturedEvent>(e =>
-
-
-
         {
-
-
-
             Dispatcher.UIThread.Post(() =>
-
-
-
             {
+                RequestBringToFront?.Invoke();
+                OpenAddDialogForBrowserCapture(e.Url, e.FileName, e.Referrer, e.Cookies, e.UserAgent, e.FileBase64);
+            });
+        });
 
+        _eventBus.Subscribe<BrowserBatchDownloadCapturedEvent>(async e =>
+        {
+            if (e.Items == null || e.Items.Count == 0) return;
 
-
+            await Dispatcher.UIThread.InvokeAsync(async () =>
+            {
                 RequestBringToFront?.Invoke();
 
+                if (e.Items.Count == 1)
+                {
+                    var single = e.Items[0];
+                    OpenAddDialogForBrowserCapture(single.Url, single.FileName, single.Referrer, single.Cookies, single.UserAgent, single.FileBase64);
+                    return;
+                }
 
+                int addedCount = 0;
+                var defaultDir = !string.IsNullOrWhiteSpace(AddDialogSavePath)
+                    ? AddDialogSavePath
+                    : (!string.IsNullOrWhiteSpace(SettingsDefaultSaveDirectory)
+                        ? SettingsDefaultSaveDirectory
+                        : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"));
 
-                OpenAddDialogForBrowserCapture(e.Url, e.FileName, e.Referrer, e.Cookies, e.UserAgent);
+                foreach (var item in e.Items)
+                {
+                    if (string.IsNullOrWhiteSpace(item.Url)) continue;
+                    var cleanUrl = item.Url.Trim();
+                    var fileName = !string.IsNullOrWhiteSpace(item.FileName)
+                        ? item.FileName
+                        : Path.GetFileName(cleanUrl.Split('?')[0].Trim('\"', '\''));
+                    if (string.IsNullOrWhiteSpace(fileName) || fileName.Length < 3)
+                    {
+                        fileName = "download_" + Guid.NewGuid().ToString("N")[..6];
+                    }
 
+                    var req = new PendingDownloadRequest
+                    {
+                        Url = cleanUrl,
+                        SaveDir = defaultDir,
+                        FileName = fileName,
+                        Referrer = item.Referrer,
+                        Cookies = item.Cookies,
+                        UserAgent = item.UserAgent,
+                        IsMedia = YtDlpMediaService.IsMediaUrl(cleanUrl),
+                        IsTorrent = cleanUrl.StartsWith("magnet:", StringComparison.OrdinalIgnoreCase) || cleanUrl.EndsWith(".torrent", StringComparison.OrdinalIgnoreCase),
+                        FileBase64 = item.FileBase64
+                    };
 
+                    await ExecutePendingDownloadAsync(req, overwriteExisting: false);
+                    addedCount++;
+                }
 
+                ShowNotification("📑 Toplu İndirme Eklendi", $"{addedCount} adet dosya (PDF/Belge vb.) indirme listesine eklendi ve başlatıldı.", null, "✓", CompletionSound.Notify);
             });
-
-
-
         });
 
 
@@ -5180,24 +5103,15 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
     private void LoadExistingTasks()
-
-
-
     {
-
-
-
         Downloads.Clear();
 
-
-
         foreach (var task in _downloadManager.Tasks)
-
-
-
         {
-
-
+            if (task.Status == DownloadStatus.Completed)
+            {
+                _initialCompletedTaskIds.Add(task.Id);
+            }
 
             var fileName = string.IsNullOrWhiteSpace(task.FileName) ? task.Name : task.FileName;
 
@@ -10978,171 +10892,81 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
             var path = await RequestBrowseTorrentFile();
-
-
-
             if (!string.IsNullOrWhiteSpace(path))
-
-
-
             {
-
-
-
-                AddDialogUrl = path;
-
-
-
+                ResetAddDialogState();
+                AddDialogTitle = Path.GetFileName(path);
                 IsAddDialogOpen = true;
-
-
-
-                AnalyzeAddUrl(path);
-
-
-
+                if (!string.Equals(AddDialogUrl, path, StringComparison.Ordinal))
+                {
+                    AddDialogUrl = path;
+                }
+                else
+                {
+                    AnalyzeAddUrl(path);
+                }
             }
-
-
-
         }
-
-
-
     }
-
-
 
     public Task HandleDroppedFileOrUrlAsync(string pathOrUrl)
-
-
-
     {
-
-
-
         if (string.IsNullOrWhiteSpace(pathOrUrl)) return Task.CompletedTask;
-
-
-
         var clean = pathOrUrl.Trim().Trim('\"', '\'');
-
-
-
-        AddDialogUrl = clean;
-
-
-
+        ResetAddDialogState();
+        AddDialogTitle = string.Empty;
         IsAddDialogOpen = true;
-
-
-
-        AnalyzeAddUrl(clean);
-
-
-
+        if (!string.Equals(AddDialogUrl, clean, StringComparison.Ordinal))
+        {
+            AddDialogUrl = clean;
+        }
+        else
+        {
+            AnalyzeAddUrl(clean);
+        }
         return Task.CompletedTask;
-
-
-
     }
 
-
+    private void ResetAddDialogState()
+    {
+        Interlocked.Increment(ref _torrentInspectCounter);
+        AddDialogTorrentFiles.Clear();
+        AddDialogHasTorrentFiles = false;
+        AddDialogIsTorrentResolving = false;
+        AddDialogHasDiskWarning = false;
+        AddDialogDiskWarningText = string.Empty;
+        AddDialogTorrentSelectedSizeText = string.Empty;
+        AddDialogThumbnailUrl = null;
+        AddDialogIsMediaDetected = false;
+        AddDialogIsTorrentDetected = false;
+        AddDialogIsPlaylistDetected = false;
+        AddDialogIsLoading = false;
+        AddDialogQualityOptions.Clear();
+        AddDialogSelectedQuality = null;
+        AddDialogReferrer = null;
+        AddDialogCookies = null;
+        AddDialogUserAgent = null;
+        AddDialogFileBase64 = null;
+        AddDialogIsMp3 = true;
+        AddDialogIsMp4 = false;
+        AddDialogDownloadSingleOnly = true;
+        AddDialogDownloadWholePlaylist = false;
+        AddDialogPlaylistNoticeText = string.Empty;
+    }
 
     [RelayCommand]
-
-
-
     public void OpenAddDownloadDialog()
-
-
-
     {
-
-
-
+        ResetAddDialogState();
         AddDialogUrl = string.Empty;
-
-
-
         AddDialogTitle = string.Empty;
-
-
-
-        AddDialogThumbnailUrl = null;
-
-
-
-        AddDialogTorrentFiles.Clear();
-
-
-
-        AddDialogHasTorrentFiles = false;
-
-
-
-        AddDialogIsMediaDetected = false;
-
-
-
-        AddDialogIsTorrentDetected = false;
-
-
-
-        AddDialogIsPlaylistDetected = false;
-
-
-
-        AddDialogIsMp3 = true;
-
-
-
-        AddDialogIsMp4 = false;
-
-
-
-        AddDialogDownloadSingleOnly = true;
-
-
-
-        AddDialogDownloadWholePlaylist = false;
-
-
-
         AddDialogStatusText = "URL veya Magnet linki girin";
-
-
-
         UpdateAddDialogDiskSpace();
-
-
-
         IsAddDialogOpen = true;
-
-
-
     }
 
-
-
     public void OpenAddDialogWithUrl(string url, ClipboardUrlType urlType)
-
-
-
     {
-
-
-
-        AddDialogReferrer = null;
-
-
-
-        AddDialogCookies = null;
-
-
-
-        AddDialogUserAgent = null;
-
         // Turbo MP3 Modu: Eğer aktifse ve URL bir medya bağlantısıysa diyalog açmadan arka planda doğrudan MP3 olarak başlat
         if (IsTurboMp3ModeEnabled && (urlType == ClipboardUrlType.MediaVideo || YtDlpMediaService.IsMediaUrl(url)))
         {
@@ -11150,53 +10974,22 @@ public partial class MainViewModel : ViewModelBase, IDisposable
             return;
         }
 
+        ResetAddDialogState();
+        AddDialogTitle = string.Empty;
         IsAddDialogOpen = true;
-
-
-
         if (!string.Equals(AddDialogUrl, url, StringComparison.Ordinal))
-
-
-
         {
-
-
-
             AddDialogUrl = url;
-
-
-
         }
-
-
-
         else
-
-
-
         {
-
-
-
             AnalyzeAddUrl(url);
-
-
-
         }
-
-
-
     }
 
-
-
     public void OpenAddDialogForBrowserCapture(
-        string url, string? fileName, string? referrer, string? cookies, string? userAgent)
+        string url, string? fileName, string? referrer, string? cookies, string? userAgent, string? fileBase64 = null)
     {
-        AddDialogReferrer = referrer;
-        AddDialogCookies = cookies;
-        AddDialogUserAgent = userAgent;
-
         // Turbo MP3 Modu: Eğer aktifse ve URL bir medya bağlantısıysa diyalog açmadan arka planda doğrudan MP3 olarak başlat
         if (IsTurboMp3ModeEnabled && YtDlpMediaService.IsMediaUrl(url))
         {
@@ -11204,34 +10997,35 @@ public partial class MainViewModel : ViewModelBase, IDisposable
             return;
         }
 
+        ResetAddDialogState();
+        AddDialogReferrer = referrer;
+        AddDialogCookies = cookies;
+        AddDialogUserAgent = userAgent;
+        AddDialogFileBase64 = fileBase64;
+
         if (!string.IsNullOrWhiteSpace(fileName))
         {
             AddDialogTitle = fileName;
         }
-
-        IsAddDialogOpen = true;
-        AddDialogUrl = url;
-
-        // AnalyzeAddUrl(url, fileName); - Handled by AddDialogUrl property change
-
-
-
-        if (!AddDialogIsTorrentDetected && !string.IsNullOrWhiteSpace(fileName))
-
-
-
+        else
         {
-
-
-
-            AddDialogStatusText = $"🌐 Tarayıcıdan yakalandı: {fileName}";
-
-
-
+            AddDialogTitle = string.Empty;
         }
 
+        IsAddDialogOpen = true;
+        if (!string.Equals(AddDialogUrl, url, StringComparison.Ordinal))
+        {
+            AddDialogUrl = url;
+        }
+        else
+        {
+            AnalyzeAddUrl(url, fileName);
+        }
 
-
+        if (!AddDialogIsTorrentDetected && !string.IsNullOrWhiteSpace(fileName))
+        {
+            AddDialogStatusText = $"🌐 Tarayıcıdan yakalandı: {fileName}";
+        }
     }
 
     /// <summary>
@@ -11293,33 +11087,13 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
         var candidates = new List<string>
-
-
-
         {
-
-
-
             Path.Combine(AppContext.BaseDirectory, "tools", "browser-extension"),
-
-
-
             Path.Combine(Directory.GetCurrentDirectory(), "tools", "browser-extension"),
-
-
-
             Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "tools", "browser-extension"),
-
-
-
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FDownloader", "current", "tools", "browser-extension"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FDownloader", "browser-extension"),
-
-
-
             @"C:\FDownloader\tools\browser-extension"
-
-
-
         };
 
 
@@ -11432,6 +11206,26 @@ public partial class MainViewModel : ViewModelBase, IDisposable
             null,
             "🔄",
             CompletionSound.Notify);
+    }
+
+    [RelayCommand]
+    public void OpenInBrowser(DownloadItemViewModel? item)
+    {
+        item ??= SelectedDownload;
+        if (item == null || string.IsNullOrWhiteSpace(item.OriginalUrl)) return;
+
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = item.OriginalUrl,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            ShowNotification("Hata", $"Tarayıcı açılamadı: {ex.Message}", null, "⚠️", CompletionSound.Notify);
+        }
     }
 
     [RelayCommand]
@@ -11752,12 +11546,12 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         if (IsVersionOlder(version, targetVersion))
         {
             IsExtensionUpdateAvailable = true;
-            // Kullanıcıya hiçbir modal çıkarmadan arka planda otomatik yenileme sinyali gönder
-            BrowserBridgeService.RequestExtensionReload();
 
+            // Sonsuz döngüyü önlemek için otomatik yenileme sinyali sadece ilk tespitte 1 kez gönderilir
             if (!_hasAutoPromptedExtensionUpdate)
             {
                 _hasAutoPromptedExtensionUpdate = true;
+                BrowserBridgeService.RequestExtensionReload();
                 ShowNotification(
                     "🔄 Tarayıcı Eklentisi",
                     $"Tarayıcı eklentisi en güncel sürüme (v{targetVersion}) arka planda otomatik güncellendi.",
@@ -12090,277 +11884,116 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
         if (string.IsNullOrWhiteSpace(rawUrl))
-
-
-
         {
-
-
-
             AddDialogIsMediaDetected = false;
-
-
-
             AddDialogIsTorrentDetected = false;
-
-
-
             AddDialogIsPlaylistDetected = false;
-
-
-
+            AddDialogTorrentFiles.Clear();
+            AddDialogHasTorrentFiles = false;
+            AddDialogIsTorrentResolving = false;
+            AddDialogHasDiskWarning = false;
+            AddDialogDiskWarningText = string.Empty;
+            AddDialogTorrentSelectedSizeText = string.Empty;
             AddDialogStatusText = "URL veya Magnet linki girin";
-
-
-
             return;
-
-
-
         }
-
-
 
         var url = rawUrl.Trim();
-
-
-
         var cleanUrl = url.Split('?')[0].Trim('\"', '\'');
 
-
-
         // 1. BitTorrent Kontrolü
-
-
-
         bool isTorrentMatch = url.StartsWith("magnet:", StringComparison.OrdinalIgnoreCase) ||
-
                               cleanUrl.EndsWith(".torrent", StringComparison.OrdinalIgnoreCase) ||
-
                               url.Contains(".torrent?", StringComparison.OrdinalIgnoreCase) ||
-
                               (!string.IsNullOrWhiteSpace(suggestedFileName) && suggestedFileName.EndsWith(".torrent", StringComparison.OrdinalIgnoreCase)) ||
-
                               (!string.IsNullOrWhiteSpace(AddDialogTitle) && AddDialogTitle.EndsWith(".torrent", StringComparison.OrdinalIgnoreCase));
-
         if (isTorrentMatch)
-
         {
-
-
-
             AddDialogIsTorrentDetected = true;
-
-
-
             AddDialogIsMediaDetected = false;
-
-
-
             AddDialogIsPlaylistDetected = false;
-
-
+            AddDialogThumbnailUrl = null;
+            AddDialogQualityOptions.Clear();
+            AddDialogSelectedQuality = null;
 
             if (url.StartsWith("magnet:", StringComparison.OrdinalIgnoreCase))
-
             {
-
                 var dnMatch = System.Text.RegularExpressions.Regex.Match(url, @"[?&]dn=([^&]+)");
-
                 AddDialogTitle = dnMatch.Success ? Uri.UnescapeDataString(dnMatch.Groups[1].Value.Replace('+', ' ')) : "Magnet Torrent";
-
             }
-
             else
-
             {
-
                 AddDialogTitle = !string.IsNullOrWhiteSpace(suggestedFileName) ? suggestedFileName : Path.GetFileName(cleanUrl);
-
             }
-
-
 
             AddDialogStatusText = "BitTorrent indirmesi algılandı. Dosyalar inceleniyor...";
-
-
-
             _ = LoadAddDialogTorrentFilesAsync(url);
-
-
-
             return;
-
-
-
         }
-
-
 
         // 2. YouTube & Medya Kontrolü
-
         bool isMedia = YtDlpMediaService.IsMediaUrl(url);
-
         if (isMedia)
-
-
-
         {
-
-
-
             AddDialogIsMediaDetected = true;
-
-
-
             AddDialogIsTorrentDetected = false;
-
-
+            AddDialogTorrentFiles.Clear();
+            AddDialogHasTorrentFiles = false;
+            AddDialogIsTorrentResolving = false;
+            AddDialogHasDiskWarning = false;
+            AddDialogDiskWarningText = string.Empty;
+            AddDialogTorrentSelectedSizeText = string.Empty;
+            Interlocked.Increment(ref _torrentInspectCounter);
 
             // Playlist algılama
-
-
-
             bool hasPlaylist = url.Contains("list=", StringComparison.OrdinalIgnoreCase) ||
-
-
-
                                url.Contains("/playlist", StringComparison.OrdinalIgnoreCase);
-
-
-
             bool hasVideoId = url.Contains("v=", StringComparison.OrdinalIgnoreCase) ||
-
-
-
                               url.Contains("youtu.be/", StringComparison.OrdinalIgnoreCase);
 
-
-
             if (hasPlaylist)
-
-
-
             {
-
-
-
                 AddDialogIsPlaylistDetected = true;
-
-
-
                 if (hasVideoId)
-
-
-
                 {
-
-
-
                     AddDialogPlaylistNoticeText = "🎵 Çalma Listesi (Playlist) Algılandı: Hem bu parça hem de liste bulundu.";
-
-
-
                     AddDialogDownloadSingleOnly = true;
-
-
-
                     AddDialogDownloadWholePlaylist = false;
-
-
-
                 }
-
-
-
                 else
-
-
-
                 {
-
-
-
                     AddDialogPlaylistNoticeText = "🎵 Çalma Listesi (Playlist) Algılandı: Tüm liste indirilecek.";
-
-
-
                     AddDialogDownloadSingleOnly = false;
-
-
-
                     AddDialogDownloadWholePlaylist = true;
-
-
-
                 }
-
-
-
             }
-
-
-
             else
-
-
-
             {
-
-
-
                 AddDialogIsPlaylistDetected = false;
-
-
-
                 AddDialogDownloadSingleOnly = true;
-
-
-
                 AddDialogDownloadWholePlaylist = false;
-
-
-
             }
-
-
 
             FetchMediaInfoInBackground(url);
-
-
-
         }
-
-
-
         else
-
-
-
         {
-
-
-
             AddDialogIsMediaDetected = false;
-
-
-
             AddDialogIsTorrentDetected = false;
-
-
-
             AddDialogIsPlaylistDetected = false;
-
-
+            AddDialogThumbnailUrl = null;
+            AddDialogQualityOptions.Clear();
+            AddDialogSelectedQuality = null;
+            AddDialogTorrentFiles.Clear();
+            AddDialogHasTorrentFiles = false;
+            AddDialogIsTorrentResolving = false;
+            AddDialogHasDiskWarning = false;
+            AddDialogDiskWarningText = string.Empty;
+            AddDialogTorrentSelectedSizeText = string.Empty;
+            Interlocked.Increment(ref _torrentInspectCounter);
 
             AddDialogTitle = Path.GetFileName(cleanUrl);
-
-
-
             AddDialogStatusText = "Doğrudan indirme bağlantısı.";
-
-
-
         }
 
 
@@ -12699,7 +12332,8 @@ public partial class MainViewModel : ViewModelBase, IDisposable
                 TorrentFiles = AddDialogTorrentFiles.Select(f => new TorrentFileSelection { Index = f.Index, IsSelected = f.IsSelected }).ToList(),
                 FormatSpecifier = AddDialogSelectedQuality?.FormatSpecifier,
                 StopSeedingImmediately = AddDialogStopSeedingImmediately,
-                SeedRatioLimit = AddDialogSeedRatioLimit
+                SeedRatioLimit = AddDialogSeedRatioLimit,
+                FileBase64 = AddDialogFileBase64
 
 
 
@@ -12712,28 +12346,18 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
             if (CheckAndPromptFileConflict(pendingReq))
-
-
-
             {
-
-
-
                 IsAddDialogOpen = false;
-
-
-
+                ResetAddDialogState();
+                AddDialogUrl = string.Empty;
+                AddDialogTitle = string.Empty;
                 return;
-
-
-
             }
 
-
-
             IsAddDialogOpen = false;
-
-
+            ResetAddDialogState();
+            AddDialogUrl = string.Empty;
+            AddDialogTitle = string.Empty;
 
             await ExecutePendingDownloadAsync(pendingReq, overwriteExisting: false);
 
@@ -14035,7 +13659,15 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-                    startImmediately: true);
+                    startImmediately: true,
+
+
+
+                    allowDuplicate: true,
+
+
+
+                    initialDataBase64: req.FileBase64);
 
 
 
@@ -14141,7 +13773,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         {
             var files = await _downloadManager.InspectTorrentFilesAsync(
                 pathOrUrl, AddDialogCookies, AddDialogReferrer, AddDialogUserAgent);
-            if (requestId != _torrentInspectCounter)
+            if (requestId != _torrentInspectCounter || !AddDialogIsTorrentDetected || !IsAddDialogOpen)
                 return;
             AddDialogTorrentFiles.Clear();
             if (files.Count > 0)
@@ -14166,7 +13798,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         }
         catch (Exception ex)
         {
-            if (requestId != _torrentInspectCounter) return;
+            if (requestId != _torrentInspectCounter || !AddDialogIsTorrentDetected || !IsAddDialogOpen) return;
             AddDialogStatusText = $"Hata: {ex.Message}";
         }
         finally
@@ -14505,14 +14137,9 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     public void CancelAddDownload()
     {
         IsAddDialogOpen = false;
+        ResetAddDialogState();
         AddDialogUrl = string.Empty;
         AddDialogTitle = string.Empty;
-        AddDialogTorrentFiles.Clear();
-        AddDialogHasTorrentFiles = false;
-        AddDialogIsTorrentResolving = false;
-        AddDialogHasDiskWarning = false;
-        AddDialogDiskWarningText = string.Empty;
-        AddDialogTorrentSelectedSizeText = string.Empty;
         _ = _downloadManager.CleanUnattachedTorrentManagersAsync();
     }
 
@@ -15225,6 +14852,41 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     }
 
     [RelayCommand]
+    public void PreviewUpdateToast()
+    {
+        UpdateCurrentVersion = AppVersionText;
+        UpdateTargetVersion = "v2.0.13";
+        IsUpdateAvailable = true;
+        UpdateStatusText = "Yeni sürüm kullanılabilir.";
+        UpdateReleaseTitle = "FDownloader v2.0.13";
+        UpdateReleaseDate = DateTime.Now.ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.InvariantCulture);
+        UpdateChangelog = "• Güvenlik iyileştirmeleri ve yetki sınırlandırmaları yapıldı\n" +
+                          "• Facebook, YouTube ve video indirme motoru hızlandırıldı\n" +
+                          "• Torrent indirme sonrası indirme ekleme paneli sıfırlama sorunu giderildi\n" +
+                          "• Masaüstü sağ alt köşe bildirim kartı arayüzü optimize edildi\n" +
+                          "• Kararlılık geliştirmeleri ve bellek kullanım optimizasyonları";
+        ShowUpdateToast();
+    }
+
+    public void ShowUpdateToast()
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(UpdateChangelog))
+                {
+                    UpdateChangelog = "• Hata düzeltmeleri ve kararlılık geliştirmeleri\n" +
+                                      "• Performans ve indirme hızı optimizasyonları\n" +
+                                      "• Yeni özellikler ve kullanıcı arayüzü iyileştirmeleri";
+                }
+                UpdateToastNotificationWindow.ShowToast(this);
+            }
+            catch { }
+        });
+    }
+
+    [RelayCommand]
     public async Task ApplyUpdateAsync()
     {
         // Doğrudan güncellemek yerine onay ve sürüm notları modalını aç
@@ -15309,10 +14971,10 @@ public partial class MainViewModel : ViewModelBase, IDisposable
                         UpdateTargetVersion = targetVer;
                         UpdateStatusText = $"Yeni sürüm mevcut ({UpdateVersionText}).";
 
-                        // İlk kurulum sihirbazı açık değilse doğrudan açılışta kullanıcıya sor
+                        UpdateChangelog = await _updateService.FetchReleaseNotesAsync(targetVer);
                         if (!IsFirstRunWizardOpen)
                         {
-                            await OpenUpdateDialogAsync();
+                            ShowUpdateToast();
                         }
                     });
                     return;
@@ -15338,7 +15000,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
                         if (!IsFirstRunWizardOpen)
                         {
-                            await OpenUpdateDialogAsync();
+                            ShowUpdateToast();
                         }
                     });
                 }
@@ -15422,6 +15084,7 @@ public sealed class PendingDownloadRequest
 
 
     public string? UserAgent { get; set; }
+    public string? FileBase64 { get; set; }
 
 
 

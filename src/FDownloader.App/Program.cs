@@ -1,6 +1,8 @@
 using Avalonia;
 using System;
 using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
 using FDownloader.App.Utilities;
 using Sentry;
 using Velopack;
@@ -9,17 +11,18 @@ namespace FDownloader.App;
 
 sealed class Program
 {
-    private const string AppMutexName = "FDownloader_SingleInstance_Mutex_9666";
+    private const string AppMutexName = @"Local\FDownloader_SingleInstance_Mutex_9666";
+
+    [DllImport("user32.dll")]
+    private static extern bool AllowSetForegroundWindow(int dwProcessId);
+    private const int ASFW_ANY = -1;
 
     [STAThread]
     public static void Main(string[] args)
     {
         VelopackApp.Build().Run();
 
-        // Güncelleme sonrası veya açılışta eski versiyondan kalan masaüstü simgesini ve hedefini güncelle
-        DesktopShortcutHelper.UpdateDesktopShortcuts();
-
-        // Tekil Oturum (Single Instance) Yönetimi
+        // Tekil Oturum (Single Instance) Yönetimi & Kendini Onaran Başlatma
         using var mutex = new System.Threading.Mutex(true, AppMutexName, out bool isFirstInstance);
         if (!isFirstInstance)
         {
@@ -33,16 +36,58 @@ sealed class Program
             if (!isAutoStart)
             {
                 // Kullanıcı masaüstünden/başlat menüsünden elle tıkladı: Çalışan kopyayı tepsiden ekrana öne getir
+                bool wakeSuccess = false;
                 try
                 {
-                    using var client = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(2) };
-                    _ = client.PostAsync("http://127.0.0.1:9666/show", null).GetAwaiter().GetResult();
+                    if (OperatingSystem.IsWindows())
+                    {
+                        AllowSetForegroundWindow(ASFW_ANY);
+                    }
+
+                    using var client = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromMilliseconds(1500) };
+                    var response = client.PostAsync("http://127.0.0.1:9666/show", null).GetAwaiter().GetResult();
+                    if (response.IsSuccessStatusCode)
+                    {
+                        wakeSuccess = true;
+                    }
                 }
                 catch { }
-            }
 
-            return; // İkinci kopyayı sonlandır
+                if (wakeSuccess)
+                {
+                    return; // Mevcut çalışan ana kopya başarıyla uyandırıldı ve ekrana getirildi
+                }
+
+                // HTTP çağrısı yanıt vermediyse arka plandaki kopya donmuş/zombi durumdadır
+                try
+                {
+                    var currentPid = Environment.ProcessId;
+                    var staleProcesses = System.Diagnostics.Process.GetProcessesByName("FDownloader.App")
+                        .Concat(System.Diagnostics.Process.GetProcessesByName("FDownloader"))
+                        .Where(p => p.Id != currentPid);
+
+                    foreach (var p in staleProcesses)
+                    {
+                        try
+                        {
+                            p.Kill(entireProcessTree: true);
+                            p.WaitForExit(1000);
+                        }
+                        catch { }
+                    }
+                }
+                catch { }
+
+                // Zombi süreç temizlendi; artık bu yeni süreç ana uygulama olarak devam edebilir
+            }
+            else
+            {
+                return; // Windows açılışı zaten ana kopya tarafından başlatılmış
+            }
         }
+
+        // Güncelleme sonrası veya açılışta eski versiyondan kalan masaüstü simgesini ve hedefini arka planda güvenle güncelle (0ms UI gecikmesi)
+        _ = System.Threading.Tasks.Task.Run(() => DesktopShortcutHelper.UpdateDesktopShortcuts());
 
         AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
         {

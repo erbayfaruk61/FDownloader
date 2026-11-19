@@ -96,7 +96,12 @@ public record BrowserDownloadCapturedEvent(
     string? Referrer = null,
     string? Cookies = null,
     string? UserAgent = null,
-    long? TotalBytes = null
+    long? TotalBytes = null,
+    string? FileBase64 = null
+);
+
+public record BrowserBatchDownloadCapturedEvent(
+    List<FDownloader.Core.Network.BrowserDownloadRequest> Items
 );
 
 public record BrowserExtensionHeartbeatEvent(

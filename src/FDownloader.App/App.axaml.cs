@@ -94,6 +94,19 @@ public partial class App : Application
             {
                 _trayIcon.Icon = mainWindow.Icon;
             }
+            else
+            {
+                try
+                {
+                    var uri = new Uri("avares://FDownloader.App/Assets/logo.ico");
+                    if (Avalonia.Platform.AssetLoader.Exists(uri))
+                    {
+                        using var stream = Avalonia.Platform.AssetLoader.Open(uri);
+                        _trayIcon.Icon = new WindowIcon(stream);
+                    }
+                }
+                catch { }
+            }
 
             var nativeMenu = new NativeMenu();
 
@@ -172,7 +185,8 @@ public partial class App : Application
             {
                 AllowAutoRedirect = true,
                 MaxAutomaticRedirections = 10,
-                AutomaticDecompression = System.Net.DecompressionMethods.None
+                AutomaticDecompression = System.Net.DecompressionMethods.None,
+                UseCookies = false
             };
             return new HttpClient(handler)
             {

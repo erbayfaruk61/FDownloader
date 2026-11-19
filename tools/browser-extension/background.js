@@ -1,6 +1,14 @@
 // ⚡ FDownloader Chrome/Edge/Brave/Firefox Browser Extension (Manifest V3)
 const BRIDGE_URL = "http://127.0.0.1:9666";
 
+// Servis çalışanının güncellendiğinde beklemeden derhal devreye girmesini sağla
+self.addEventListener("install", () => {
+  self.skipWaiting();
+});
+self.addEventListener("activate", (event) => {
+  event.waitUntil(clients.claim());
+});
+
 // Genel kullanımı yüksek ve FDownloader tarafından otomatik yakalanacak dosya uzantıları
 const DEFAULT_EXTENSIONS = [
   // Arşivler & Sıkıştırma (7z, zip, rar vb.)
@@ -58,6 +66,13 @@ const KNOWN_MIME_EXACT = [
 const MIME_PREFIXES = [
   "video/",
   "audio/"
+];
+
+// Doğrudan tarayıcıya bırakılacak oturum açma / SSO kimlik doğrulama alan adları
+const DEFAULT_EXCLUDED_DOMAINS = [
+  "accounts.google.com",
+  "login.microsoftonline.com",
+  "appleid.apple.com"
 ];
 
 function matchesMime(mime) {
@@ -132,9 +147,6 @@ function extractHostname(urlStr) {
 function isDomainExcluded(url, referrer, excludedList) {
   if (!Array.isArray(excludedList) || excludedList.length === 0) return false;
 
-  const urlHost = extractHostname(url);
-  const refHost = extractHostname(referrer);
-
   for (const item of excludedList) {
     if (!item || typeof item !== "string") continue;
     let pattern = item.toLowerCase().trim();
@@ -152,9 +164,10 @@ function isDomainExcluded(url, referrer, excludedList) {
 }
 
 function shouldCapture(downloadItem, allowedExtensions, minSizeBytes = 0, excludedDomains = []) {
-  // 1. Hariç tutulan alan adları kontrolü
-  if (isDomainExcluded(downloadItem.url, downloadItem.referrer, excludedDomains) ||
-      isDomainExcluded(downloadItem.finalUrl, downloadItem.referrer, excludedDomains)) {
+  // 1. Hariç tutulan alan adları kontrolü (Kullanıcı listesi + yerleşik e-fatura/güvenlikli alan adları)
+  const combinedExcluded = Array.from(new Set([...DEFAULT_EXCLUDED_DOMAINS, ...(excludedDomains || [])]));
+  if (isDomainExcluded(downloadItem.url, downloadItem.referrer, combinedExcluded) ||
+      isDomainExcluded(downloadItem.finalUrl, downloadItem.referrer, combinedExcluded)) {
     return false;
   }
 
@@ -191,30 +204,99 @@ function shouldCapture(downloadItem, allowedExtensions, minSizeBytes = 0, exclud
   return false;
 }
 
+// ─── Ayarların Bellek İçi Önbelleği (Senkron ve 0 ms Gecikmeli Kararlar İçin) ───
+let cachedSettings = {
+  isEnabled: true,
+  bypassOnAltKey: true,
+  extensions: DEFAULT_EXTENSIONS,
+  minSizeBytes: 0,
+  excludedDomains: DEFAULT_EXCLUDED_DOMAINS
+};
+
+function updateSettingsCache() {
+  if (typeof chrome === "undefined" || !chrome.storage || !chrome.storage.local) return;
+  chrome.storage.local.get({
+    isEnabled: true,
+    bypassOnAltKey: true,
+    extensions: [],
+    minSizeBytes: 0,
+    excludedDomains: []
+  }, (st) => {
+    if (st) {
+      cachedSettings.isEnabled = st.isEnabled !== false;
+      cachedSettings.bypassOnAltKey = st.bypassOnAltKey !== false;
+      cachedSettings.extensions = Array.from(new Set([...DEFAULT_EXTENSIONS, ...(st.extensions || [])]));
+      cachedSettings.minSizeBytes = st.minSizeBytes || 0;
+      cachedSettings.excludedDomains = Array.from(new Set([...DEFAULT_EXCLUDED_DOMAINS, ...(st.excludedDomains || [])]));
+    }
+  });
+}
+updateSettingsCache();
+try {
+  if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.onChanged) {
+    chrome.storage.onChanged.addListener(() => updateSettingsCache());
+  }
+} catch (_) { }
+
+// ─── FDownloader Canlılık Önbelleği (Ağ Beklemesini Önler) ───
+let lastBridgeAliveTime = 0;
+let isBridgeCurrentlyAlive = false;
+
+async function quickIsBridgeAlive() {
+  const now = Date.now();
+  // Son 4.5 saniye içinde başarılı bir heartbeat alındıysa hemen true dön
+  if (isBridgeCurrentlyAlive && (now - lastBridgeAliveTime < 4500)) {
+    return true;
+  }
+  return await isBridgeAlive();
+}
+
+async function safeReloadExtension(reason) {
+  try {
+    if (typeof chrome === "undefined" || !chrome.storage || !chrome.storage.local) return;
+    const store = await chrome.storage.local.get("last_reload_timestamp");
+    const lastTime = store?.last_reload_timestamp || 0;
+    const now = Date.now();
+    // 60 saniyelik kesin cooldown: sonsuz yeniden başlatma ve Chrome 'etkin değil' kilidini önler
+    if (now - lastTime < 60000) {
+      console.warn(`⚡ FDownloader: Yenileme isteği (${reason}) engellendi, 60 sn cooldown devrede.`);
+      return;
+    }
+    await chrome.storage.local.set({ last_reload_timestamp: now });
+    if (chrome.runtime && chrome.runtime.reload) {
+      console.log(`⚡ FDownloader: ${reason}, eklenti diskten yenileniyor...`);
+      chrome.runtime.reload();
+    }
+  } catch (e) {
+    console.warn("Yenileme yürütülemedi:", e);
+  }
+}
+
 async function isBridgeAlive() {
   try {
     const manifest = chrome.runtime.getManifest();
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 2500);
+    const timer = setTimeout(() => controller.abort(), 1200);
     const res = await fetch(`${BRIDGE_URL}/health?v=${encodeURIComponent(manifest.version || "1.0.0")}`, {
       headers: { "X-Extension-Version": manifest.version || "1.0.0" },
       signal: controller.signal
     });
     clearTimeout(timer);
     if (res.ok) {
+      isBridgeCurrentlyAlive = true;
+      lastBridgeAliveTime = Date.now();
       try {
         const data = await res.json();
         if (data && data.reloadRequested === true) {
-          if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.reload) {
-            console.log("⚡ FDownloader: Uygulamadan yenileme sinyali alındı, eklenti yenileniyor...");
-            chrome.runtime.reload();
-          }
+          safeReloadExtension("Uygulamadan yenileme sinyali alındı");
         }
       } catch (_) { }
       return true;
     }
+    isBridgeCurrentlyAlive = false;
     return false;
   } catch (e) {
+    isBridgeCurrentlyAlive = false;
     return false;
   }
 }
@@ -224,7 +306,7 @@ async function checkBridgeHeartbeat() {
     const manifest = chrome.runtime.getManifest();
     const ver = manifest.version || "1.0.0";
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 2000);
+    const timer = setTimeout(() => controller.abort(), 1500);
     
     // Öncelikli olarak POST /ping dene
     let res = null;
@@ -251,15 +333,18 @@ async function checkBridgeHeartbeat() {
     clearTimeout(timer);
 
     if (res && res.ok) {
+      isBridgeCurrentlyAlive = true;
+      lastBridgeAliveTime = Date.now();
       const data = await res.json().catch(() => null);
       if (data && data.reloadRequested === true) {
-        if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.reload) {
-          console.log("⚡ FDownloader: Kalp atışında yenileme sinyali alındı, eklenti diskten güncelleniyor...");
-          chrome.runtime.reload();
-        }
+        safeReloadExtension("Kalp atışında yenileme sinyali alındı");
       }
+    } else {
+      isBridgeCurrentlyAlive = false;
     }
-  } catch (_) { }
+  } catch (_) {
+    isBridgeCurrentlyAlive = false;
+  }
 }
 
 // FDownloader uygulamasından komut/yenileme kontrolü (3.5 saniye aralıkla)
@@ -321,7 +406,7 @@ async function sendToFDownloader(item) {
   try {
     const manifest = chrome.runtime.getManifest();
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 3500);
+    const timer = setTimeout(() => controller.abort(), 1200); // 1.2 sn zaman aşımı (köprü kapalıysa anında hata verir)
     const res = await fetch(`${BRIDGE_URL}/download`, {
       method: "POST",
       headers: {
@@ -335,9 +420,104 @@ async function sendToFDownloader(item) {
     const data = await res.json();
     return data && data.success === true;
   } catch (err) {
-    console.warn("FDownloader'a gönderilemedi:", err);
     return false;
   }
+}
+
+function arrayBufferToBase64(buffer) {
+  let binary = "";
+  const bytes = new Uint8Array(buffer);
+  const len = bytes.byteLength;
+  const chunkSize = 0x8000;
+  for (let i = 0; i < len; i += chunkSize) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i + chunkSize, len)));
+  }
+  return btoa(binary);
+}
+
+function isProtectedInvoiceOrSessionUrl(url, filename) {
+  if (!url) return false;
+  const u = url.toLowerCase();
+  const fn = (filename || "").toLowerCase();
+
+  // Sadece ve sadece Cloudflare bot korumalı e-Fatura ve kamu portalları
+  if (u.includes("fatura.n11.com") || u.includes("earsivportal.efatura.gov.tr") || u.includes("earsiv") || u.includes("efatura")) {
+    return true;
+  }
+  if (u.includes("fatura") && (u.includes(".pdf") || fn.includes(".pdf") || u.includes("n11.com") || u.includes("gib.gov.tr"))) {
+    return true;
+  }
+  return false;
+}
+
+async function fetchFileAsBase64(url, referrer) {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4000); // 4 sn kesin zaman aşımı (tarayıcıyı asla kilitlemez)
+    const headers = {};
+    if (referrer && (referrer.startsWith("http://") || referrer.startsWith("https://"))) {
+      headers["Referer"] = referrer;
+    }
+    const res = await fetch(url, {
+      method: "GET",
+      headers: headers,
+      credentials: "include",
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+
+    if (!res.ok) {
+      console.warn("fetchFileAsBase64 HTTP hatası:", res.status, url);
+      return null;
+    }
+
+    const cl = res.headers.get("content-length");
+    if (cl && parseInt(cl, 10) > 30 * 1024 * 1024) {
+      return null;
+    }
+
+    const buf = await res.arrayBuffer();
+    if (buf.byteLength > 30 * 1024 * 1024) {
+      return null;
+    }
+
+    return arrayBufferToBase64(buf);
+  } catch (err) {
+    console.warn("fetchFileAsBase64 hatası:", err);
+    return null;
+  }
+}
+
+async function sendBatchToFDownloader(items) {
+  if (!items || items.length === 0) return false;
+  try {
+    const manifest = chrome.runtime.getManifest();
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 6000);
+    const res = await fetch(`${BRIDGE_URL}/download/batch`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Extension-Version": manifest.version || "1.0.0"
+      },
+      body: JSON.stringify({ items: items }),
+      signal: controller.signal
+    });
+    clearTimeout(timer);
+    if (res.ok) {
+      const data = await res.json();
+      return data && data.success === true;
+    }
+  } catch (err) {
+    console.warn("Toplu indirme /batch endpointine iletilemedi, sırayla deneniyor:", err);
+  }
+
+  // Fallback: tek tek gönder
+  for (const it of items) {
+    await sendToFDownloader(it);
+    await new Promise(r => setTimeout(r, 60));
+  }
+  return true;
 }
 
 // ─── Alt Tuşu Takibi (5 Saniye Boyunca İndirme Yakalamama / Baypas) ───
@@ -373,18 +553,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return;
       }
 
-      const storageSettings = await new Promise(resolve => {
-        chrome.storage.local.get({ excludedDomains: [] }, resolve);
-      });
-      if (isDomainExcluded(message.url, message.referrer || sender.url || "", storageSettings.excludedDomains)) {
+      if (isDomainExcluded(message.url, message.referrer || sender.url || "", cachedSettings.excludedDomains)) {
         sendResponse({ success: false, reason: "excluded_domain" });
         return;
       }
 
-      const alive = await isBridgeAlive();
-      if (!alive) {
-        sendResponse({ success: false, reason: "bridge_offline" });
-        return;
+      let fileBase64 = null;
+      if (isProtectedInvoiceOrSessionUrl(message.url, message.filename)) {
+        fileBase64 = await fetchFileAsBase64(message.url, message.referrer || sender.url || "");
       }
 
       const cookies = await getCookiesForUrl(message.url, message.referrer || sender.url || "");
@@ -393,7 +569,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         filename: message.filename || "",
         referrer: message.referrer || sender.url || "",
         cookies: cookies,
-        userAgent: navigator.userAgent
+        userAgent: navigator.userAgent,
+        fileBase64: fileBase64
       });
 
       sendResponse({ success: captured });
@@ -405,93 +582,152 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // ─── 1. İndirme Yakalama (chrome.downloads.onDeterminingFilename) ───────────
 
 chrome.downloads.onDeterminingFilename.addListener((downloadItem, suggest) => {
-  // blob: veya data: linklerini tarayıcı kendisi indirsin
+  // 1. blob: veya data: linklerini tarayıcı kendisi hemen yönlendirsin
   const rawUrl = downloadItem.finalUrl || downloadItem.url || "";
   if (!rawUrl || rawUrl.startsWith("blob:") || rawUrl.startsWith("data:")) {
     suggest();
     return false;
   }
 
-  chrome.storage.local.get({
-    isEnabled: true,
-    bypassOnAltKey: true,
-    extensions: [],
-    minSizeBytes: 0,
-    excludedDomains: []
-  }, async (settings) => {
-    if (!settings.isEnabled) {
-      suggest();
-      return;
-    }
+  // 2. Eklenti kapalıysa SENKRON OLARAK ANINDA suggest() çağır (0 ms gecikme)
+  if (!cachedSettings.isEnabled) {
+    suggest();
+    return false;
+  }
 
-    // Alt tuşuna basıldıysa veya 5 saniyelik süre dolmadıysa tarayıcı kendisi indirsin
-    if (settings.bypassOnAltKey !== false) {
-      const now = Date.now();
-      const isAltActive = memIsAltDown || (now < memAltPressedUntil);
+  // 3. Alt tuşuna basıldıysa SENKRON OLARAK ANINDA suggest() çağır (0 ms gecikme)
+  const now = Date.now();
+  const isAltActive = memIsAltDown || (now < memAltPressedUntil);
+  if (cachedSettings.bypassOnAltKey !== false && isAltActive) {
+    console.log("⚡ FDownloader: Alt tuşu (5 sn baypas) devrede. İndirme doğrudan tarayıcıya bırakıldı.");
+    suggest();
+    return false;
+  }
 
-      if (isAltActive) {
-        console.log("⚡ FDownloader: Alt tuşu (5 sn baypas) devrede. İndirme doğrudan tarayıcıya bırakıldı.");
-        suggest();
-        return;
+  // 4. Hedef dosya değilse SENKRON OLARAK ANINDA suggest() çağır (0 ms gecikme)
+  const isTargetFile = shouldCapture(downloadItem, cachedSettings.extensions, cachedSettings.minSizeBytes, cachedSettings.excludedDomains);
+  if (!isTargetFile) {
+    suggest();
+    return false;
+  }
+
+  // 5. Asenkron FDownloader aktarımı (Köprü kapalıysa 5-10ms içinde tarayıcıya bırakır)
+  (async () => {
+    let captured = false;
+    try {
+      const cookies = await getCookiesForUrl(downloadItem.url, downloadItem.referrer);
+      
+      let fileBase64 = null;
+      if (isProtectedInvoiceOrSessionUrl(downloadItem.url, downloadItem.filename)) {
+        fileBase64 = await fetchFileAsBase64(downloadItem.url, downloadItem.referrer);
       }
+
+      captured = await sendToFDownloader({
+        url: downloadItem.url,
+        filename: downloadItem.filename,
+        referrer: downloadItem.referrer || "",
+        cookies: cookies,
+        userAgent: navigator.userAgent,
+        totalBytes: downloadItem.fileSize > 0 ? downloadItem.fileSize : null,
+        mime: downloadItem.mime || "",
+        fileBase64: fileBase64
+      });
+    } catch (e) {
+      console.warn("FDownloader aktarım hatası:", e);
     }
-
-    // Kullanıcıda eski bir kayıt olsa bile DEFAULT_EXTENSIONS daima geçerli kalır
-    const allowed = Array.from(new Set([
-      ...DEFAULT_EXTENSIONS,
-      ...(settings.extensions || [])
-    ]));
-
-    const isTargetFile = shouldCapture(downloadItem, allowed, settings.minSizeBytes, settings.excludedDomains);
-
-    if (!isTargetFile) {
-      suggest();
-      return;
-    }
-
-    // FDownloader açık mı kontrol et
-    const alive = await isBridgeAlive();
-    if (!alive) {
-      // Uygulama açık değilse tarayıcı standart indirmeye devam etsin
-      suggest();
-      return;
-    }
-
-    // İlgili domain çerezlerini topla
-    const cookies = await getCookiesForUrl(downloadItem.url, downloadItem.referrer);
-
-    // FDownloader'a aktar
-    const captured = await sendToFDownloader({
-      url: downloadItem.url,
-      filename: downloadItem.filename,
-      referrer: downloadItem.referrer || "",
-      cookies: cookies,
-      userAgent: navigator.userAgent,
-      totalBytes: downloadItem.fileSize > 0 ? downloadItem.fileSize : null,
-      mime: downloadItem.mime || ""
-    });
 
     if (captured) {
-      // Tarayıcının kendi indirmesini iptal et ve indirme geçmişinden temizle
-      chrome.downloads.cancel(downloadItem.id, () => {
-        chrome.downloads.erase({ id: downloadItem.id });
-      });
+      // 1. Önce suggest() çağrılarak determining_filename aşaması sonlandırılır
+      suggest({ filename: downloadItem.filename });
+      // 2. İndirme in_progress durumuna geçtiği an iptal edilip indirme geçmişinden silinir
+      setTimeout(() => {
+        chrome.downloads.cancel(downloadItem.id, () => {
+          chrome.downloads.erase({ id: downloadItem.id }, () => {});
+        });
+      }, 60);
     } else {
+      // FDownloader kapalıysa veya yakalamadıysa hemen tarayıcıya devret (sıfır gecikme)
       suggest();
     }
-  });
+  })();
 
   return true; // Asenkron suggest için zorunlu
 });
 
 // ─── 2. Sağ Tık Bağlam Menüsü (Context Menu) ────────────────────────────────
 
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.contextMenus.create({
-    id: "fdownloader-capture-link",
-    title: "⚡ FDownloader ile İndir",
-    contexts: ["link", "video", "audio", "image"]
+function setupContextMenus() {
+  chrome.contextMenus.removeAll(() => {
+    // 1. Doğrudan bağlantı veya medya üzerine tıklandığında (tek tıkla direkt indirme)
+    chrome.contextMenus.create({
+      id: "fdownloader-capture-link",
+      title: "⚡ FDownloader ile İndir",
+      contexts: ["link", "video", "audio", "image"]
+    });
+
+    // 2. Sayfa, çerçeve, seçim veya bağlantı üzerinde sağ tık ana menüsü
+    chrome.contextMenus.create({
+      id: "fdownloader-menu-parent",
+      title: "⚡ FDownloader",
+      contexts: ["page", "frame", "selection", "link"]
+    });
+
+    // 2.1 Bu Sayfayı / Belgeyi İndir (Örn: Açık PDF sekmesi)
+    chrome.contextMenus.create({
+      id: "fdownloader-capture-page",
+      parentId: "fdownloader-menu-parent",
+      title: "📄 Bu Sayfayı / Açık Belgeyi İndir (PDF/Web)",
+      contexts: ["page", "frame", "link"]
+    });
+
+    // 2.2 Sayfadaki Tüm PDF'leri İndir
+    chrome.contextMenus.create({
+      id: "fdownloader-extract-pdf",
+      parentId: "fdownloader-menu-parent",
+      title: "📑 Sayfadaki Tüm PDF Belgelerini İndir",
+      contexts: ["page", "frame", "selection", "link"]
+    });
+
+    // 2.3 Sayfadaki Tüm Arşivleri İndir
+    chrome.contextMenus.create({
+      id: "fdownloader-extract-archives",
+      parentId: "fdownloader-menu-parent",
+      title: "📦 Sayfadaki Tüm Arşivleri İndir (ZIP, RAR, 7Z...)",
+      contexts: ["page", "frame", "selection", "link"]
+    });
+
+    // 2.4 Sayfadaki Tüm Ofis Belgelerini İndir
+    chrome.contextMenus.create({
+      id: "fdownloader-extract-docs",
+      parentId: "fdownloader-menu-parent",
+      title: "📝 Sayfadaki Tüm Ofis Belgelerini İndir (Word, Excel, PPT...)",
+      contexts: ["page", "frame", "selection", "link"]
+    });
+
+    // 2.5 Sayfadaki Tüm Medyaları İndir
+    chrome.contextMenus.create({
+      id: "fdownloader-extract-media",
+      parentId: "fdownloader-menu-parent",
+      title: "🎬 Sayfadaki Tüm Videoları & Sesleri İndir",
+      contexts: ["page", "frame", "selection", "link"]
+    });
+
+    // 2.6 Sayfadaki Tüm Dosyaları İndir
+    chrome.contextMenus.create({
+      id: "fdownloader-extract-all",
+      parentId: "fdownloader-menu-parent",
+      title: "📥 Sayfadaki Tüm Dosyaları Yakala...",
+      contexts: ["page", "frame", "selection", "link"]
+    });
   });
+}
+
+chrome.runtime.onInstalled.addListener(() => {
+  setupContextMenus();
+});
+
+chrome.runtime.onStartup.addListener(() => {
+  setupContextMenus();
 });
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
@@ -499,19 +735,97 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     const targetUrl = info.linkUrl || info.srcUrl || info.pageUrl;
     if (!targetUrl || targetUrl.startsWith("blob:") || targetUrl.startsWith("data:")) return;
 
-    const alive = await isBridgeAlive();
-    if (!alive) {
-      return;
+    const alive = await quickIsBridgeAlive();
+    if (!alive) return;
+
+    let fileBase64 = null;
+    if (isProtectedInvoiceOrSessionUrl(targetUrl, "")) {
+      fileBase64 = await fetchFileAsBase64(targetUrl, tab?.url || "");
     }
 
     const cookies = await getCookiesForUrl(targetUrl, tab?.url || "");
-
     await sendToFDownloader({
       url: targetUrl,
       filename: "",
       referrer: tab?.url || "",
       cookies: cookies,
-      userAgent: navigator.userAgent
+      userAgent: navigator.userAgent,
+      fileBase64: fileBase64
     });
+    return;
+  }
+
+  if (info.menuItemId === "fdownloader-capture-page") {
+    const targetUrl = info.pageUrl || tab?.url;
+    if (!targetUrl || targetUrl.startsWith("blob:") || targetUrl.startsWith("data:")) return;
+
+    const alive = await quickIsBridgeAlive();
+    if (!alive) return;
+
+    const cookies = await getCookiesForUrl(targetUrl, tab?.url || "");
+    let filename = "";
+    if (tab?.title) {
+      filename = tab.title.replace(/[\\/:*?"<>|]/g, "_").trim();
+      if (targetUrl.toLowerCase().includes(".pdf") && !filename.toLowerCase().endsWith(".pdf")) {
+        filename += ".pdf";
+      }
+    }
+
+    let fileBase64 = null;
+    if (isProtectedInvoiceOrSessionUrl(targetUrl, filename)) {
+      fileBase64 = await fetchFileAsBase64(targetUrl, tab?.url || "");
+    }
+
+    await sendToFDownloader({
+      url: targetUrl,
+      filename: filename,
+      referrer: tab?.url || "",
+      cookies: cookies,
+      userAgent: navigator.userAgent,
+      fileBase64: fileBase64
+    });
+    return;
+  }
+
+  const categoryMap = {
+    "fdownloader-extract-pdf": "pdf",
+    "fdownloader-extract-archives": "archives",
+    "fdownloader-extract-docs": "docs",
+    "fdownloader-extract-media": "media",
+    "fdownloader-extract-all": "all"
+  };
+
+  const category = categoryMap[info.menuItemId];
+  if (category && tab?.id) {
+    try {
+      chrome.tabs.sendMessage(tab.id, {
+        type: "FDOWNLOADER_SCAN_LINKS",
+        category: category
+      }, async (response) => {
+        if (chrome.runtime.lastError || !response) return;
+
+        const items = response.links || [];
+        if (items.length === 0) return;
+
+        const alive = await quickIsBridgeAlive();
+        if (!alive) return;
+
+        const payloadItems = [];
+        for (const it of items) {
+          const cookies = await getCookiesForUrl(it.url, tab.url || "");
+          payloadItems.push({
+            url: it.url,
+            filename: it.filename || "",
+            referrer: tab.url || "",
+            cookies: cookies,
+            userAgent: navigator.userAgent
+          });
+        }
+
+        await sendBatchToFDownloader(payloadItems);
+      });
+    } catch (e) {
+      console.warn("Sayfa link tarama hatası:", e);
+    }
   }
 });

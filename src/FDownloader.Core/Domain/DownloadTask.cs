@@ -112,6 +112,9 @@ public class DownloadTask
     /// <summary>İsteklerle gönderilecek cookie dizgesi.</summary>
     public string? Cookies { get; set; }
 
+    /// <summary>Tarayıcı oturumundan doğrudan Base64 olarak yakalanan dosya verisi (Cloudflare/oturum korumalı küçük belgeler için).</summary>
+    public string? InitialDataBase64 { get; set; }
+
     // ─── Zaman Damgaları ──────────────────────────────────────────────────
 
     /// <summary>Görevin oluşturulma zamanı.</summary>

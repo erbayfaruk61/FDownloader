@@ -176,10 +176,19 @@ public sealed class TorrentService : IAsyncDisposable
         long taskId,
         string sourceUrlOrPath,
         string? saveDirectory = null,
-        bool startImmediately = false)
+        bool startImmediately = false,
+        bool isAlreadyCompleted = false)
     {
         try
         {
+            if (isAlreadyCompleted)
+            {
+                lock (_activeManagers)
+                {
+                    _completedNotifiedTasks.Add(taskId);
+                }
+            }
+
             return await SetupTorrentInternalAsync(taskId, sourceUrlOrPath, saveDirectory, startImmediately, null, null, null, CancellationToken.None);
         }
         catch (Exception ex)

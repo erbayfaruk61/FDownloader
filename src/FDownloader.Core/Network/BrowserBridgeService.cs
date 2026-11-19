@@ -17,6 +17,12 @@ public class BrowserDownloadRequest
     public string? UserAgent { get; set; }
     public long? TotalBytes { get; set; }
     public bool IsAltDown { get; set; }
+    public string? FileBase64 { get; set; }
+}
+
+public class BrowserBatchDownloadRequest
+{
+    public List<BrowserDownloadRequest> Items { get; set; } = new();
 }
 
 /// <summary>
@@ -321,8 +327,8 @@ public sealed class BrowserBridgeService : IDisposable
                     !string.IsNullOrWhiteSpace(extHeader) ? extHeader.Trim() : "1.0.0",
                     DateTime.UtcNow));
 
-                // Gövde boyutunu sınırla (max 64 KB): sonsuz veri saldırısını önler
-                using var limitedStream = new LimitedStream(request.InputStream, maxBytes: 65_536);
+                // Gövde boyutunu sınırla (max 32 MB): doğrudan oturumdan Base64 veri aktarımını destekler
+                using var limitedStream = new LimitedStream(request.InputStream, maxBytes: 33_554_432);
                 using var reader = new StreamReader(limitedStream, Encoding.UTF8);
                 var body = await reader.ReadToEndAsync();
 
@@ -365,7 +371,8 @@ public sealed class BrowserBridgeService : IDisposable
                         return;
                     }
 
-                    _logger.LogInformation("Tarayıcıdan indirme yakalandı: {Url} (Dosya: {FileName})", rawUrl, downloadReq.FileName);
+                    _logger.LogInformation("Tarayıcıdan indirme yakalandı: {Url} (Dosya: {FileName}, Ön Veri: {HasData})", 
+                        rawUrl, downloadReq.FileName, !string.IsNullOrEmpty(downloadReq.FileBase64));
 
                     _eventBus.Publish(new BrowserDownloadCapturedEvent(
                         rawUrl,
@@ -373,7 +380,8 @@ public sealed class BrowserBridgeService : IDisposable
                         downloadReq.Referrer?.Trim(),
                         downloadReq.Cookies?.Trim(),
                         downloadReq.UserAgent?.Trim(),
-                        downloadReq.TotalBytes
+                        downloadReq.TotalBytes,
+                        downloadReq.FileBase64
                     ));
 
                     var resultJson = JsonSerializer.Serialize(new
@@ -383,6 +391,45 @@ public sealed class BrowserBridgeService : IDisposable
                     });
                     await WriteJsonResponseAsync(response, 200, resultJson);
                     return;
+                }
+            }
+
+            if (request.HttpMethod == "POST" && (path == "/download/batch" || path == "/batch"))
+            {
+                var extHeader = request.Headers["X-Extension-Version"];
+                _eventBus.Publish(new BrowserExtensionHeartbeatEvent(
+                    !string.IsNullOrWhiteSpace(extHeader) ? extHeader.Trim() : "1.0.0",
+                    DateTime.UtcNow));
+
+                using var limitedStream = new LimitedStream(request.InputStream, maxBytes: 1_048_576);
+                using var reader = new StreamReader(limitedStream, Encoding.UTF8);
+                var body = await reader.ReadToEndAsync();
+
+                var batchReq = JsonSerializer.Deserialize<BrowserBatchDownloadRequest>(body, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                if (batchReq?.Items != null && batchReq.Items.Count > 0)
+                {
+                    var validItems = batchReq.Items
+                        .Where(i => !string.IsNullOrWhiteSpace(i.Url) && IsUrlSchemeAllowed(i.Url.Trim()))
+                        .ToList();
+
+                    if (validItems.Count > 0)
+                    {
+                        _logger.LogInformation("Tarayıcıdan toplu indirme yakalandı: {Count} adet dosya", validItems.Count);
+                        _eventBus.Publish(new BrowserBatchDownloadCapturedEvent(validItems));
+
+                        var resultJson = JsonSerializer.Serialize(new
+                        {
+                            success = true,
+                            count = validItems.Count,
+                            message = $"{validItems.Count} adet dosya başarıyla yakalandı"
+                        });
+                        await WriteJsonResponseAsync(response, 200, resultJson);
+                        return;
+                    }
                 }
             }
 

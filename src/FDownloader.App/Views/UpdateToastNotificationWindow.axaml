@@ -1,0 +1,87 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:FDownloader.App.ViewModels"
+        x:Class="FDownloader.App.Views.UpdateToastNotificationWindow"
+        x:DataType="vm:MainViewModel"
+        Title="FDownloader Güncellemesi"
+        Width="410"
+        SizeToContent="Height"
+        MinHeight="180"
+        MaxHeight="520"
+        WindowStartupLocation="Manual"
+        WindowDecorations="None"
+        ShowInTaskbar="False"
+        Topmost="True"
+        CanResize="False"
+        Background="Transparent">
+
+    <Border Margin="8"
+            Background="#181F2C"
+            BorderBrush="#38BDF8"
+            BorderThickness="1.5"
+            CornerRadius="14"
+            BoxShadow="0 14 36 0 #90000000"
+            Padding="18,16">
+        <StackPanel Spacing="10">
+            <!-- Üst Başlık & Kapat Butonu -->
+            <Grid ColumnDefinitions="Auto, *, Auto">
+                <!-- Sol: FDownloader Logosu -->
+                <Border Grid.Column="0" Width="40" Height="40" CornerRadius="20" Background="#2038BDF8" BorderBrush="#38BDF8" BorderThickness="1" VerticalAlignment="Center">
+                    <TextBlock Text="⚡" Foreground="#38BDF8" FontSize="19" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+
+                <!-- Orta: Başlık ve Rozet -->
+                <StackPanel Grid.Column="1" Margin="10,0,8,0" VerticalAlignment="Center" Spacing="4">
+                    <TextBlock Text="{Binding UpdateTargetVersion, StringFormat='FDownloader {0} kullanılabilir'}" 
+                               FontSize="14" FontWeight="Bold" Foreground="#F8FAFC" TextTrimming="CharacterEllipsis" />
+                    <Border Background="#25F43F5E" BorderBrush="#F43F5E" BorderThickness="1" CornerRadius="10" Padding="8,2" HorizontalAlignment="Left">
+                        <TextBlock Text="Gerekli güncelleme" FontSize="10.5" FontWeight="SemiBold" Foreground="#FB7185" />
+                    </Border>
+                </StackPanel>
+
+                <!-- Sağ: Kapat Çarpısı -->
+                <Button Grid.Column="2" Click="OnCloseClick" Content="✕" FontSize="13" Foreground="#94A3B8" Background="Transparent" BorderThickness="0" VerticalAlignment="Top" Padding="4" Margin="0,-2,-2,0" Cursor="Hand" ToolTip.Tip="Kapat" />
+            </Grid>
+
+            <!-- Alt Başlık / Açıklama -->
+            <TextBlock Text="Dosyalarınızı ve indirmelerinizi iyileştiren yenilikler hazır. Lütfen güncelleyin." 
+                       FontSize="11.5" Foreground="#94A3B8" TextWrapping="Wrap" LineHeight="16" />
+
+            <!-- Sürüm Notları (Changelog Kutusu) -->
+            <Border Background="#0F172A" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="12,10">
+                <ScrollViewer MaxHeight="150" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                    <TextBlock Text="{Binding UpdateChangelog}" FontSize="11.5" LineHeight="18" Foreground="#E2E8F0" TextWrapping="Wrap" />
+                </ScrollViewer>
+            </Border>
+
+            <!-- Bilgilendirme Notu -->
+            <TextBlock Text="Güncelle'ye basınca FDownloader yeni sürümü indirip kurar. Ayarlarınız korunur." 
+                       FontSize="10.5" Foreground="#64748B" TextWrapping="Wrap" LineHeight="15" />
+
+            <!-- İndirme / Güncelleme İlerlemesi (Sadece güncelleme yapılırken görünür) -->
+            <StackPanel IsVisible="{Binding IsUpdating}" Spacing="6" Margin="0,2,0,4">
+                <TextBlock Text="{Binding UpdateStatusText}" FontSize="11" Foreground="#38BDF8" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                <ProgressBar Value="{Binding UpdateDownloadProgress}" Maximum="100" Height="5" CornerRadius="2.5" Foreground="#38BDF8" Background="#334155" />
+            </StackPanel>
+
+            <!-- Aksiyon Butonları -->
+            <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,4,0,0">
+                <Button Command="{Binding ConfirmApplyUpdateCommand}" 
+                        IsEnabled="{Binding !IsUpdating}"
+                        Height="36" Padding="16,0" CornerRadius="8" 
+                        Background="#0284C7" Foreground="White" FontWeight="Bold" FontSize="12" Cursor="Hand" BorderThickness="0">
+                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <TextBlock Text="📥" FontSize="13" VerticalAlignment="Center" />
+                        <TextBlock Text="Güncelle" FontSize="12" FontWeight="Bold" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <Button Click="OnCloseClick" 
+                        IsVisible="{Binding !IsUpdating}"
+                        Height="36" Padding="14,0" CornerRadius="8" 
+                        Background="#334155" Foreground="#E2E8F0" FontWeight="Medium" FontSize="12" 
+                        BorderThickness="1" BorderBrush="#475569" Content="Daha sonra" Cursor="Hand" />
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

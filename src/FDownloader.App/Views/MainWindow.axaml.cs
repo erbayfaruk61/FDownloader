@@ -251,15 +251,14 @@ public partial class MainWindow : Window
         Dispatcher.UIThread.Post(() =>
         {
             Opacity = 1;
+            ShowInTaskbar = true;
+            IsVisible = true;
             if (WindowState == WindowState.Minimized)
             {
                 WindowState = WindowState.Normal;
             }
             Show();
             Activate();
-            Topmost = true;
-            Topmost = false;
-            Focus();
 
             if (OperatingSystem.IsWindows())
             {
@@ -268,12 +267,46 @@ public partial class MainWindow : Window
                     var handle = TryGetPlatformHandle()?.Handle;
                     if (handle.HasValue && handle.Value != IntPtr.Zero)
                     {
-                        ShowWindow(handle.Value, 9); // SW_RESTORE
-                        SetForegroundWindow(handle.Value);
+                        var hWnd = handle.Value;
+                        ShowWindow(hWnd, SW_SHOW);
+                        ShowWindow(hWnd, SW_RESTORE);
+                        BringWindowToTop(hWnd);
+
+                        var foregroundHwnd = GetForegroundWindow();
+                        if (foregroundHwnd != hWnd)
+                        {
+                            uint foregroundThreadId = GetWindowThreadProcessId(foregroundHwnd, out _);
+                            uint currentThreadId = GetCurrentThreadId();
+
+                            if (foregroundThreadId != 0 && foregroundThreadId != currentThreadId)
+                            {
+                                AttachThreadInput(currentThreadId, foregroundThreadId, true);
+                                SetForegroundWindow(hWnd);
+                                BringWindowToTop(hWnd);
+                                AttachThreadInput(currentThreadId, foregroundThreadId, false);
+                            }
+                            else
+                            {
+                                SetForegroundWindow(hWnd);
+                            }
+
+                            // Alt tuşu simülasyonu ile Windows'un foreground kilit mekanizmasını kesin aş
+                            try
+                            {
+                                keybd_event(VK_MENU, 0, 0, UIntPtr.Zero);
+                                keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
+                                SetForegroundWindow(hWnd);
+                            }
+                            catch { }
+                        }
                     }
                 }
                 catch { }
             }
+
+            Topmost = true;
+            Topmost = false;
+            Focus();
         });
     }
 
@@ -584,9 +617,32 @@ public partial class MainWindow : Window
         }
     }
 
+    private const int SW_SHOW = 5;
+    private const int SW_RESTORE = 9;
+    private const byte VK_MENU = 0x12;
+    private const uint KEYEVENTF_KEYUP = 0x0002;
+
     [DllImport("user32.dll")]
     private static extern bool SetForegroundWindow(IntPtr hWnd);
 
     [DllImport("user32.dll")]
     private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetForegroundWindow();
+
+    [DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+
+    [DllImport("user32.dll")]
+    private static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
+
+    [DllImport("user32.dll")]
+    private static extern bool BringWindowToTop(IntPtr hWnd);
+
+    [DllImport("kernel32.dll")]
+    private static extern uint GetCurrentThreadId();
+
+    [DllImport("user32.dll")]
+    private static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
 }

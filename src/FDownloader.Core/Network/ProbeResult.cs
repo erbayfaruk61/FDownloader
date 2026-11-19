@@ -12,7 +12,7 @@ public record ProbeResult
     public long ContentLength { get; init; } = -1;
 
     /// <summary>Sunucu Range isteklerini destekliyor mu? (Accept-Ranges: bytes)</summary>
-    public bool SupportsRange { get; init; }
+    public bool SupportsRange { get; set; }
 
     /// <summary>Belirlenen dosya adı (temizlenmemiş ham değer).</summary>
     public required string FileName { get; init; }

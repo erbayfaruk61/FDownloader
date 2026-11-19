@@ -22,7 +22,8 @@ public static class NetworkHandlerFactory
             AutomaticDecompression = DecompressionMethods.All,
             PooledConnectionLifetime = TimeSpan.FromMinutes(15),
             PooledConnectionIdleTimeout = TimeSpan.FromMinutes(2),
-            EnableMultipleHttp2Connections = true
+            EnableMultipleHttp2Connections = true,
+            UseCookies = false
         };
 
         // 1. Proxy Yapılandırması

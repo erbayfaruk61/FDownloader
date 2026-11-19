@@ -133,6 +133,41 @@ public sealed class HttpDownloader : IDisposable
             _repository.UpdateTaskStatus(_task);
             _eventBus.Publish(new TaskStartedEvent(_task.Id));
             _logger.LogInformation("HTTP indirme başlatılıyor: Görev #{Id}, URL: {Url}", _task.Id, _task.OriginalUrl);
+
+            // 0. ADIM: Tarayıcı oturumundan yakalanmış doğrudan dosya verisi (Cloudflare/e-Fatura korumalı dosyalar)
+            if (!string.IsNullOrEmpty(_task.InitialDataBase64))
+            {
+                try
+                {
+                    _logger.LogInformation("Tarayıcı oturumundan yakalanan doğrudan veri diske yazılıyor: Görev #{Id} ({FileName})", _task.Id, _task.FileName);
+                    var fileBytes = Convert.FromBase64String(_task.InitialDataBase64);
+                    _task.TotalBytes = fileBytes.Length;
+                    _task.DownloadedBytes = fileBytes.Length;
+                    _task.Status = DownloadStatus.Downloading;
+
+                    var targetDir = !string.IsNullOrEmpty(_task.SaveDirectory)
+                        ? _task.SaveDirectory
+                        : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+                    Directory.CreateDirectory(targetDir);
+
+                    var finalPath = Path.Combine(targetDir, _task.FileName);
+                    await File.WriteAllBytesAsync(finalPath, fileBytes, cancellationToken);
+
+                    _task.Status = DownloadStatus.Completed;
+                    _task.CompletedAt = DateTimeOffset.UtcNow;
+                    _task.InitialDataBase64 = null; // RAM temizliği
+                    _repository.UpdateTaskStatus(_task);
+                    _eventBus.Publish(new TaskCompletedEvent(_task.Id, finalPath, fileBytes.Length, TimeSpan.FromMilliseconds(50)));
+                    _eventBus.Publish(new ProgressUpdatedEvent(_task.Id, fileBytes.Length, fileBytes.Length, 100.0, 0, TimeSpan.Zero, Array.Empty<SegmentProgressInfo>()));
+                    _logger.LogInformation("Tarayıcı verisi başarıyla diske yazıldı ve indirme tamamlandı: {Path}", finalPath);
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Doğrudan veri diske yazılamadı, standart HTTP indirmesi deneniyor: Görev #{Id}", _task.Id);
+                }
+            }
+
             // 1. ADIM: Sunucu Probe'u (Eğer daha önce yapılmadıysa)
             if (_task.TotalBytes <= 0 || string.IsNullOrEmpty(_task.FileName))
             {
@@ -398,7 +433,8 @@ public sealed class HttpDownloader : IDisposable
                             {
                                 Interlocked.Increment(ref rateLimitDetections);
                                 _logger.LogWarning("Sunucudan HTTP 429 Rate Limit algılandı. Dinamik bölme durduruldu, bağlantılar optimize ediliyor.");
-                            });
+                            },
+                            supportsRange: _task.SupportsRange);
 
                         worker.BytesWritten += bytes =>
                         {

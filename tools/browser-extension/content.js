@@ -80,31 +80,11 @@
     return null;
   }
 
+  // Tıklama akışı tarayıcının yerel mekanizmasına bırakılır;
+  // FDownloader indirmeyi chrome.downloads.onDeterminingFilename üzerinden merkezi ve gecikmesiz yakalar.
   document.addEventListener("click", (e) => {
-    if (e.altKey) return;
-    if (!isExtensionValid()) return;
-
-    const link = e.target.closest("a");
-    if (!link || !link.href) return;
-
-    const href = link.href;
-    if (!href.startsWith("http://") && !href.startsWith("https://")) return;
-
-    const ext = getLinkExtension(href);
-    if (ext && INTERCEPT_EXTENSIONS.has(ext)) {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-
-      chrome.runtime.sendMessage({
-        type: "INTERCEPT_LINK",
-        url: href,
-        filename: link.download || "",
-        referrer: window.location.href
-      }, (res) => {
-        if (chrome.runtime.lastError || !res || !res.success) {
-          window.location.href = href;
-        }
-      });
+    if (e.altKey) {
+      updateAltState(true);
     }
   }, true);
 
@@ -765,4 +745,139 @@
   }
   pingExtensionBridge();
   setInterval(pingExtensionBridge, 15000);
+
+  // ─── Sayfadan Dosya Tarama & Bildirim (Context Menu Handler) ─────────────────
+  function extractPageLinksByCategory(category) {
+    const result = [];
+    const seenUrls = new Set();
+
+    const pdfExts = new Set(["pdf"]);
+    const archiveExts = new Set(["zip", "rar", "7z", "tar", "gz", "bz2", "xz", "iso", "img", "bin", "dat", "cab", "wim"]);
+    const docExts = new Set(["pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "odt", "ods", "odp", "txt", "rtf", "csv", "epub", "mobi"]);
+    const mediaExts = new Set(["mp4", "mkv", "avi", "mov", "flv", "webm", "mp3", "flac", "wav", "aac", "m4a", "ogg", "opus", "m3u8"]);
+
+    function matchCategory(url) {
+      if (!url || url.startsWith("javascript:") || url.startsWith("data:") || url.startsWith("blob:") || url.startsWith("#")) return false;
+      let clean = url.split("?")[0].split("#")[0].toLowerCase();
+      let extMatch = clean.match(/\.([a-z0-9]{2,5})$/i);
+      let ext = extMatch ? extMatch[1] : "";
+
+      if (category === "pdf") {
+        return ext === "pdf" || clean.endsWith(".pdf") || url.toLowerCase().includes("application/pdf") || url.toLowerCase().includes(".pdf?");
+      }
+      if (category === "archives") {
+        return archiveExts.has(ext);
+      }
+      if (category === "docs") {
+        return docExts.has(ext);
+      }
+      if (category === "media") {
+        return mediaExts.has(ext);
+      }
+      if (category === "all") {
+        return (ext && (pdfExts.has(ext) || archiveExts.has(ext) || docExts.has(ext) || mediaExts.has(ext))) || clean.endsWith(".pdf");
+      }
+      return false;
+    }
+
+    // 1. a[href] etiketleri
+    const anchors = document.querySelectorAll("a[href]");
+    for (const a of anchors) {
+      try {
+        const fullUrl = new URL(a.href, document.baseURI).href;
+        if (!seenUrls.has(fullUrl) && matchCategory(fullUrl)) {
+          seenUrls.add(fullUrl);
+          let fn = a.download || a.title || a.textContent || "";
+          fn = fn.trim().replace(/[\\/:*?"<>|\r\n\t]+/g, " ");
+          result.push({ url: fullUrl, filename: fn });
+        }
+      } catch (e) { }
+    }
+
+    // 2. embed / iframe / object etiketleri
+    const embeds = document.querySelectorAll("embed[src], iframe[src], object[data]");
+    for (const el of embeds) {
+      try {
+        const src = el.src || el.data;
+        if (src) {
+          const fullUrl = new URL(src, document.baseURI).href;
+          if (!seenUrls.has(fullUrl) && matchCategory(fullUrl)) {
+            seenUrls.add(fullUrl);
+            result.push({ url: fullUrl, filename: "" });
+          }
+        }
+      } catch (e) { }
+    }
+
+    // 3. Mevcut sayfa URL'si doğrudan eşleşiyorsa (örneğin açık sekmede bir PDF açılmışsa)
+    try {
+      const loc = window.location.href;
+      if (!seenUrls.has(loc) && matchCategory(loc)) {
+        seenUrls.add(loc);
+        result.unshift({ url: loc, filename: document.title || "" });
+      }
+    } catch (e) { }
+
+    return result;
+  }
+
+  function showInPageToast(message, isWarning) {
+    try {
+      let toast = document.getElementById("fdownloader-page-toast");
+      if (toast) toast.remove();
+
+      toast = document.createElement("div");
+      toast.id = "fdownloader-page-toast";
+      toast.style.position = "fixed";
+      toast.style.bottom = "24px";
+      toast.style.right = "24px";
+      toast.style.zIndex = "2147483647";
+      toast.style.padding = "10px 16px";
+      toast.style.borderRadius = "8px";
+      toast.style.fontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      toast.style.fontSize = "12px";
+      toast.style.fontWeight = "600";
+      toast.style.color = "#FFFFFF";
+      toast.style.background = isWarning ? "rgba(239, 68, 68, 0.95)" : "rgba(15, 23, 42, 0.95)";
+      toast.style.border = isWarning ? "1px solid #EF4444" : "1px solid #38BDF8";
+      toast.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.4)";
+      toast.style.backdropFilter = "blur(8px)";
+      toast.style.transition = "opacity 0.3s ease, transform 0.3s ease";
+      toast.style.transform = "translateY(0)";
+      toast.textContent = message;
+
+      const targetParent = document.body || document.documentElement;
+      if (targetParent) {
+        targetParent.appendChild(toast);
+        setTimeout(() => {
+          if (toast && toast.parentNode) {
+            toast.style.opacity = "0";
+            toast.style.transform = "translateY(10px)";
+            setTimeout(() => toast.remove(), 350);
+          }
+        }, 3000);
+      }
+    } catch (e) { }
+  }
+
+  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    if (msg && msg.type === "FDOWNLOADER_SCAN_LINKS") {
+      const categoryNames = {
+        "pdf": "PDF",
+        "archives": "Arşiv",
+        "docs": "Ofis Belgesi",
+        "media": "Medya",
+        "all": "Dosya"
+      };
+      const catTitle = categoryNames[msg.category] || "Dosya";
+      const links = extractPageLinksByCategory(msg.category);
+      if (links.length === 0) {
+        showInPageToast(`⚠️ Bu sayfada indirilebilecek ${catTitle} bağlantısı bulunamadı.`, true);
+      } else {
+        showInPageToast(`⚡ ${links.length} adet ${catTitle} FDownloader'a aktarılıyor...`, false);
+      }
+      sendResponse({ links: links });
+      return true;
+    }
+  });
 })();

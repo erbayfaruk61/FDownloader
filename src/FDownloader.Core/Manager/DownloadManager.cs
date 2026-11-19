@@ -295,7 +295,8 @@ public sealed class DownloadManager : IAsyncDisposable
                         torrentTask.Id,
                         torrentTask.OriginalUrl,
                         torrentTask.SaveDirectory,
-                        startImmediately: false);
+                        startImmediately: false,
+                        isAlreadyCompleted: torrentTask.Status == DownloadStatus.Completed);
                 }
             }
             _logger.LogInformation("Veritabanından {Count} adet indirme görevi yüklendi.", existing.Count);
@@ -335,7 +336,8 @@ public sealed class DownloadManager : IAsyncDisposable
         string? cookies = null,
         string? userAgent = null,
         bool startImmediately = true,
-        bool allowDuplicate = true)
+        bool allowDuplicate = true,
+        string? initialDataBase64 = null)
     {
         if (!allowDuplicate)
         {
@@ -366,6 +368,7 @@ public sealed class DownloadManager : IAsyncDisposable
             Referer = referer,
             Cookies = cookies,
             UserAgent = userAgent,
+            InitialDataBase64 = initialDataBase64,
             Status = DownloadStatus.Queued,
             CreatedAt = DateTimeOffset.UtcNow
         };
