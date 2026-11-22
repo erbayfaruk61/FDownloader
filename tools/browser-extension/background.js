@@ -68,11 +68,13 @@ const MIME_PREFIXES = [
   "audio/"
 ];
 
-// Doğrudan tarayıcıya bırakılacak oturum açma / SSO kimlik doğrulama alan adları
+// Doğrudan tarayıcıya bırakılacak oturum açma / SSO / web mesajlaşma servis çalışanı alan adları
 const DEFAULT_EXCLUDED_DOMAINS = [
   "accounts.google.com",
   "login.microsoftonline.com",
-  "appleid.apple.com"
+  "appleid.apple.com",
+  "web.telegram.org",
+  "web.whatsapp.com"
 ];
 
 function matchesMime(mime) {
@@ -171,7 +173,7 @@ function shouldCapture(downloadItem, allowedExtensions, minSizeBytes = 0, exclud
   // 1. Hariç tutulan alan adları kontrolü (Kullanıcı listesi + yerleşik e-fatura/güvenlikli alan adları)
   const combinedExcluded = Array.from(new Set([...DEFAULT_EXCLUDED_DOMAINS, ...(excludedDomains || [])]));
   if (isDomainExcluded(downloadItem.url, downloadItem.referrer, combinedExcluded) ||
-      isDomainExcluded(downloadItem.finalUrl, downloadItem.referrer, combinedExcluded)) {
+    isDomainExcluded(downloadItem.finalUrl, downloadItem.referrer, combinedExcluded)) {
     return false;
   }
 
@@ -311,7 +313,7 @@ async function checkBridgeHeartbeat() {
     const ver = manifest.version || "1.0.0";
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 1500);
-    
+
     // Öncelikli olarak POST /ping dene
     let res = null;
     try {
@@ -504,11 +506,19 @@ function isProtectedInvoiceOrSessionUrl(url, filename) {
     return true;
   }
 
+  // 1.5. Web tabanlı istemci-taraflı şifreli mesajlaşma servisleri (Telegram Web K/A, WhatsApp Web vb. Service Worker akışları)
+  if (u.includes("web.telegram.org") || (u.includes("telegram.org") && (u.includes("/k/d/") || u.includes("/a/d/")))) {
+    return true;
+  }
+  if (u.includes("web.whatsapp.com")) {
+    return true;
+  }
+
   // 2. Dinamik sunucu betikleri (.aspx, .asp, .php, .jsp vb.) ve kamu/intranet sistemleri (BYS, EBYS, EDYS vb.)
   const isDynamicScript = [".aspx", ".asp", ".php", ".jsp", ".ashx", ".asmx", ".do", ".action"].some(ext => u.includes(ext) || fn.endsWith(ext));
   if (isDynamicScript) {
     if (u.includes(".gov.tr") || u.includes(".edu.tr") || u.includes("bys.") || u.includes("ebys") || u.includes("portal") ||
-        u.includes("rapor") || u.includes("belge") || fn.includes("belge") || fn.includes("rapor") || fn.includes("istek")) {
+      u.includes("rapor") || u.includes("belge") || fn.includes("belge") || fn.includes("rapor") || fn.includes("istek")) {
       return true;
     }
   }
@@ -682,7 +692,7 @@ chrome.downloads.onDeterminingFilename.addListener((downloadItem, suggest) => {
     let captured = false;
     try {
       const cookies = await getCookiesForUrl(downloadItem.url, downloadItem.referrer);
-      
+
       let fileBase64 = null;
       let finalFilename = downloadItem.filename || "";
 
@@ -723,7 +733,7 @@ chrome.downloads.onDeterminingFilename.addListener((downloadItem, suggest) => {
       // 2. İndirme in_progress durumuna geçtiği an iptal edilip indirme geçmişinden silinir
       setTimeout(() => {
         chrome.downloads.cancel(downloadItem.id, () => {
-          chrome.downloads.erase({ id: downloadItem.id }, () => {});
+          chrome.downloads.erase({ id: downloadItem.id }, () => { });
         });
       }, 60);
     } else {

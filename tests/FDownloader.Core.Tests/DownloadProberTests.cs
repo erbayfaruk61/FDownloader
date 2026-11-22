@@ -109,4 +109,22 @@ public sealed class DownloadProberTests : IDisposable
 
         Assert.Equal("belge.pdf", result.FileName);
     }
+
+    [Fact]
+    public async Task Scenario07_RedirectWithoutLocation_FailsWithDescriptiveMessage()
+    {
+        _server.CustomHandlers["/no-location-redirect"] = (req, res) =>
+        {
+            res.StatusCode = 302;
+            // No Location header added
+            return Task.CompletedTask;
+        };
+
+        string url = $"{_server.BaseUrl}no-location-redirect";
+        var result = await _prober.ProbeAsync(url);
+
+        Assert.False(result.IsSuccess);
+        Assert.NotNull(result.ErrorMessage);
+        Assert.Contains("Location", result.ErrorMessage);
+    }
 }

@@ -2796,7 +2796,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-    public const string TargetExtensionVersion = "2.0.22";
+    public const string TargetExtensionVersion = "2.0.23";
 
 
 

@@ -552,19 +552,60 @@ public sealed class DownloadProber
 
 
             // Manuel 3xx yönlendirme durumu
-
             var location = response.Headers.Location;
+            if (location is null)
+            {
+                // 1. response.Headers içinden ham Location başlığını almayı dene (unescaped veya özel Uri karakterleri için)
+                if (response.Headers.TryGetValues("Location", out var rawLocValues) ||
+                    response.Content.Headers.TryGetValues("Location", out rawLocValues) ||
+                    response.Content.Headers.TryGetValues("Content-Location", out rawLocValues))
+                {
+                    var rawLoc = rawLocValues.FirstOrDefault()?.Trim().Trim('"', '\'');
+                    if (!string.IsNullOrWhiteSpace(rawLoc))
+                    {
+                        if (!Uri.TryCreate(rawLoc, UriKind.RelativeOrAbsolute, out location))
+                        {
+                            try
+                            {
+                                var escaped = Uri.EscapeUriString(rawLoc);
+                                Uri.TryCreate(escaped, UriKind.RelativeOrAbsolute, out location);
+                            }
+                            catch { }
+                        }
+                    }
+                }
 
+                // 2. Refresh başlığı kontrolü (Örn: "Refresh: 0; url=https://...")
+                if (location is null && (response.Headers.TryGetValues("Refresh", out var refreshValues) ||
+                                         response.Content.Headers.TryGetValues("Refresh", out refreshValues)))
+                {
+                    var refreshStr = refreshValues.FirstOrDefault();
+                    if (!string.IsNullOrWhiteSpace(refreshStr))
+                    {
+                        var urlIndex = refreshStr.IndexOf("url=", StringComparison.OrdinalIgnoreCase);
+                        if (urlIndex >= 0)
+                        {
+                            var rawUrl = refreshStr[(urlIndex + 4)..].Trim().Trim('"', '\'');
+                            if (!Uri.TryCreate(rawUrl, UriKind.RelativeOrAbsolute, out location))
+                            {
+                                try
+                                {
+                                    var escaped = Uri.EscapeUriString(rawUrl);
+                                    Uri.TryCreate(escaped, UriKind.RelativeOrAbsolute, out location);
+                                }
+                                catch { }
+                            }
+                        }
+                    }
+                }
+            }
+
+            var statusCode = response.StatusCode;
             response.Dispose();
 
-
-
             if (location is null)
-
             {
-
-                return (null, currentUrl, "Yönlendirme yanıtında Location başlığı bulunamadı.");
-
+                return (null, currentUrl, $"Yönlendirme yanıtında (HTTP {(int)statusCode}) geçerli bir Location başlığı bulunamadı.");
             }
 
 
