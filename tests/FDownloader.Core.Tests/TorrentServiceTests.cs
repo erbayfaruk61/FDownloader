@@ -403,6 +403,11 @@ public class TorrentServiceTests : IDisposable
     {
         var settings = new AppTorrentSettings
         {
+            ListeningPort = 0,
+            EnableDht = false,
+            EnableUpnp = false,
+            EnableLsd = false,
+            EnableFallbackTrackers = false,
             SeedRatioLimit = 1.5,
             StopSeedingWhenRatioReached = true
         };

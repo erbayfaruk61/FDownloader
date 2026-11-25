@@ -101,6 +101,8 @@
 
 
   let grabberSettings = {
+    extensionEnabled: true,
+    grabberEnabled: true,
     grabberPosition: "outside-top-right",
     grabberHoverOnly: true,
     grabberHoverOpacity: 100,
@@ -110,6 +112,8 @@
   try {
     if (isExtensionValid() && chrome.storage && chrome.storage.local) {
       chrome.storage.local.get({
+        extensionEnabled: true,
+        grabberEnabled: true,
         grabberPosition: "outside-top-right",
         grabberHoverOnly: true,
         grabberHoverOpacity: 100,
@@ -117,6 +121,9 @@
       }, (res) => {
         if (chrome.runtime.lastError) return;
         if (res) grabberSettings = Object.assign(grabberSettings, res);
+        if (!grabberSettings.extensionEnabled || !grabberSettings.grabberEnabled) {
+          hideGrabberImmediately();
+        }
       });
 
       chrome.storage.onChanged.addListener((changes, area) => {
@@ -125,6 +132,10 @@
             if (key in grabberSettings) {
               grabberSettings[key] = changes[key].newValue;
             }
+          }
+          if (!grabberSettings.extensionEnabled || !grabberSettings.grabberEnabled) {
+            hideGrabberImmediately();
+            return;
           }
           if (currentActiveVideo) {
             if (grabberSettings.grabberHoverOnly && !isHoveringVideoOrButton) {
@@ -599,6 +610,10 @@
 
   function showGrabberForVideo(video) {
     if (!video || !video.isConnected) return;
+    if (!grabberSettings.extensionEnabled || !grabberSettings.grabberEnabled) {
+      hideGrabberImmediately();
+      return;
+    }
     if (!isYouTubeVideoPage()) {
       hideGrabberImmediately();
       return;
@@ -688,7 +703,7 @@
 
   let lastGlobalCheckTime = 0;
   function onGlobalMouseMove(e) {
-    if (!grabberSettings.grabberEnabled) return;
+    if (!grabberSettings.extensionEnabled || !grabberSettings.grabberEnabled) return;
     if (isDirectlyHoveringButton) return;
 
     const now = Date.now();

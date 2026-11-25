@@ -212,6 +212,7 @@ function shouldCapture(downloadItem, allowedExtensions, minSizeBytes = 0, exclud
 
 // ─── Ayarların Bellek İçi Önbelleği (Senkron ve 0 ms Gecikmeli Kararlar İçin) ───
 let cachedSettings = {
+  extensionEnabled: true,
   isEnabled: true,
   bypassOnAltKey: true,
   extensions: DEFAULT_EXTENSIONS,
@@ -222,6 +223,7 @@ let cachedSettings = {
 function updateSettingsCache() {
   if (typeof chrome === "undefined" || !chrome.storage || !chrome.storage.local) return;
   chrome.storage.local.get({
+    extensionEnabled: true,
     isEnabled: true,
     bypassOnAltKey: true,
     extensions: [],
@@ -229,7 +231,9 @@ function updateSettingsCache() {
     excludedDomains: []
   }, (st) => {
     if (st) {
+      cachedSettings.extensionEnabled = st.extensionEnabled !== false;
       cachedSettings.isEnabled = st.isEnabled !== false;
+      cachedSettings.bypassOnAltKey = st.bypassOnAltKey !== false;
       cachedSettings.bypassOnAltKey = st.bypassOnAltKey !== false;
       cachedSettings.extensions = Array.from(new Set([...DEFAULT_EXTENSIONS, ...(st.extensions || [])]));
       cachedSettings.minSizeBytes = st.minSizeBytes || 0;
@@ -665,8 +669,8 @@ chrome.downloads.onDeterminingFilename.addListener((downloadItem, suggest) => {
     return false;
   }
 
-  // 2. Eklenti kapalıysa SENKRON OLARAK ANINDA suggest() çağır (0 ms gecikme)
-  if (!cachedSettings.isEnabled) {
+  // 2. Eklenti veya yakalama kapalıysa SENKRON OLARAK ANINDA suggest() çağır (0 ms gecikme)
+  if (!cachedSettings.extensionEnabled || !cachedSettings.isEnabled) {
     suggest();
     return false;
   }

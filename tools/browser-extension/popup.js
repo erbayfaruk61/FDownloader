@@ -4,6 +4,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   const statusCard = document.getElementById("statusCard");
   const statusDot = document.getElementById("statusDot");
   const statusText = document.getElementById("statusText");
+  const extensionEnabledToggle = document.getElementById("extensionEnabledToggle");
+  const masterToggleLabel = document.getElementById("masterToggleLabel");
+  const settingsContainer = document.getElementById("settingsContainer");
   const interceptToggle = document.getElementById("interceptToggle");
   const bypassAltToggle = document.getElementById("bypassAltToggle");
 
@@ -15,8 +18,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   const idleOpacityRange = document.getElementById("idleOpacityRange");
   const idleOpacityVal = document.getElementById("idleOpacityVal");
 
+  function applyMasterToggleUI(enabled) {
+    if (masterToggleLabel) {
+      masterToggleLabel.textContent = enabled ? "Eklenti Aktif" : "Eklenti Pasif (Devre Dışı)";
+      masterToggleLabel.style.color = enabled ? "#38bdf8" : "#94a3b8";
+    }
+    if (settingsContainer) {
+      settingsContainer.style.opacity = enabled ? "1" : "0.4";
+      settingsContainer.style.pointerEvents = enabled ? "auto" : "none";
+    }
+  }
+
   // Ayarları oku
   chrome.storage.local.get({
+    extensionEnabled: true,
     isEnabled: true,
     bypassOnAltKey: true,
     grabberPosition: "outside-top-right",
@@ -24,6 +39,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     grabberHoverOpacity: 100,
     grabberIdleOpacity: 0
   }, (data) => {
+    const extActive = data.extensionEnabled !== false;
+    if (extensionEnabledToggle) {
+      extensionEnabledToggle.checked = extActive;
+    }
+    applyMasterToggleUI(extActive);
     interceptToggle.checked = data.isEnabled !== false;
     bypassAltToggle.checked = data.bypassOnAltKey !== false;
 
@@ -41,6 +61,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (idleOpacityVal) idleOpacityVal.textContent = `${idleOpacityRange.value}%`;
     }
   });
+
+  if (extensionEnabledToggle) {
+    extensionEnabledToggle.addEventListener("change", () => {
+      const enabled = extensionEnabledToggle.checked;
+      applyMasterToggleUI(enabled);
+      chrome.storage.local.set({ extensionEnabled: enabled });
+    });
+  }
 
   interceptToggle.addEventListener("change", () => {
     chrome.storage.local.set({ isEnabled: interceptToggle.checked });
