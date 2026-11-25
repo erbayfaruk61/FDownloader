@@ -2796,7 +2796,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
 
-    public const string TargetExtensionVersion = "2.0.23";
+    public const string TargetExtensionVersion = "2.0.25";
 
 
 
@@ -12003,13 +12003,8 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
 
     private async void FetchMediaInfoInBackground(string url)
-
-
-
     {
-
-
-
+        _lastDetectedMediaInfo = null;
         AddDialogIsLoading = true;
 
 

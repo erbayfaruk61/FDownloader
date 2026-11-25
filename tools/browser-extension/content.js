@@ -294,6 +294,17 @@
     } catch (err) { }
   }
 
+  function isYouTubeVideoPage() {
+    const host = window.location.hostname.toLowerCase();
+    if (!host.includes("youtube.com") && !host.includes("youtu.be")) return true;
+    if (host.includes("youtu.be")) return window.location.pathname.length > 1;
+    const path = window.location.pathname.toLowerCase();
+    return path === "/watch" ||
+      path.startsWith("/shorts/") ||
+      path.startsWith("/live/") ||
+      path.startsWith("/embed/");
+  }
+
   function isVideoDrmProtected(video) {
     if (!video) return false;
     if (video._fdownloader_has_drm === true) return true;
@@ -323,6 +334,9 @@
     const host = window.location.hostname.toLowerCase();
     const isYouTube = host.includes("youtube.com") || host.includes("youtu.be");
     if (isYouTube) {
+      if (!isYouTubeVideoPage()) {
+        return { url: null, filename: null };
+      }
       return {
         url: window.location.href,
         filename: document.title ? document.title.replace(/\s*-\s*YouTube$/i, "").trim() + ".mp4" : "YouTube Video.mp4"
@@ -398,10 +412,51 @@
 
     const isInstagram = host.includes("instagram.com");
     if (isInstagram) {
+      // 1. Gönderi/Reel kartı içinden kalıcı /reel/, /p/ veya /tv/ bağlantısını DOM'dan çek
+      let igPostLink = null;
+      const igPermalinkRegex = /(?:^|\/)(?:p|reel|reels|tv)\/[A-Za-z0-9_-]+/;
+      const extractIgLink = (root) => {
+        if (!root) return null;
+        const links = root.querySelectorAll("a[href*='/reel/'], a[href*='/reels/'], a[href*='/p/'], a[href*='/tv/']");
+        for (const a of links) {
+          try {
+            const u = new URL(a.href, window.location.origin);
+            if (igPermalinkRegex.test(u.pathname)) {
+              return u.href;
+            }
+          } catch (_) { }
+        }
+        return null;
+      };
+
+      try {
+        const article = video.closest("article");
+        if (article) {
+          igPostLink = extractIgLink(article);
+        }
+        if (!igPostLink) {
+          let el = video.parentElement;
+          for (let depth = 0; el && depth < 10; depth++, el = el.parentElement) {
+            if (el.tagName === "MAIN" || el.tagName === "BODY" || el.tagName === "HTML") break;
+            igPostLink = extractIgLink(el);
+            if (igPostLink) break;
+          }
+        }
+      } catch (_) { }
+
+      // 2. Sayfa URL'si tekil bir gönderi/reel sayfasıysa kullan
+      const isIgPostPage = igPermalinkRegex.test(window.location.pathname);
+      const bestIgUrl = igPostLink || (isIgPostPage ? window.location.href : null);
+      if (bestIgUrl) {
+        return { url: bestIgUrl, filename: "Instagram Video.mp4" };
+      }
+
+      // 3. Doğrudan mp4/cdn src varsa kullan
       const src = video.currentSrc || video.src || "";
       if (src && !src.startsWith("blob:") && !src.startsWith("data:")) {
         return { url: src, filename: "Instagram Video.mp4" };
       }
+
       return { url: window.location.href, filename: "Instagram Video.mp4" };
     }
 
@@ -544,6 +599,10 @@
 
   function showGrabberForVideo(video) {
     if (!video || !video.isConnected) return;
+    if (!isYouTubeVideoPage()) {
+      hideGrabberImmediately();
+      return;
+    }
     ensureGrabberHost();
     if (!panelContainer || !panelContainer.style) return;
 

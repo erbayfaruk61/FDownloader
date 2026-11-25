@@ -641,6 +641,15 @@ public sealed class YtDlpMediaService : IDisposable
                     var vcodec = fmt.TryGetProperty("vcodec", out var fvc) ? fvc.GetString() : null;
                     var acodec = fmt.TryGetProperty("acodec", out var fac) ? fac.GetString() : null;
 
+                    int? width = null;
+                    if (fmt.TryGetProperty("width", out var fw))
+                    {
+                        if (fw.ValueKind == JsonValueKind.Number && (fw.TryGetInt32(out var wInt) || (fw.TryGetDouble(out var wDbl) && (wInt = (int)wDbl) >= 0)))
+                            width = wInt;
+                        else if (fw.ValueKind == JsonValueKind.String && int.TryParse(fw.GetString(), out var wParsed))
+                            width = wParsed;
+                    }
+
                     int? height = null;
                     if (fmt.TryGetProperty("height", out var fh))
                     {
@@ -649,6 +658,11 @@ public sealed class YtDlpMediaService : IDisposable
                         else if (fh.ValueKind == JsonValueKind.String && int.TryParse(fh.GetString(), out var hParsed))
                             height = hParsed;
                     }
+
+                    // Dikey (9:16) videolarda kısa kenar gerçek çözünürlük katmanını (1080p, 1440p, 2160p) belirler
+                    int? effectiveHeight = (width.HasValue && width.Value > 0 && height.HasValue && height.Value > 0)
+                        ? Math.Min(width.Value, height.Value)
+                        : height;
 
                     int? fps = null;
                     if (fmt.TryGetProperty("fps", out var ffps))
@@ -667,26 +681,33 @@ public sealed class YtDlpMediaService : IDisposable
                     }
 
                     long? fileSize = null;
-                    if (fmt.TryGetProperty("filesize", out var fsz))
+                    if (fmt.TryGetProperty("filesize", out var fsz) && fsz.ValueKind != JsonValueKind.Null)
                     {
                         if (fsz.ValueKind == JsonValueKind.Number && (fsz.TryGetInt64(out var szLong) || (fsz.TryGetDouble(out var szDbl) && (szLong = (long)szDbl) >= 0)))
                             fileSize = szLong;
                         else if (fsz.ValueKind == JsonValueKind.String && long.TryParse(fsz.GetString(), out var szParsed))
                             fileSize = szParsed;
                     }
+                    else if (fmt.TryGetProperty("filesize_approx", out var fsza) && fsza.ValueKind != JsonValueKind.Null)
+                    {
+                        if (fsza.ValueKind == JsonValueKind.Number && (fsza.TryGetInt64(out var szaLong) || (fsza.TryGetDouble(out var szaDbl) && (szaLong = (long)szaDbl) >= 0)))
+                            fileSize = szaLong;
+                        else if (fsza.ValueKind == JsonValueKind.String && long.TryParse(fsza.GetString(), out var szaParsed))
+                            fileSize = szaParsed;
+                    }
 
                     bool isAudioOnly = vcodec == "none" || (string.IsNullOrEmpty(vcodec) && !string.IsNullOrEmpty(acodec) && acodec != "none");
 
-                    if (height.HasValue && height.Value > 0 && !isAudioOnly)
+                    if (effectiveHeight.HasValue && effectiveHeight.Value > 0 && !isAudioOnly)
                     {
-                        if (seenHeights.Add(height.Value))
+                        if (seenHeights.Add(effectiveHeight.Value))
                         {
                             formatsList.Add(new MediaFormatInfo
                             {
                                 FormatId = formatId,
                                 Extension = ext,
-                                Height = height,
-                                Resolution = $"{height}p",
+                                Height = effectiveHeight,
+                                Resolution = $"{effectiveHeight}p",
                                 Fps = fps,
                                 FileSize = fileSize,
                                 VCodec = vcodec,
